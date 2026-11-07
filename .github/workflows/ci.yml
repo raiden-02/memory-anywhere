@@ -55,6 +55,10 @@ jobs:
           if [ -z "$OWNER_HOST" ]; then
             echo "OWNER_HOST secret is not set"; exit 1
           fi
+          # A stray newline or space would make the grep match nothing and pass silently.
+          case "$OWNER_HOST" in
+            *[[:space:]]*) echo "OWNER_HOST secret contains whitespace"; exit 1 ;;
+          esac
           if git grep -i -F -q -e "$OWNER_HOST"; then
             echo "found"; exit 1
           fi
