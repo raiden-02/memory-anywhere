@@ -53,6 +53,7 @@ upsert_policy() {
   if aws iam get-policy --policy-arn "$arn" >/dev/null 2>&1; then
     # IAM keeps at most 5 versions; drop the oldest non-default one first.
     local old
+    # shellcheck disable=SC2016 # the backticks are a JMESPath literal, not shell
     old="$(aws iam list-policy-versions --policy-arn "$arn" \
       --query 'sort_by(Versions[?IsDefaultVersion==`false`], &CreateDate)[].VersionId' --output text)"
     if [ "$(wc -w <<<"$old")" -ge 4 ]; then
