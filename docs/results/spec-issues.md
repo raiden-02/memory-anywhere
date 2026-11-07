@@ -1,0 +1,12 @@
+# Spec issues found while building
+
+Contradictions and gaps found in the spec during implementation, each with the owner's decision and the spec change that applies it (DESIGN.md §6: report conflicts as spec bugs). Ambiguities settled by a spike result are recorded in that question's ADR instead.
+
+| # | Found in | Issue | Owner decision (date) | Spec change |
+| --- | --- | --- | --- | --- |
+| 1 | deployment-aws.md §3.4 vs §5.2 | The deploy permission set may empty spike and eval buckets "so `mema destroy` can empty them", but the backup bucket policy denies every principal except the instance role, operator, CDK execution role and root, so destroy cannot empty the backup bucket | Non-prod backup buckets also exempt the deploy permission-set role for listing and deleting object versions; prod unchanged (2026-11-07) | §5.2 deny bullet |
+| 2 | deployment-aws.md §3.3 | The CDK execution policy has KMS create, alias, key policy and grants but no `ScheduleKeyDeletion`, so destroying a spike or eval stack would leave its CMK behind (only the member-account root could delete it) | The execution policy may schedule deletion (30-day window) only for keys tagged with a stage other than `prod`; prod keys are retained (2026-11-07) | §3.3 cfn-exec paragraph |
+| 3 | deployment-aws.md §5.2 vs §3.3 | §5.2 requires Block Public Access at account level, but no bootstrap step or permission set turns it on | `bootstrap-member.sh` sets account-level BPA (all four settings) (2026-11-07) | §3.3 step 2 |
+| 4 | deployment-aws.md §7.1 vs §3.4 | `mema deploy` must check the IMDS account default, which needs `ec2:GetInstanceMetadataDefaults`; the deploy set has only `ec2:Describe*` | Add the read-only action to the deploy set (2026-11-07) | §3.4 deploy row |
+| 5 | deployment-aws.md §3.3 | The full `memory-anywhere-cfn-exec` policy is 8,583 characters; IAM customer managed policies are limited to 6,144 (excluding whitespace) | Split into `memory-anywhere-cfn-exec` (EC2, IAM, KMS) and `memory-anywhere-cfn-exec-services` (the other services), both attached to the CDK execution role; same rights (implementation constraint, shown to the owner at bootstrap review) | §3.3 steps 1–2 |
+| 6 | config-and-cli.md §1, retrieval.md §10 | Links to `../../review2-factcheck-build.md`, which is not part of the spec delivery | Open: no behaviour depends on it | — |

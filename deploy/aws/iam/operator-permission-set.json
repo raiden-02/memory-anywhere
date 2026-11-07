@@ -1,0 +1,114 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CloudShell",
+      "Effect": "Allow",
+      "Action": [
+        "cloudshell:CreateEnvironment", "cloudshell:CreateSession", "cloudshell:StartEnvironment", "cloudshell:StopEnvironment",
+        "cloudshell:GetEnvironmentStatus", "cloudshell:DeleteSession", "cloudshell:PutCredentials",
+        "cloudshell:GetFileUploadUrls", "cloudshell:GetFileDownloadUrls"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SessionsAndRunCommandOnStageInstances",
+      "Effect": "Allow",
+      "Action": ["ssm:StartSession", "ssm:SendCommand"],
+      "Resource": "arn:aws:ec2:*:${ACCOUNT_ID}:instance/*",
+      "Condition": { "Null": { "ssm:resourceTag/memory-anywhere:stage": "false" } }
+    },
+    {
+      "Sid": "RunCommandDocuments",
+      "Effect": "Allow",
+      "Action": "ssm:SendCommand",
+      "Resource": "arn:aws:ssm:*::document/AWS-RunShellScript"
+    },
+    {
+      "Sid": "SessionDocument",
+      "Effect": "Allow",
+      "Action": "ssm:StartSession",
+      "Resource": "arn:aws:ssm:*:*:document/SSM-SessionManagerRunShell"
+    },
+    {
+      "Sid": "OwnSessionsAndCommandResults",
+      "Effect": "Allow",
+      "Action": ["ssm:TerminateSession", "ssm:ResumeSession"],
+      "Resource": "arn:aws:ssm:*:${ACCOUNT_ID}:session/${aws:userid}-*"
+    },
+    {
+      "Sid": "CommandResults",
+      "Effect": "Allow",
+      "Action": ["ssm:GetCommandInvocation", "ssm:ListCommandInvocations"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "StageParameters",
+      "Effect": "Allow",
+      "Action": ["ssm:GetParameter*", "ssm:PutParameter", "ssm:DeleteParameter"],
+      "Resource": [
+        "arn:aws:ssm:*:${ACCOUNT_ID}:parameter/memory-anywhere/*",
+        "arn:aws:ssm:*:${ACCOUNT_ID}:parameter/memory-anywhere-spike/*",
+        "arn:aws:ssm:*:${ACCOUNT_ID}:parameter/memory-anywhere-eval-*/*"
+      ]
+    },
+    {
+      "Sid": "ReadBackups",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:ListBucket", "s3:ListBucketVersions"],
+      "Resource": ["arn:aws:s3:::memory-anywhere-backup-*", "arn:aws:s3:::memory-anywhere-backup-*/*"]
+    },
+    {
+      "Sid": "TransferUploads",
+      "Effect": "Allow",
+      "Action": "s3:PutObject",
+      "Resource": "arn:aws:s3:::memory-anywhere-backup-*/transfer/*"
+    },
+    {
+      "Sid": "DeleteNonProdBackups",
+      "Effect": "Allow",
+      "Action": ["s3:DeleteObject", "s3:DeleteObjectVersion", "s3:DeleteBucket"],
+      "Resource": [
+        "arn:aws:s3:::memory-anywhere-backup-*-spike", "arn:aws:s3:::memory-anywhere-backup-*-spike/*",
+        "arn:aws:s3:::memory-anywhere-backup-*-eval-*", "arn:aws:s3:::memory-anywhere-backup-*-eval-*/*"
+      ]
+    },
+    {
+      "Sid": "KmsViaS3",
+      "Effect": "Allow",
+      "Action": ["kms:Decrypt", "kms:GenerateDataKey"],
+      "Resource": "arn:aws:kms:*:${ACCOUNT_ID}:key/*",
+      "Condition": { "StringLike": { "kms:ViaService": "s3.*.amazonaws.com" } }
+    },
+    {
+      "Sid": "ReadOnly",
+      "Effect": "Allow",
+      "Action": ["ec2:Describe*", "cloudformation:Describe*"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "DenyKeyDeletion",
+      "Effect": "Deny",
+      "Action": "kms:ScheduleKeyDeletion",
+      "Resource": "*"
+    },
+    {
+      "Sid": "DenyProdBackupVersionAndBucketDeletion",
+      "Effect": "Deny",
+      "Action": ["s3:DeleteObjectVersion", "s3:DeleteBucket"],
+      "Resource": ["arn:aws:s3:::memory-anywhere-backup-*-prod", "arn:aws:s3:::memory-anywhere-backup-*-prod/*"]
+    },
+    {
+      "Sid": "DenyIam",
+      "Effect": "Deny",
+      "Action": "iam:*",
+      "Resource": "*"
+    },
+    {
+      "Sid": "DenyCloudFormationWrites",
+      "Effect": "Deny",
+      "NotAction": ["cloudformation:Describe*", "cloudformation:Get*", "cloudformation:List*", "cloudformation:Detect*", "cloudformation:Validate*", "cloudformation:Estimate*"],
+      "Resource": "arn:aws:cloudformation:*:*:*"
+    }
+  ]
+}

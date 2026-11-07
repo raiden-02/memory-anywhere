@@ -1,0 +1,77 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "S3StackBuckets",
+      "Effect": "Allow",
+      "Action": ["s3:CreateBucket", "s3:DeleteBucket", "s3:ListBucket", "s3:GetBucketLocation", "s3:GetBucketPolicy", "s3:PutBucketPolicy", "s3:DeleteBucketPolicy", "s3:GetLifecycleConfiguration", "s3:PutLifecycleConfiguration", "s3:GetBucketVersioning", "s3:PutBucketVersioning", "s3:GetEncryptionConfiguration", "s3:PutEncryptionConfiguration", "s3:GetBucketPublicAccessBlock", "s3:PutBucketPublicAccessBlock", "s3:GetBucketOwnershipControls", "s3:PutBucketOwnershipControls", "s3:GetBucketObjectLockConfiguration", "s3:PutBucketObjectLockConfiguration", "s3:GetBucketTagging", "s3:PutBucketTagging"],
+      "Resource": "arn:aws:s3:::memory-anywhere-*"
+    },
+    {
+      "Sid": "SsmStageParameters",
+      "Effect": "Allow",
+      "Action": ["ssm:GetParameter", "ssm:GetParameters", "ssm:PutParameter", "ssm:DeleteParameter", "ssm:AddTagsToResource", "ssm:RemoveTagsFromResource", "ssm:ListTagsForResource"],
+      "Resource": ["arn:aws:ssm:${REGION}:${ACCOUNT_ID}:parameter/memory-anywhere/*", "arn:aws:ssm:${REGION}:${ACCOUNT_ID}:parameter/memory-anywhere-*"]
+    },
+    {
+      "Sid": "SnsAlertsTopic",
+      "Effect": "Allow",
+      "Action": ["sns:CreateTopic", "sns:DeleteTopic", "sns:GetTopicAttributes", "sns:SetTopicAttributes", "sns:Subscribe", "sns:Unsubscribe", "sns:GetSubscriptionAttributes", "sns:ListSubscriptionsByTopic", "sns:TagResource", "sns:UntagResource", "sns:ListTagsForResource"],
+      "Resource": "arn:aws:sns:${REGION}:${ACCOUNT_ID}:memory-anywhere-*"
+    },
+    {
+      "Sid": "LogsDescribe",
+      "Effect": "Allow",
+      "Action": ["logs:DescribeLogGroups"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "LogsStackGroups",
+      "Effect": "Allow",
+      "Action": ["logs:CreateLogGroup", "logs:DeleteLogGroup", "logs:PutRetentionPolicy", "logs:DeleteRetentionPolicy", "logs:PutMetricFilter", "logs:DeleteMetricFilter", "logs:DescribeMetricFilters", "logs:TagResource", "logs:UntagResource", "logs:ListTagsForResource", "logs:TagLogGroup", "logs:UntagLogGroup"],
+      "Resource": "arn:aws:logs:${REGION}:${ACCOUNT_ID}:log-group:/memory-anywhere/*"
+    },
+    {
+      "Sid": "CloudWatchAlarms",
+      "Effect": "Allow",
+      "Action": ["cloudwatch:PutMetricAlarm", "cloudwatch:DeleteAlarms", "cloudwatch:DescribeAlarms", "cloudwatch:TagResource", "cloudwatch:UntagResource", "cloudwatch:ListTagsForResource"],
+      "Resource": "arn:aws:cloudwatch:${REGION}:${ACCOUNT_ID}:alarm:memory-anywhere-*"
+    },
+    {
+      "Sid": "EventBridgeRules",
+      "Effect": "Allow",
+      "Action": ["events:PutRule", "events:DeleteRule", "events:DescribeRule", "events:EnableRule", "events:DisableRule", "events:PutTargets", "events:RemoveTargets", "events:ListTargetsByRule", "events:TagResource", "events:UntagResource", "events:ListTagsForResource"],
+      "Resource": "arn:aws:events:${REGION}:${ACCOUNT_ID}:rule/memory-anywhere-*"
+    },
+    {
+      "Sid": "CloudTrailTrail",
+      "Effect": "Allow",
+      "Action": ["cloudtrail:CreateTrail", "cloudtrail:UpdateTrail", "cloudtrail:DeleteTrail", "cloudtrail:GetTrail", "cloudtrail:GetTrailStatus", "cloudtrail:StartLogging", "cloudtrail:StopLogging", "cloudtrail:PutEventSelectors", "cloudtrail:GetEventSelectors", "cloudtrail:AddTags", "cloudtrail:RemoveTags", "cloudtrail:ListTags"],
+      "Resource": "arn:aws:cloudtrail:${REGION}:${ACCOUNT_ID}:trail/memory-anywhere-*"
+    },
+    {
+      "Sid": "CloudTrailDescribe",
+      "Effect": "Allow",
+      "Action": ["cloudtrail:DescribeTrails"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "BudgetsStageBudget",
+      "Effect": "Allow",
+      "Action": ["budgets:ViewBudget", "budgets:ModifyBudget", "budgets:TagResource", "budgets:UntagResource", "budgets:ListTagsForResource"],
+      "Resource": "arn:aws:budgets::${ACCOUNT_ID}:budget/memory-anywhere-*"
+    },
+    {
+      "Sid": "CostAnomalyDetection",
+      "Effect": "Allow",
+      "Action": ["ce:CreateAnomalyMonitor", "ce:UpdateAnomalyMonitor", "ce:DeleteAnomalyMonitor", "ce:GetAnomalyMonitors", "ce:CreateAnomalySubscription", "ce:UpdateAnomalySubscription", "ce:DeleteAnomalySubscription", "ce:GetAnomalySubscriptions", "ce:TagResource", "ce:UntagResource", "ce:ListTagsForResource"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "DataLifecycleManager",
+      "Effect": "Allow",
+      "Action": ["dlm:CreateLifecyclePolicy", "dlm:UpdateLifecyclePolicy", "dlm:DeleteLifecyclePolicy", "dlm:GetLifecyclePolicy", "dlm:GetLifecyclePolicies", "dlm:TagResource", "dlm:UntagResource"],
+      "Resource": "*"
+    }
+  ]
+}

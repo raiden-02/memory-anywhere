@@ -1,0 +1,5 @@
+{
+  "name": "@memory-anywhere/deploy-aws",
+  "private": true,
+  "type": "module"
+}

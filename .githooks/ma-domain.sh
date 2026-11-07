@@ -1,3 +1,4 @@
+# shellcheck shell=sh
 # Sourced by pre-commit and commit-msg. Sets $ma_domain to the owner's private
 # hostname (MA_DOMAIN) or exits non-zero. The value is never printed.
 ma_domain="${MA_DOMAIN:-}"
