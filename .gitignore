@@ -1,0 +1,13 @@
+node_modules/
+dist/
+coverage/
+cdk.out/
+*.tsbuildinfo
+.env
+.env.*
+# Never commit private keys (the dev release key lives outside the repo).
+*.key
+# Public datasets are fetched by script, never committed (evals.md §2).
+evals/datasets/public/data/
+# Local scratch output of spikes before it is scrubbed into docs/results/evidence/.
+spikes/**/out/

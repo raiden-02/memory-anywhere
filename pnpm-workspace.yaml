@@ -1,0 +1,11 @@
+packages:
+  - packages/*
+  - deploy/aws
+  - spikes/*
+  - evals
+
+# Only these may run install scripts (auth-and-security.md §10). The client has none.
+onlyBuiltDependencies:
+  - better-sqlite3
+  - onnxruntime-node
+  - argon2
