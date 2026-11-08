@@ -15,6 +15,18 @@ describe("scrub", () => {
     expect(text).toBe("arn:aws:iam::<aws-account-id>:role/x ts=1731000000000");
   });
 
+  it("leaves decimal numbers alone, so JSON results stay valid", () => {
+    const json = '{"ndcg":0.123456789012,"big":123456789012.5,"id":"123456789012"}';
+    const { text, counts } = scrub(json, { domain });
+    expect(text).toBe('{"ndcg":0.123456789012,"big":123456789012.5,"id":"<aws-account-id>"}');
+    expect(counts.accountIds).toBe(1);
+    expect(() => JSON.parse(text)).not.toThrow();
+  });
+
+  it("still replaces an account id at the end of a sentence", () => {
+    expect(scrub("signed in to account 123456789012.", { domain }).text).toBe("signed in to account <aws-account-id>.");
+  });
+
   it("replaces real email addresses and keeps spec placeholders", () => {
     const { text } = scrub("to me+ma-deploy@gmail.com, cc you+ma-aws@example.com", { domain });
     expect(text).toBe("to <email>, cc you+ma-aws@example.com");

@@ -58,7 +58,9 @@ export function scrub(input: string, opts: { domain: string }): ScrubResult {
     return "{host}";
   });
 
-  text = text.replace(/(?<![0-9])[0-9]{12}(?![0-9])/g, () => {
+  // A standalone 12-digit run, but not the fraction of a decimal number (0.123456789012) nor the
+  // integer part of one: scrubbing those corrupted eval result files.
+  text = text.replace(/(?<![0-9])(?<![0-9]\.)[0-9]{12}(?![0-9])(?!\.[0-9])/g, () => {
     counts.accountIds++;
     return "<aws-account-id>";
   });

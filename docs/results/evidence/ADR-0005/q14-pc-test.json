@@ -1509,8 +1509,8 @@
       }
     ],
     "eval_spend_usd": 0,
-    "started_at": "2026-11-08T22:19:17.018Z",
-    "duration_ms": 63
+    "started_at": "2026-11-08T23:50:18.594Z",
+    "duration_ms": 55
   },
   "models": [
     {
@@ -1530,16 +1530,16 @@
         "maxTokens": 512,
         "licence": "Gemma Terms of Use (redistribution and on-demand download allowed with the terms and notice)"
       },
-      "embed_seconds": 2236.706,
+      "embed_seconds": 23.967,
       "device_agreement_min_cosine": 0.9999999576120626,
       "cpu": {
         "candidate": "embeddinggemma-300m-q8",
         "queries": 200,
         "store_vectors": 10000,
-        "p50_ms": 143.7,
-        "p95_ms": 175.2,
-        "max_ms": 192.9,
-        "rss_baseline_mb": 71,
+        "p50_ms": 142.7,
+        "p95_ms": 172.8,
+        "max_ms": 179,
+        "rss_baseline_mb": 70,
         "rss_peak_mb": 1685,
         "node": "v24.22.2",
         "platform": "win32-x64",
@@ -3075,8 +3075,8 @@
           }
         ],
         "eval_spend_usd": 0,
-        "started_at": "2026-11-08T22:56:36.746Z",
-        "duration_ms": 119
+        "started_at": "2026-11-08T23:50:45.030Z",
+        "duration_ms": 99
       },
       "hybrid": {
         "suite": "R",
@@ -4606,8 +4606,8 @@
           }
         ],
         "eval_spend_usd": 0,
-        "started_at": "2026-11-08T22:56:36.865Z",
-        "duration_ms": 91
+        "started_at": "2026-11-08T23:50:45.129Z",
+        "duration_ms": 86
       }
     },
     {
@@ -4627,17 +4627,17 @@
         "maxTokens": 512,
         "licence": "Gemma Terms of Use (redistribution and on-demand download allowed with the terms and notice)"
       },
-      "embed_seconds": 2361.124,
+      "embed_seconds": 5.576,
       "device_agreement_min_cosine": 0.9997137863023645,
       "cpu": {
         "candidate": "embeddinggemma-300m-q4",
         "queries": 200,
         "store_vectors": 10000,
-        "p50_ms": 43.1,
-        "p95_ms": 63.7,
-        "max_ms": 80.1,
+        "p50_ms": 43.7,
+        "p95_ms": 61.3,
+        "max_ms": 85.8,
         "rss_baseline_mb": 71,
-        "rss_peak_mb": 596,
+        "rss_peak_mb": 597,
         "node": "v24.22.2",
         "platform": "win32-x64",
         "cpus": 32,
@@ -6172,8 +6172,8 @@
           }
         ],
         "eval_spend_usd": 0,
-        "started_at": "2026-11-08T23:36:40.803Z",
-        "duration_ms": 97
+        "started_at": "2026-11-08T23:51:32.953Z",
+        "duration_ms": 86
       },
       "hybrid": {
         "suite": "R",
@@ -6256,7 +6256,7 @@
             "ndcg10": {
               "mean": 0.6324646411410577,
               "ci95": [
-                0.<aws-account-id>,
+                0.553698348079,
                 0.7092949229144361
               ]
             },
@@ -7703,8 +7703,8 @@
           }
         ],
         "eval_spend_usd": 0,
-        "started_at": "2026-11-08T23:36:40.900Z",
-        "duration_ms": 89
+        "started_at": "2026-11-08T23:51:33.039Z",
+        "duration_ms": 82
       }
     },
     {
@@ -7723,17 +7723,17 @@
         "maxTokens": 512,
         "licence": "MIT (BAAI/bge-small-en-v1.5)"
       },
-      "embed_seconds": 320.135,
+      "embed_seconds": 0.866,
       "device_agreement_min_cosine": 0.9956066933077183,
       "cpu": {
         "candidate": "bge-small-en-v1.5-q8",
         "queries": 200,
         "store_vectors": 10000,
-        "p50_ms": 10.2,
-        "p95_ms": 20.2,
-        "max_ms": 21.6,
+        "p50_ms": 10.9,
+        "p95_ms": 19.2,
+        "max_ms": 25,
         "rss_baseline_mb": 71,
-        "rss_peak_mb": 180,
+        "rss_peak_mb": 179,
         "node": "v24.22.2",
         "platform": "win32-x64",
         "cpus": 32,
@@ -9268,8 +9268,8 @@
           }
         ],
         "eval_spend_usd": 0,
-        "started_at": "2026-11-08T23:42:28.608Z",
-        "duration_ms": 75
+        "started_at": "2026-11-08T23:52:01.652Z",
+        "duration_ms": 69
       },
       "hybrid": {
         "suite": "R",
@@ -10799,8 +10799,8 @@
           }
         ],
         "eval_spend_usd": 0,
-        "started_at": "2026-11-08T23:42:28.683Z",
-        "duration_ms": 72
+        "started_at": "2026-11-08T23:52:01.721Z",
+        "duration_ms": 85
       }
     },
     {
@@ -10819,15 +10819,15 @@
         "maxTokens": 512,
         "licence": "MIT (intfloat/e5-small-v2)"
       },
-      "embed_seconds": 325.284,
+      "embed_seconds": 0.766,
       "device_agreement_min_cosine": 0.9966539870108297,
       "cpu": {
         "candidate": "e5-small-v2-q8",
         "queries": 200,
         "store_vectors": 10000,
-        "p50_ms": 10.4,
-        "p95_ms": 17.3,
-        "max_ms": 22.4,
+        "p50_ms": 10.1,
+        "p95_ms": 20.2,
+        "max_ms": 21.9,
         "rss_baseline_mb": 71,
         "rss_peak_mb": 181,
         "node": "v24.22.2",
@@ -12364,8 +12364,8 @@
           }
         ],
         "eval_spend_usd": 0,
-        "started_at": "2026-11-08T23:47:59.961Z",
-        "duration_ms": 77
+        "started_at": "2026-11-08T23:52:08.554Z",
+        "duration_ms": 72
       },
       "hybrid": {
         "suite": "R",
@@ -13895,8 +13895,8 @@
           }
         ],
         "eval_spend_usd": 0,
-        "started_at": "2026-11-08T23:48:00.038Z",
-        "duration_ms": 71
+        "started_at": "2026-11-08T23:52:08.626Z",
+        "duration_ms": 74
       }
     }
   ],
