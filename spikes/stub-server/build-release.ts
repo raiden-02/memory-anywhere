@@ -44,6 +44,18 @@ export function run(cmd: string, args: string[], cwd = ROOT): void {
   if (r.status !== 0) throw new Error(`${cmd} ${args.join(" ")} failed (${r.status ?? r.error?.message})`);
 }
 
+/** A release must carry a flat node_modules with no links: tar on Windows turns pnpm's .pnpm
+ * links into copies, which breaks transitive requires (Q14: onnxruntime-common not found on the
+ * instance). pnpm deploy needs --node-linker hoisted for that. */
+export function assertFlatNodeModules(appDir: string): void {
+  // Hoisted mode keeps only a lock.yaml in .pnpm; the linked layout keeps a folder per package there.
+  const store = join(appDir, "node_modules", ".pnpm");
+  const packages = existsSync(store) ? readdirSync(store).filter((e) => statSync(join(store, e)).isDirectory()) : [];
+  if (packages.length > 0) {
+    throw new Error(`pnpm deploy produced a linked node_modules (${packages.length} packages under .pnpm); expected --node-linker hoisted`);
+  }
+}
+
 export function walk(dir: string, out: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
     const p = join(dir, name);
@@ -72,9 +84,11 @@ function main(): void {
       "--libc",
       "glibc",
       "--ignore-scripts",
-      "--config.node-linker=hoisted",
+      "--node-linker",
+      "hoisted",
       join(stage, "app"),
     ]);
+    assertFlatNodeModules(join(stage, "app"));
     // The stub is pure JavaScript; a native module would need an arm64 build check.
     const natives = walk(join(stage, "app")).filter((f) => f.endsWith(".node"));
     if (natives.length) throw new Error(`unexpected native modules: ${natives.map((f) => relative(stage, f)).join(", ")}`);

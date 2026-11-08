@@ -7,14 +7,15 @@
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { run } from "../stub-server/build-release.ts";
+import { assertFlatNodeModules, run } from "../stub-server/build-release.ts";
 
 const HERE = import.meta.dirname;
 const OUT = join(HERE, "out");
 
 const stage = mkdtempSync(join(tmpdir(), "ma bench "));
 try {
-  run("pnpm", ["--filter", "@memory-anywhere/spike-embed-bench", "deploy", "--prod", "--cpu", "arm64", "--os", "linux", "--libc", "glibc", "--ignore-scripts", join(stage, "app")]);
+  run("pnpm", ["--filter", "@memory-anywhere/spike-embed-bench", "deploy", "--prod", "--cpu", "arm64", "--os", "linux", "--libc", "glibc", "--ignore-scripts", "--node-linker", "hoisted", join(stage, "app")]);
+  assertFlatNodeModules(join(stage, "app"));
   // Keep only onnxruntime-node's linux-arm64 binaries (the package carries every platform).
   const napi = join(stage, "app", "node_modules", "onnxruntime-node", "bin", "napi-v6");
   for (const os of readdirSync(napi)) {
