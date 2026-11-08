@@ -27,7 +27,7 @@ function windowsPnpm(): { exe: string } | { shim: string } {
   return { shim };
 }
 
-function run(cmd: string, args: string[], cwd = ROOT): void {
+export function run(cmd: string, args: string[], cwd = ROOT): void {
   let command = cmd;
   let argv = args;
   if (process.platform === "win32" && cmd === "pnpm") {
@@ -44,7 +44,7 @@ function run(cmd: string, args: string[], cwd = ROOT): void {
   if (r.status !== 0) throw new Error(`${cmd} ${args.join(" ")} failed (${r.status ?? r.error?.message})`);
 }
 
-function walk(dir: string, out: string[] = []): string[] {
+export function walk(dir: string, out: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
     const p = join(dir, name);
     if (statSync(p).isDirectory()) walk(p, out);
@@ -111,4 +111,4 @@ function main(): void {
   }
 }
 
-main();
+if (import.meta.main) main();
