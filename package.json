@@ -8,7 +8,7 @@
   },
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",
-    "typecheck": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json && tsc -p deploy/aws/tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run",
     "check": "pnpm typecheck && pnpm lint && pnpm test",

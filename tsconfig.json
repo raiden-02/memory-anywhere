@@ -22,5 +22,5 @@
     "noEmit": true
   },
   "include": ["packages", "deploy", "spikes", "evals", "scripts"],
-  "exclude": ["**/node_modules", "**/cdk.out", "**/dist", "evals/datasets/public/data"]
+  "exclude": ["deploy/aws", "**/node_modules", "**/cdk.out", "**/dist", "evals/datasets/public/data"]
 }

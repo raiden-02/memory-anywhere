@@ -1,0 +1,11 @@
+{
+  // The CDK app is checked on its own: aws-cdk-lib's type declarations are not
+  // written for exactOptionalPropertyTypes (a constructed Vpc or Bucket is not
+  // assignable to IVpc or IBucket with it on). Every other setting is the root's.
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "exactOptionalPropertyTypes": false
+  },
+  "include": ["."],
+  "exclude": ["node_modules", "cdk.out"]
+}
