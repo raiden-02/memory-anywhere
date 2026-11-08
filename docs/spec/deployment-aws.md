@@ -106,7 +106,7 @@ output = json
 **C. One-time bootstrap (during M0, when Claude Code asks; §3.3).**
 
 **Deploy (PC)**, when Claude Code says a milestone needs one:
-1. The owner runs `aws sso login --sso-session ma-deploy` and completes the browser sign-in as `ma-deploy`.
+1. The owner runs `aws sso login --sso-session ma-deploy --use-device-code`, opens the printed URL in a private window, checks the code and signs in as `ma-deploy` (the `--no-browser` callback flow did not complete from a private window; ADR-0113).
 2. Claude Code runs `mema deploy aws … --profile memory-anywhere-deploy --region <region>`.
 3. `mema deploy` runs `aws sso logout` when it exits (success or failure), which deletes the cached token. The owner can also run it at any time.
 

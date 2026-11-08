@@ -1,0 +1,8 @@
+{
+  "name": "@memory-anywhere/spike-separation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "q25": "node src/q25.ts"
+  }
+}
