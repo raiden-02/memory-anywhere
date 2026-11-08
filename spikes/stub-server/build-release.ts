@@ -102,7 +102,9 @@ function main(): void {
     const tarball = join(outDir, `memory-anywhere-server-${version}-linux-arm64.tar.gz`);
     if (existsSync(tarball)) rmSync(tarball);
     // bsdtar (Windows) and GNU tar both accept this; entries are relative to the release root.
-    run("tar", ["-czf", tarball, "-C", stage, "VERSION", "bin", "app", "host", "probe"]);
+    // On Windows, use the system bsdtar: a GNU tar from Git Bash on PATH reads "C:\..." as a remote host.
+    const tar = process.platform === "win32" ? join(process.env["SystemRoot"] ?? "C:\\Windows", "System32", "tar.exe") : "tar";
+    run(tar, ["-czf", tarball, "-C", stage, "VERSION", "bin", "app", "host", "probe"]);
     console.log(`built ${tarball}`);
   } finally {
     rmSync(stage, { recursive: true, force: true });
