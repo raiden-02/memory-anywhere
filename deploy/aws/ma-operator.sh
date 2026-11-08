@@ -103,7 +103,7 @@ setup_link() {
       if [ -n "$value" ] && [ "$value" != "$before" ]; then break; fi
       sleep 2
     done
-    [ -n "$value" ] && [ "$value" != "$before" ] || die "the instance did not publish a new setup token within 60 s"
+    if [ -z "$value" ] || [ "$value" = "$before" ]; then die "the instance did not publish a new setup token within 60 s"; fi
     token=$(printf '%s' "$value" | python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])')
     expires=$(printf '%s' "$value" | python3 -c 'import json,sys; print(json.load(sys.stdin)["expires_at"])')
   fi
