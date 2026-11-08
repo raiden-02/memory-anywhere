@@ -125,9 +125,12 @@ setup_link() {
 set_llm_key() {
   load_stack
   local key input
-  [ -t 0 ] || die "set-llm-key reads the key from a terminal"
-  read -r -s -p "LLM API key (input hidden): " key
-  echo
+  if [ -t 0 ]; then
+    read -r -s -p "LLM API key (input hidden): " key
+    echo
+  else
+    read -r key || true # piped in (never as an argument, which would show in the process list)
+  fi
   [ -n "$key" ] || die "empty key"
   input=$(mktemp)
   trap 'shred -u "$input" 2>/dev/null || rm -f "$input"' RETURN
