@@ -40,6 +40,7 @@ export function readSimpleToml(text: string): Record<string, string> {
 }
 
 const OUTBOX = "/run/memory-anywhere/outbox";
+const INSTANCE_CONFIG = "/etc/memory-anywhere/server.toml";
 const SETUP_TOKEN_TTL_MS = 30 * 60_000;
 
 function writeOutbox(name: string, content: string): void {
@@ -57,14 +58,18 @@ async function main(argv: string[]): Promise<number> {
     args: rest,
     options: { config: { type: "string" }, port: { type: "string" }, renew: { type: "boolean", default: false }, out: { type: "string" } },
   });
-  const cfg = values.config ? readSimpleToml(readFileSync(values.config, "utf8")) : {};
+  // Like the real server: --config, else the instance's server.toml when it exists
+  // (operator commands run through SSM without --config, from an arbitrary directory).
+  const configFile = values.config ?? (existsSync(INSTANCE_CONFIG) ? INSTANCE_CONFIG : undefined);
+  const cfg = configFile ? readSimpleToml(readFileSync(configFile, "utf8")) : {};
   const dataDir = cfg["server.data_dir"] ?? process.env["MA_STUB_DATA"] ?? join(process.cwd(), ".stub-data");
-  const store = new JsonlStore(join(dataDir, "stub-memories.jsonl"));
+  // Opened only by the commands that serve MCP; the others never touch the store.
+  const openStore = () => new JsonlStore(join(dataDir, "stub-memories.jsonl"));
 
   switch (command) {
     case "start": {
       const publicOrigin = cfg["server.public_origin"] ?? `http://127.0.0.1:${values.port ?? "8787"}`;
-      const server = createHttpServer({ version: VERSION, store, publicOrigin });
+      const server = createHttpServer({ version: VERSION, store: openStore(), publicOrigin });
       const socket = cfg["server.socket"];
       if (socket) {
         if (existsSync(socket)) unlinkSync(socket);
@@ -80,7 +85,7 @@ async function main(argv: string[]): Promise<number> {
       return await new Promise<number>(() => {});
     }
     case "stdio":
-      serveStdio(() => createStubServer({ version: VERSION, store, client: "stdio" }));
+      serveStdio(() => createStubServer({ version: VERSION, store: openStore(), client: "stdio" }));
       return await new Promise<number>(() => {});
     case "setup-token": {
       if (!values.renew) {

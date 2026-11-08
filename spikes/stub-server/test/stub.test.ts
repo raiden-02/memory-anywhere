@@ -1,4 +1,5 @@
-import { mkdtempSync, readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -33,6 +34,16 @@ describe("channel texts", () => {
     for (const c of TRUNCATION_CANARIES) expect(DESC_MEMORY_STATUS.indexOf(c.text)).toBe(c.at);
     expect(TRUNCATION_CANARIES.map((c) => c.at)).toEqual([1900, 3900, 4300]);
     expect(DESC_MEMORY_STATUS.endsWith("DESC-C27P.")).toBe(true);
+  });
+});
+
+describe("operator commands", () => {
+  it("do not open the store, so they run from any directory (SSM runs them from /usr/bin)", () => {
+    const cwd = mkdtempSync(join(tmpdir(), "ma stub cwd "));
+    const main = join(import.meta.dirname, "..", "src", "main.ts");
+    const r = spawnSync(process.execPath, [main, "migrate"], { cwd, encoding: "utf8" });
+    expect(r.status).toBe(0);
+    expect(existsSync(join(cwd, ".stub-data"))).toBe(false);
   });
 });
 
