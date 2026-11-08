@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
@@ -18,6 +18,10 @@ describe("litestream probe (local, no Litestream)", () => {
     // so check the persistent journal mode rather than the -wal file.
     const header = readFileSync(db).subarray(18, 20);
     expect([...header]).toEqual([2, 2]); // file format read/write version 2 = WAL
+  });
+
+  it.skipIf(process.platform === "win32")("creates the store group-writable (0660) so Litestream can use it", () => {
+    expect(statSync(db).mode & 0o777).toBe(0o660);
   });
 
   it("purges the canary row and its FTS entry", () => {

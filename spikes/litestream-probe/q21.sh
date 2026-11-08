@@ -20,6 +20,9 @@ log() { echo "[$(date -u +%T)] $*"; }
 result() { echo "RESULT $1=$2"; }
 # As the server user, with group-writable files so Litestream (group ma-data) can checkpoint.
 probe_as_server() { runuser -u memory-anywhere -- sh -c 'umask 007; exec "$@"' sh "$NODE" "$PROBE" "$@"; }
+# Same, with errors folded into the captured result (one line), so a failure is visible in RESULT lines.
+probe_result() { probe_as_server "$@" 2>&1 | grep -v "^    at " | tr "
+" " "; }
 probe_root() { "$NODE" "$PROBE" "$@"; }
 present() { if probe_root contains "$1" "$CANARY"; then echo present; else echo absent; fi; }
 s3_objects() { aws --region "$MA_REGION" s3 ls "s3://$MA_BACKUP_BUCKET/litestream/store/" --recursive | wc -l; }
@@ -62,10 +65,12 @@ result first_replication_s "$(($(date +%s) - t0))"
 sleep 5
 
 log "4. application checkpoint while Litestream holds its read transaction"
-result app_checkpoint_truncate_while_litestream_runs "$(probe_as_server checkpoint "$DB")"
+result store_file_modes "$(stat -c "%n %a %U:%G" "$DB" "$DB-wal" "$DB-shm" 2>&1 | sed "s|$DATA/||" | tr "
+" ";")"
+result app_checkpoint_truncate_while_litestream_runs "$(probe_result checkpoint "$DB")"
 
 log "5. purge the canary (no application checkpoint: aws mode) and time until it leaves the files"
-result purged_rows "$(probe_as_server purge "$DB" "$CANARY")"
+result purged_rows "$(probe_result purge "$DB" "$CANARY")"
 tp=$(date +%s)
 db_cleared=-1
 wal_cleared=-1
@@ -85,7 +90,7 @@ tm=$(date +%s)
 before_objects=$(s3_objects)
 systemctl stop litestream.service
 result litestream_runtime_dir_after_stop "$([ -e /run/litestream ] && echo present || echo removed)"
-result compact "$(probe_as_server compact "$DB")"
+result compact "$(probe_result compact "$DB")"
 rm -rf /run/litestream/store
 systemctl start litestream.service
 result maint_cycle_s "$(($(date +%s) - tm))"
@@ -98,7 +103,7 @@ done
 result new_snapshot_after_maint_s "$(($(date +%s) - tm))"
 
 log "7. one more row, then wait for it to replicate (sync-interval 1s)"
-probe_as_server write "$DB" 1
+result write_after_maint "$(probe_result write "$DB" 1)(empty = ok)"
 sleep 15
 live=$(probe_as_server dump-hash "$DB")
 

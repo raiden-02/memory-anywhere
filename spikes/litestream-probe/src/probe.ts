@@ -11,7 +11,7 @@
 //   probe.ts contains <file> <text>    exit 0 if the bytes of <file> contain <text>
 
 import { createHash } from "node:crypto";
-import { closeSync, existsSync, fsyncSync, openSync, readFileSync, renameSync, statSync, unlinkSync, writeSync } from "node:fs";
+import { chmodSync, closeSync, existsSync, fsyncSync, openSync, readFileSync, renameSync, statSync, unlinkSync, writeSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 
 export const PRAGMAS_AWS = [
@@ -29,7 +29,19 @@ export function open(path: string): DatabaseSync {
   return db;
 }
 
+/** deployment-aws.md §4 step 7: store files are 0660, group ma-data (from the setgid directory).
+ * SQLite creates the database with 0644 minus the umask, and gives the -wal and -shm files the
+ * database file's mode, so setting it once on the new file covers all three. Litestream (group
+ * ma-data) writes to the database (its _litestream_seq table) and to the WAL, so 0640 breaks it. */
+function makeGroupWritable(path: string): void {
+  chmodSync(path, 0o660);
+}
+
 export function init(path: string): void {
+  if (!existsSync(path)) {
+    closeSync(openSync(path, "a", 0o660));
+    makeGroupWritable(path);
+  }
   const db = open(path);
   db.exec(`CREATE TABLE IF NOT EXISTS memory (id INTEGER PRIMARY KEY, content TEXT NOT NULL, created_at TEXT NOT NULL);
     CREATE VIRTUAL TABLE IF NOT EXISTS memory_fts USING fts5(version_id UNINDEXED, content, excerpts, aliases,
@@ -96,6 +108,7 @@ export function compact(path: string): { before: number; after: number } {
   const fd = openSync(tmp, "r+");
   fsyncSync(fd);
   closeSync(fd);
+  makeGroupWritable(tmp);
   for (const f of [path, `${path}-wal`, `${path}-shm`]) zeroAndRemove(f);
   renameSync(tmp, path);
   return { before, after: statSync(path).size };
