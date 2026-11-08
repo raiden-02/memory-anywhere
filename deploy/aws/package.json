@@ -2,6 +2,10 @@
   "name": "@memory-anywhere/deploy-aws",
   "private": true,
   "type": "module",
+  "exports": {
+    "./names": "./lib/names.ts",
+    "./dir": "./lib/dir.ts"
+  },
   "dependencies": {
     "aws-cdk-lib": "2.275.0",
     "constructs": "10.8.1"

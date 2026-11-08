@@ -198,9 +198,20 @@ importers:
         specifier: 2.1148.0
         version: 2.1148.0
 
+  packages/client:
+    dependencies:
+      '@memory-anywhere/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@memory-anywhere/deploy-aws':
+        specifier: workspace:*
+        version: link:../../deploy/aws
+
   packages/contracts: {}
 
   spikes/rtt: {}
+
+  spikes/separation: {}
 
 packages:
 

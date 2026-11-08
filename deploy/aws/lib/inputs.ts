@@ -2,12 +2,12 @@
 // the binary pins and the host files that go into user data.
 
 import { existsSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+import { DEPLOY_AWS_DIR } from "./dir.ts";
 import { parseStage, trustedReleaseKeys, type Stage } from "./names.ts";
 import type { HostFile, ReleaseKey } from "./user-data.ts";
 
-export const DEPLOY_AWS_DIR = join(dirname(fileURLToPath(import.meta.url)), "..");
+export { DEPLOY_AWS_DIR };
 
 const AMI = /^ami-[0-9a-f]{8,17}$/;
 const REGION = /^[a-z]{2}(-[a-z]+)+-\d$/;
