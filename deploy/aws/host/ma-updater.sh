@@ -55,14 +55,20 @@ switch_current() { # switch_current <release dir>: atomic symlink swap
   mv -T "$CURRENT.new" "$CURRENT"
 }
 
-install_release() { # install_release <version> <sha256>
+# install_release <version> <sha256>. Called as a condition, so set -e does not apply
+# inside it: every step checks its own result and returns 1 (refuse) before anything
+# is switched.
+install_release() {
   local version=$1 sha=$2 work dest previous="" verified=""
   work=$(mktemp -d /var/tmp/ma-release.XXXXXX)
   # shellcheck disable=SC2064 # expand $work now: it is local to this function
   trap "rm -rf '$work'" RETURN
 
-  aws_ s3 cp --only-show-errors "s3://$MA_RELEASES_BUCKET/releases/$version.tar.gz" "$work/release.tar.gz"
-  aws_ s3 cp --only-show-errors "s3://$MA_RELEASES_BUCKET/releases/$version.tar.gz.minisig" "$work/release.tar.gz.minisig"
+  if ! aws_ s3 cp --only-show-errors "s3://$MA_RELEASES_BUCKET/releases/$version.tar.gz" "$work/release.tar.gz" ||
+    ! aws_ s3 cp --only-show-errors "s3://$MA_RELEASES_BUCKET/releases/$version.tar.gz.minisig" "$work/release.tar.gz.minisig"; then
+    log "could not download release $version; will retry"
+    return 1
+  fi
   if ! echo "$sha  $work/release.tar.gz" | sha256sum -c --quiet - >/dev/null 2>&1; then
     log "refusing $version: SHA-256 does not match release/desired"
     alert update_failed "Release $version refused: SHA-256 mismatch."
@@ -83,26 +89,36 @@ install_release() { # install_release <version> <sha256>
 
   if [ -L "$CURRENT" ]; then previous=$(readlink -f "$CURRENT"); fi
   if [ -n "$previous" ] && [ -f "$DATA/store.db" ]; then
-    runuser -u memory-anywhere -- "$CURRENT/bin/memory-anywhere-server" backup --out "$DATA/pre-$version.db"
+    runuser -u memory-anywhere -- "$CURRENT/bin/memory-anywhere-server" backup --out "$DATA/pre-$version.db" ||
+      { log "pre-update backup failed; not updating"; return 1; }
   fi
 
   dest="$RELEASES/$version"
   rm -rf "$dest"
   install -d -m 0755 "$dest"
-  tar -xzf "$work/release.tar.gz" -C "$dest" --no-same-owner --no-same-permissions
-  if [ "$(tr -d '[:space:]' <"$dest/VERSION")" != "$version" ]; then
+  if ! tar -xzf "$work/release.tar.gz" -C "$dest" --no-same-owner --no-same-permissions; then
+    log "could not unpack release $version"
+    rm -rf "$dest"
+    return 1
+  fi
+  if [ "$(tr -d '[:space:]' <"$dest/VERSION" 2>/dev/null)" != "$version" ]; then
     log "refusing $version: VERSION file says $(cat "$dest/VERSION")"
     rm -rf "$dest"
     return 1
   fi
-  bash "$dest/host/install.sh" "$dest"
+  if ! bash "$dest/host/install.sh" "$dest"; then
+    log "host/install.sh of $version failed; the running release is unchanged"
+    alert update_failed "Release $version: host install failed; still running the previous release."
+    return 1
+  fi
 
   systemctl stop memory-anywhere.service 2>/dev/null || true
-  if [ -f "$DATA/store.db" ]; then
-    runuser -u memory-anywhere -- "$dest/bin/memory-anywhere-server" migrate
+  if [ -f "$DATA/store.db" ] && ! runuser -u memory-anywhere -- "$dest/bin/memory-anywhere-server" migrate; then
+    log "migrate failed for $version; rolling back"
+  else
+    switch_current "$dest"
+    systemctl start memory-anywhere.service || true
   fi
-  switch_current "$dest"
-  systemctl start memory-anywhere.service
 
   if wait_healthy "$version"; then
     log "release $version healthy"

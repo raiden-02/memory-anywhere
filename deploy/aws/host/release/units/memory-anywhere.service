@@ -1,0 +1,30 @@
+[Unit]
+Description=memory-anywhere server
+Requires=memory-anywhere-secrets.service
+After=network-online.target memory-anywhere-secrets.service
+
+[Service]
+Type=simple
+User=memory-anywhere
+# Primary group caddy: the socket it creates is group caddy, mode 0660 (auth-and-security.md §9).
+Group=caddy
+SupplementaryGroups=memory-anywhere ma-data
+EnvironmentFile=-/run/memory-anywhere/secrets.env
+ExecStart=/opt/memory-anywhere/current/bin/memory-anywhere-server start --config /etc/memory-anywhere/server.toml
+Restart=always
+RestartSec=2
+UMask=0007
+# Plaintext memory never reaches the swap file (deployment-aws.md §4).
+MemorySwapMax=0
+MemoryMax=1400M
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/var/lib/memory-anywhere /run/memory-anywhere
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+SystemCallFilter=@system-service
+
+[Install]
+WantedBy=multi-user.target
