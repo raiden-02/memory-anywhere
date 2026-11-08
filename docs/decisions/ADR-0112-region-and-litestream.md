@@ -1,6 +1,6 @@
 # 0112 Deployment region (Q20) and Litestream on the pinned release (Q21)
 
-Status: proposed (Q20 decided; Q21 pending)
+Status: accepted (Q20 and Q21)
 Date: 2026-11-07
 Milestone: M0
 Question: Q20, Q21
@@ -40,4 +40,28 @@ Prices in deployment-aws.md §10 (us-east-1 on-demand) apply as written. If the 
 
 ## Q21 Litestream v0.5 on the spike instance
 
-Pending (M0 phase P8).
+### Context
+deployment-aws.md §5.1 configures Litestream 0.5 with a top-level `snapshot:`, one `replica:` with `sse-kms-key-id` and `sync-interval: 1s`, and `meta-path` on tmpfs; §4 `ma-maint` replaces the database during compaction. Q21 checks that this exact file works on the pinned release and that a restore after compaction is exact.
+
+### Method
+`spikes/litestream-probe` (a `node:sqlite` stand-in for the server's store with the data-model.md §1 PRAGMAs in aws mode, a purge, and `maint --compact`: checkpoint, `VACUUM INTO`, fsync, zero-overwrite of the old files, rename) shipped in the dev-signed spike release; `probe/q21.sh` run as root on the spike instance through SSM Run Command: create the store with a canary row, start `litestream.service`, scan the data directory and `/run/litestream` every 2 s, attempt an application `wal_checkpoint(TRUNCATE)`, purge the canary and time its removal, run one `ma-maint` cycle, write one more row, `litestream restore` to a fresh path and compare ordered-dump SHA-256s. Litestream 0.5.18 (pins.env), Node 24.22.2, t4g.small, AL2023 arm64, 2026-11-08.
+
+### Result
+- **Run 1 failed** ([`q21-run1.txt`](../results/evidence/ADR-0112/q21-run1.txt)): the probe created `store.db` with mode 0640 (SQLite's 0644 minus the unit's umask 007). Litestream 0.5 writes into the database (its `_litestream_seq` table) and could not; the WAL it created (0640, owner `litestream`) then blocked the server user, so purge, checkpoint and compaction failed and the restore found no backup. deployment-aws.md §4 step 7 already requires 0660; the store's creator must set it explicitly before the first WAL exists (SQLite gives `-wal` and `-shm` the database file's mode).
+- **Run 2 passed** ([`q21-run2.txt`](../results/evidence/ADR-0112/q21-run2.txt)), store created 0660:
+
+| Check | Result |
+| --- | --- |
+| Replication with KMS through the gateway endpoint | first 3 objects within 3 s |
+| File modes with Litestream running | `store.db` 660 memory-anywhere:ma-data; `-wal`, `-shm` 660 litestream:ma-data |
+| Application `wal_checkpoint(TRUNCATE)` while Litestream runs | blocked: `{busy: 1, log: 4, checkpointed: 4}` |
+| Purged canary leaves the database file | after 56 s (Litestream's own checkpoint) |
+| `ma-maint` cycle (stop, compact, clear `/run/litestream/store`, start) | 1 s; canary absent from the database and WAL; Litestream reported "database behind replica", fetched the latest L0 file and continued; new snapshot after 5 s |
+| Restore after compaction plus one more row | 1 s; ordered-dump SHA-256 equal to the live database (`e388ce1d…`) |
+| Litestream files under `/var/lib/memory-anywhere` | none (`meta-path` on tmpfs honoured) |
+| Peak `/run/litestream` staging | 18,260 bytes |
+
+The canary was not in the WAL when it was purged (it was written before Litestream started, then checkpointed on close), so the WAL clearing time is not measured by this run; the nightly `ma-maint` zeroes the WAL regardless (§4), and run 2 shows it absent after that cycle.
+
+### Decision
+**Accepted: config as written.** No key changes, no tmpfs fallback, no `litestream reset`. The 56 s database clearing time replaces "≤ Litestream's checkpoint interval" in deployment-aws.md §5.3 with a measured value at this write volume. M1 requirement (spec-issues.md #14): the server creates `store.db` with mode 0660 before opening it, and `maint --compact` sets 0660 on `store.new.db` before the rename.
