@@ -306,7 +306,11 @@ async function withLogout<T>(opts: CommonOptions, deps: Deps, body: (session: Se
   try {
     return await body(session);
   } finally {
-    if (session.used) {
+    if (session.used && opts.stage !== "prod") {
+      // Owner decision 2026-11-08 (spec-issues.md #11): non-prod stages keep the sign-in, which
+      // ends with the Identity Center session or `aws sso logout`. Prod always signs out.
+      deps.log("Keeping the deploy sign-in (non-prod stage). End it any time with: aws sso logout");
+    } else if (session.used) {
       const r = await deps.run("aws", ["sso", "logout", "--profile", opts.profile]);
       deps.log(r.code === 0 ? "Signed out of the deploy SSO session." : `Warning: aws sso logout failed: ${r.stderr}`);
     } else {

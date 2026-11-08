@@ -108,7 +108,7 @@ output = json
 **Deploy (PC)**, when Claude Code says a milestone needs one:
 1. The owner runs `aws sso login --sso-session ma-deploy --use-device-code`, opens the printed URL in a private window, checks the code and signs in as `ma-deploy` (the `--no-browser` callback flow did not complete from a private window; ADR-0113).
 2. Claude Code runs `mema deploy aws … --profile memory-anywhere-deploy --region <region>`.
-3. `mema deploy` runs `aws sso logout` when it exits (success or failure), which deletes the cached token. The owner can also run it at any time.
+3. For `prod`, `mema deploy` runs `aws sso logout` when it exits (success or failure), which deletes the cached token. For non-prod stages it keeps the sign-in, which ends with the Identity Center session (12 hours) or `aws sso logout`; it never signs out a session it did not use (spec-issues.md #11). The owner can run `aws sso logout` at any time.
 
 **Operator (CloudShell)**, for the few operator tasks:
 1. Open a private browser window, sign in to the access portal as `ma-operator`, choose the `memory-anywhere` account and `memory-anywhere-operator`, open the console, then CloudShell (top bar).
@@ -362,7 +362,7 @@ With `--dns route53 --hosted-zone-id <id>`, the stack creates the A and CAA reco
 2. `cdk deploy` with the stack parameters. Prints the diff first; `--yes` skips the prompt only for non-prod stages.
 3. Uploads the release tarball to the releases bucket and sets `<prefix>/release/desired` = `{version, sha256}`. For `prod` the tarball must be a CI-signed GitHub release (§7.4); for `spike` and `eval-*` it may be `--release-file <tarball>` signed with the dev key.
 4. With `--dns manual`, prints the records of §6.2 for the new Elastic IP and waits until both names resolve to it (DNS only). Then waits until `https://{host}/v1/health` returns the expected version (timeout 15 minutes after DNS resolves).
-5. Runs `aws sso logout` and tells the owner to open CloudShell as `ma-operator` and run `./ma-operator.sh setup-link` and `./ma-operator.sh set-llm-key` (§3.2).
+5. Runs `aws sso logout` (prod; non-prod keeps the sign-in, §3.2 C) and tells the owner to open CloudShell as `ma-operator` and run `./ma-operator.sh setup-link` and `./ma-operator.sh set-llm-key` (§3.2).
 
 ### 7.2 Updates (`mema deploy aws --update [--release <version> | --release-file <tarball>]`)
 

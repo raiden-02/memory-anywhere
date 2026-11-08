@@ -128,6 +128,11 @@ describe("mema deploy aws: refusals", () => {
   it("refuses a sign-in that is not the deploy permission set", async () => {
     const w = world({ arn: `arn:aws:sts::${ACCOUNT}:assumed-role/AWSReservedSSO_memory-anywhere-operator_0123456789abcdef/ma-operator` });
     await expect(deployAws(spikeOpts, w.deps)).rejects.toThrow(/not signed in with the memory-anywhere-deploy permission set/);
+  });
+
+  it("always signs out after prod, even when it refuses", async () => {
+    const w = world();
+    await expect(deployAws({ ...spikeOpts, stage: "prod" }, w.deps)).rejects.toThrow(/--yes is only allowed/);
     expect(lastCall(w.calls)?.args.slice(0, 2)).toEqual(["sso", "logout"]);
   });
 
@@ -166,7 +171,7 @@ describe("mema deploy aws: refusals", () => {
 });
 
 describe("mema deploy aws: the deploy", () => {
-  it("passes the host only as a CloudFormation parameter, waits for DNS, and signs out", async () => {
+  it("passes the host only as a CloudFormation parameter, waits for DNS, and keeps the non-prod sign-in", async () => {
     const w = world({ dns: [[], ["104.16.1.1"], [EIP]] });
     await deployAws(spikeOpts, w.deps);
     const deploy = w.calls.find((c) => c.command === process.execPath && c.args.includes("deploy"));
@@ -174,7 +179,8 @@ describe("mema deploy aws: the deploy", () => {
     expect(w.logs.join("\n")).toMatch(/A {4}spike\.memory\.example\.com {2}-> {2}198\.51\.100\.7 {3}DNS only/);
     expect(w.logs.join("\n")).toMatch(/proxied; set it to DNS only/);
     expect(w.logs.join("\n")).toMatch(/spike\.memory\.example\.com: resolves to 198\.51\.100\.7/);
-    expect(lastCall(w.calls)?.args.slice(0, 2)).toEqual(["sso", "logout"]);
+    expect(w.calls.some((c) => has(c.args, "sso", "logout"))).toBe(false);
+    expect(w.logs.join("\n")).toMatch(/Keeping the deploy sign-in \(non-prod stage\)/);
   });
 });
 
@@ -187,7 +193,6 @@ describe("mema destroy aws", () => {
     expect(order.indexOf("cdk destroy")).toBeGreaterThan(lastDoh);
     expect(order.filter((o) => o === "doh")).toHaveLength(3);
     expect(w.calls.filter((c) => has(c.args, "list-object-versions")).map((c) => c.args[c.args.indexOf("--bucket") + 1])).toEqual(["b-backup", "b-releases", "b-trail"]);
-    expect(lastCall(w.calls)?.args.slice(0, 2)).toEqual(["sso", "logout"]);
   });
 
   it("empties the buckets again and retries when cdk destroy fails", async () => {
