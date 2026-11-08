@@ -109,11 +109,20 @@ const cdkCalls = (calls: Call[]) => calls.filter((c) => c.command === process.ex
 const lastCall = (calls: Call[]) => calls.at(-1);
 
 describe("mema deploy aws: refusals", () => {
-  it("refuses without MA_DOMAIN and still signs out", async () => {
+  it("refuses without MA_DOMAIN before touching AWS, and has no session to sign out of", async () => {
     const w = world();
     w.deps.env = {};
     await expect(deployAws(spikeOpts, w.deps)).rejects.toThrow(/MA_DOMAIN is not set/);
-    expect(w.calls.map((c) => c.args.slice(0, 2).join(" "))).toEqual(["sso logout"]);
+    expect(w.calls).toEqual([]);
+  });
+
+  it("does not sign out when the sign-in check fails (a sign-in may be completing meanwhile)", async () => {
+    const w = world();
+    const run = w.deps.run;
+    w.deps.run = async (command, args, o) =>
+      has(args, "get-caller-identity") ? (w.calls.push({ command, args }), fail("Error loading SSO Token")) : run(command, args, o);
+    await expect(deployAws(spikeOpts, w.deps)).rejects.toThrow(/checking the SSO sign-in/);
+    expect(w.calls.some((c) => has(c.args, "sso", "logout"))).toBe(false);
   });
 
   it("refuses a sign-in that is not the deploy permission set", async () => {

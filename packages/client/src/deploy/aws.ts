@@ -87,7 +87,12 @@ function requireHost(env: Deps["env"]): string {
   return host;
 }
 
-async function begin(opts: CommonOptions, deps: Deps): Promise<Context> {
+/** Set once the SSO session has answered: from then on, exiting signs it out. */
+interface Session {
+  used: boolean;
+}
+
+async function begin(opts: CommonOptions, deps: Deps, session: Session): Promise<Context> {
   const stage = (() => {
     try {
       return parseStage(opts.stage);
@@ -103,6 +108,7 @@ async function begin(opts: CommonOptions, deps: Deps): Promise<Context> {
     Account: string;
     Arn: string;
   };
+  session.used = true;
   if (!/:assumed-role\/AWSReservedSSO_memory-anywhere-deploy_[0-9a-f]+\//.test(who.Arn)) {
     throw new DeployError(`profile ${opts.profile} is not signed in with the memory-anywhere-deploy permission set`);
   }
@@ -292,18 +298,26 @@ async function emptyBucket(ctx: Context, bucket: string, deps: Deps): Promise<nu
 
 // ---------------------------------------------------------------- commands
 
-async function withLogout<T>(opts: CommonOptions, deps: Deps, body: () => Promise<T>): Promise<T> {
+/** Runs body and then signs out of the SSO session, success or failure. It skips the
+ * sign-out only when no session ever answered: a sign-in the owner completes while a
+ * failed run is exiting must not be deleted by that run. */
+async function withLogout<T>(opts: CommonOptions, deps: Deps, body: (session: Session) => Promise<T>): Promise<T> {
+  const session: Session = { used: false };
   try {
-    return await body();
+    return await body(session);
   } finally {
-    const r = await deps.run("aws", ["sso", "logout", "--profile", opts.profile]);
-    deps.log(r.code === 0 ? "Signed out of the deploy SSO session." : `Warning: aws sso logout failed: ${r.stderr}`);
+    if (session.used) {
+      const r = await deps.run("aws", ["sso", "logout", "--profile", opts.profile]);
+      deps.log(r.code === 0 ? "Signed out of the deploy SSO session." : `Warning: aws sso logout failed: ${r.stderr}`);
+    } else {
+      deps.log("Not signed in, so there was no deploy session to sign out of.");
+    }
   }
 }
 
 export async function deployAws(opts: DeployOptions, deps: Deps): Promise<void> {
-  return withLogout(opts, deps, async () => {
-    const ctx = await begin(opts, deps);
+  return withLogout(opts, deps, async (session) => {
+    const ctx = await begin(opts, deps, session);
     const nonProd = ctx.stage !== "prod";
     if (opts.dns !== "manual") throw new DeployError("only --dns manual is implemented (Route 53 is for other self-hosters)");
     if (opts.yes && !nonProd) throw new DeployError("--yes is only allowed for non-prod stages");
@@ -344,8 +358,8 @@ export async function deployAws(opts: DeployOptions, deps: Deps): Promise<void> 
 }
 
 export async function destroyAws(opts: CommonOptions, deps: Deps): Promise<void> {
-  return withLogout(opts, deps, async () => {
-    const ctx = await begin(opts, deps);
+  return withLogout(opts, deps, async (session) => {
+    const ctx = await begin(opts, deps, session);
     const outputs = await stackOutputs(ctx);
     if (!outputs) throw new DeployError(`${stackName(ctx.stage)} does not exist in ${opts.region}`);
     const elasticIp = requireOutput(outputs, "ElasticIp");
