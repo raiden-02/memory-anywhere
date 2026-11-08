@@ -15,6 +15,12 @@
 # --stage defaults to prod. The region is CloudShell's (AWS_REGION) unless --region is given.
 set -euo pipefail
 umask 077
+# Git Bash on Windows rewrites arguments that start with / (such as SSM parameter names)
+# into Windows paths. Turn that off; it has no effect anywhere else.
+export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*'
+# aws.exe on Windows prints with the console code page and fails on characters such as
+# systemd's status bullets; ask its Python runtime for UTF-8.
+export PYTHONUTF8=1
 
 SERVER=/opt/memory-anywhere/current/bin/memory-anywhere-server
 
@@ -136,7 +142,7 @@ set_llm_key() {
   trap 'shred -u "$input" 2>/dev/null || rm -f "$input"' RETURN
   # The key goes through stdin into a 0600 file, never onto a command line.
   printf '%s' "$key" | node -e 'let v="";process.stdin.on("data",d=>v+=d).on("end",()=>require("fs").writeFileSync(process.argv[2],JSON.stringify({Name:process.argv[1],Type:"SecureString",Overwrite:true,Value:v}),{mode:0o600}))' \
-    "$prefix/llm/api_key" "$input"
+    "$prefix/llm/api_key" "$(native_path "$input")"
   key=""
   # The AWS-managed SSM key, which the instance role can use through SSM; the stack CMK is for S3 only.
   aws_ ssm put-parameter --cli-input-json "file://$(native_path "$input")" >/dev/null

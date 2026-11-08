@@ -5,6 +5,7 @@
 # and one direct Run Command that publishes a test alert (Q27) and reports unit states.
 # The setup token is redacted before anything is written to the evidence file.
 set -euo pipefail
+export MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*' PYTHONUTF8=1 # see ma-operator.sh
 out=${1:?usage: q26.sh <evidence file>}
 here=$(cd "$(dirname "$0")" && pwd)
 op="$here/../../deploy/aws/ma-operator.sh"

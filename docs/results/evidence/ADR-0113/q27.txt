@@ -1,0 +1,45 @@
+# Q27, 2026-11-08, read with the deploy profile (budgets:ViewBudget, cloudformation:Describe*).
+# The anomaly monitor is shown through CloudFormation: neither permission set may call ce:GetAnomalyMonitors.
+
+$ aws cloudformation describe-stack-resources (cost resources)
+AWS::SNS::Subscription	CREATE_COMPLETE
+AWS::CE::AnomalyMonitor	CREATE_COMPLETE
+AWS::CE::AnomalySubscription	CREATE_COMPLETE
+AWS::Budgets::Budget	CREATE_COMPLETE
+
+$ aws budgets describe-budget --budget-name memory-anywhere-spike
+{
+    "Name": "memory-anywhere-spike",
+    "Limit": {
+        "Amount": "30.0",
+        "Unit": "USD"
+    },
+    "Type": "COST",
+    "Unit": "MONTHLY",
+    "Actual": {
+        "Amount": "0.0",
+        "Unit": "USD"
+    }
+}
+
+$ aws budgets describe-notifications-for-budget --budget-name memory-anywhere-spike
+{
+    "Notifications": [
+        {
+            "NotificationType": "ACTUAL",
+            "ComparisonOperator": "GREATER_THAN",
+            "Threshold": 30.0,
+            "ThresholdType": "ABSOLUTE_VALUE",
+            "NotificationState": "OK"
+        },
+        {
+            "NotificationType": "FORECASTED",
+            "ComparisonOperator": "GREATER_THAN",
+            "Threshold": 25.0,
+            "ThresholdType": "ABSOLUTE_VALUE",
+            "NotificationState": "OK"
+        }
+    ]
+}
+
+Test notification: published from the instance via SNS during Q26 run 2 (see q26-run2.txt); owner confirmation of the email: pending.
