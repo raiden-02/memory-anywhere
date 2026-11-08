@@ -35,6 +35,12 @@ export const runProcess: Runner = (command, args, opts = {}) =>
     child.on("close", (code) => resolve({ code: code ?? 1, stdout: stdout.trim(), stderr: stderr.trim() }));
   });
 
+/** The tar to run: Windows' own bsdtar on Windows, because a GNU tar from Git Bash that comes
+ * first on PATH reads "C:\..." as a remote host and fails. */
+export function systemTar(platform: NodeJS.Platform = process.platform, env: NodeJS.ProcessEnv = process.env): string {
+  return platform === "win32" ? `${env["SystemRoot"] ?? "C:\\Windows"}\\System32\\tar.exe` : "tar";
+}
+
 /** Run and require exit 0. */
 export async function must(run: Runner, what: string, command: string, args: string[], opts?: RunOptions): Promise<string> {
   const r = await run(command, args, opts);

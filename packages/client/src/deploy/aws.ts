@@ -19,7 +19,7 @@ import {
   type Stage,
 } from "@memory-anywhere/deploy-aws/names";
 import { classifyName, resolveA, type Fetch } from "./dns.ts";
-import { DeployError, must, type Runner } from "./process.ts";
+import { DeployError, must, systemTar, type Runner } from "./process.ts";
 
 export interface Deps {
   run: Runner;
@@ -189,7 +189,7 @@ function requireOutput(outputs: Record<string, string>, key: string): string {
 async function uploadRelease(ctx: Context, opts: DeployOptions, outputs: Record<string, string>, deps: Deps): Promise<string> {
   const file = opts.releaseFile;
   if (!file) throw new DeployError("internal: no release file");
-  const version = (await must(deps.run, "reading VERSION from the release", "tar", ["-xOf", file, "VERSION"])).trim();
+  const version = (await must(deps.run, "reading VERSION from the release", systemTar(), ["-xOf", file, "VERSION"])).trim();
   if (!VERSION.test(version)) throw new DeployError(`the release's VERSION file is not a version: ${JSON.stringify(version)}`);
   const sha256 = await deps.sha256File(file);
   await must(deps.run, "signing the release with the dev key", "minisign", ["-S", "-s", deps.devKeyFile, "-m", file, "-x", `${file}.minisig`, "-t", `memory-anywhere ${version} sha256 ${sha256}`]);

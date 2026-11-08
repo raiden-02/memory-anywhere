@@ -231,3 +231,11 @@ describe("DNS classification", () => {
     expect(classifyName([EIP, "203.0.113.9"], EIP).kind).toBe("wrong");
   });
 });
+
+describe("systemTar", () => {
+  it("uses Windows' own tar.exe on Windows and tar elsewhere", async () => {
+    const { systemTar } = await import("../src/deploy/process.ts");
+    expect(systemTar("win32", { SystemRoot: "C:\\Windows" })).toBe("C:\\Windows\\System32\\tar.exe");
+    expect(systemTar("linux", {})).toBe("tar");
+  });
+});
