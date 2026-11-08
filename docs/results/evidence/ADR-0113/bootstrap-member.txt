@@ -1,0 +1,53 @@
+# bootstrap-member.sh, run by the owner in member-account CloudShell as ma-operator
+# (temporary AdministratorAccess), 2026-11-08. Verbatim terminal output, scrubbed.
+
+~ $ git clone https://github.com/raiden-02/memory-anywhere && cd memory-anywhere && git checkout 7deba3b033e5ebfbca9623726b77e310726e0bac && git rev-parse HEAD
+Cloning into 'memory-anywhere'...
+[... git clone and detached-HEAD advice omitted ...]
+HEAD is now at 7deba3b bootstrap-member: mark the JMESPath backtick literal for shellcheck
+7deba3b033e5ebfbca9623726b77e310726e0bac
+memory-anywhere $ bash deploy/aws/bootstrap-member.sh <aws-account-id> us-east-1
+memory-anywhere member-account bootstrap
+  account : <aws-account-id>
+  region  : us-east-1
+  caller  : arn:aws:sts::<aws-account-id>:assumed-role/AWSReservedSSO_AdministratorAccess_89ab3001346d608e/ma-operator
+  commit  : 7deba3b033e5ebfbca9623726b77e310726e0bac
+It will create or update 3 IAM policies, run 'cdk bootstrap' (aws-cdk@2.1148.0),
+set the account IMDS default to IMDSv2 with hop limit 1, and enable account-level
+S3 Block Public Access.
+Type yes to continue: yes
+created policy memory-anywhere-boundary
+created policy memory-anywhere-cfn-exec
+created policy memory-anywhere-cfn-exec-services
+ ⏳  Bootstrapping environment aws://<aws-account-id>/us-east-1...
+(node:324) Warning: NodeVersionSupportWarning: The AWS SDK for JavaScript (v3)
+versions published after the first week of January 2027
+will require node >=22. You are running node v20.20.2.
+[... warning link omitted ...]
+Trusted accounts for deployment: (none)
+Trusted accounts for lookup: (none)
+Execution policies: arn:aws:iam::<aws-account-id>:policy/memory-anywhere-cfn-exec,arn:aws:iam::<aws-account-id>:policy/memory-anywhere-cfn-exec-services
+CDKToolkit: creating CloudFormation changeset...
+✅  Environment aws://<aws-account-id>/us-east-1 bootstrapped.
+[... npm upgrade notice omitted ...]
+
+== verification ==
+CDK execution policies:
+arn:aws:iam::<aws-account-id>:policy/memory-anywhere-cfn-exec,arn:aws:iam::<aws-account-id>:policy/memory-anywhere-cfn-exec-services
+IMDS account defaults:
+{
+    "HttpTokens": "required",
+    "HttpPutResponseHopLimit": 1,
+    "ManagedBy": "account"
+}
+Account Block Public Access:
+{
+    "PublicAccessBlockConfiguration": {
+        "BlockPublicAcls": true,
+        "IgnorePublicAcls": true,
+        "BlockPublicPolicy": true,
+        "RestrictPublicBuckets": true
+    }
+}
+Done. Next: bootstrap-identity.sh in the management account (deployment-aws.md §3.3 step 3).
+memory-anywhere $

@@ -1,0 +1,24 @@
+# bootstrap-identity.sh, run by the owner in management-account CloudShell, 2026-11-08.
+# Verbatim terminal output, scrubbed. The first command is a deliberate negative:
+# bootstrap-member.sh refuses to run outside the member account.
+
+memory-anywhere $ bash deploy/aws/bootstrap-member.sh <aws-account-id> us-east-1
+error: signed in to account <aws-account-id>, not the member account <aws-account-id>
+memory-anywhere $ cd ~/memory-anywhere && git rev-parse HEAD && bash deploy/aws/bootstrap-identity.sh <aws-account-id> us-east-1
+7deba3b033e5ebfbca9623726b77e310726e0bac
+memory-anywhere Identity Center bootstrap
+  Identity Center region : us-east-1
+  instance ARN           : arn:aws:sso:::instance/ssoins-72239ca44e5e9d33
+  instance owner account : <aws-account-id> (management account: <aws-account-id>)
+  member account         : <aws-account-id> (memory-anywhere)
+  commit                 : 7deba3b033e5ebfbca9623726b77e310726e0bac
+Type yes to continue: yes
+created permission set memory-anywhere-deploy
+created permission set memory-anywhere-operator
+removed AdministratorAccess from user d4c8d4a8-70f1-70aa-02d1-e297120c99e7 on <aws-account-id>
+
+== assignments on account <aws-account-id> ==
+  memory-anywhere-operator -> USER ma-operator
+  memory-anywhere-deploy -> USER ma-deploy
+OK: exactly the two expected assignments.
+memory-anywhere $
