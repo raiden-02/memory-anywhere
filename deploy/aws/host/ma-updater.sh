@@ -43,8 +43,7 @@ health_ok() { # health_ok <version>: /v1/health over the socket reports that ver
 }
 
 wait_healthy() { # wait_healthy <version>: up to 60 s
-  local i
-  for i in $(seq 1 30); do
+  for _ in $(seq 1 30); do
     if health_ok "$1"; then return 0; fi
     sleep 2
   done

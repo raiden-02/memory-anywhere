@@ -637,6 +637,9 @@ export class MemoryAnywhereStack extends Stack {
     new CfnOutput(this, "AlertsTopicOut", { key: "AlertsTopic", value: topic.topicArn });
     new CfnOutput(this, "ParameterPrefixOut", { key: "ParameterPrefix", value: prefix });
     new CfnOutput(this, "StageOut", { key: "Stage", value: stage });
+    // The origin of the stage's admin and setup pages (spike serves everything on one name, §9).
+    const adminHost = stage === "prod" ? `admin.${host.valueAsString}` : stage === "spike" ? `spike.${host.valueAsString}` : `admin.eval.${host.valueAsString}`;
+    new CfnOutput(this, "AdminOriginOut", { key: "AdminOrigin", value: `https://${adminHost}` });
   }
 }
 

@@ -7,9 +7,10 @@ set -euo pipefail
 exec >>/var/log/ma-firstboot.log 2>&1
 echo "== ma-firstboot $(date -u +%FT%TZ)"
 
+# Both files are written by user data (lib/user-data.ts); pins.env is host/pins.env.
 # shellcheck source=/dev/null
 . /etc/memory-anywhere/stack.env
-# shellcheck source=pins.env
+# shellcheck source=/dev/null
 . /etc/memory-anywhere/pins.env
 
 # 1 GiB swap file (§2). The server and Litestream units set MemorySwapMax=0.
