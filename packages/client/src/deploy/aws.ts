@@ -157,11 +157,15 @@ async function pinnedAmi(ctx: Context, region: string, deps: Deps): Promise<stri
 
 // ---------------------------------------------------------------- stack helpers
 
+/** The stack's outputs, or undefined if it does not exist. A stack left in
+ * REVIEW_IN_PROGRESS by a first changeset that failed has no resources, so it
+ * counts as not existing (cdk deploy creates it again). */
 async function stackOutputs(ctx: Context): Promise<Record<string, string> | undefined> {
   const r = await ctx.aws("reading the stack", ["cloudformation", "describe-stacks", "--stack-name", stackName(ctx.stage)]).catch(() => "");
   if (!r) return undefined;
-  const outputs = (JSON.parse(r) as { Stacks: { Outputs?: { OutputKey: string; OutputValue: string }[] }[] }).Stacks[0]?.Outputs ?? [];
-  return Object.fromEntries(outputs.map((o) => [o.OutputKey, o.OutputValue]));
+  const stack = (JSON.parse(r) as { Stacks: { StackStatus?: string; Outputs?: { OutputKey: string; OutputValue: string }[] }[] }).Stacks[0];
+  if (!stack || stack.StackStatus === "REVIEW_IN_PROGRESS") return undefined;
+  return Object.fromEntries((stack.Outputs ?? []).map((o) => [o.OutputKey, o.OutputValue]));
 }
 
 function cdkArgs(opts: CommonOptions, stage: Stage): string[] {

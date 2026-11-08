@@ -132,6 +132,17 @@ describe("mema deploy aws: refusals", () => {
     await expect(deployAws({ ...spikeOpts, stage: "prod", yes: false, releaseFile: "r.tgz" }, world().deps)).rejects.toThrow(/only allowed for spike and eval/);
   });
 
+  it("treats a stack left in REVIEW_IN_PROGRESS by a failed first changeset as absent", async () => {
+    const w = world();
+    const run = w.deps.run;
+    w.deps.run = async (command, args, o) =>
+      has(args, "describe-stacks", "MemoryAnywhere-spike") && !w.calls.some((c) => c.command === process.execPath && c.args.includes("deploy"))
+        ? (w.calls.push({ command, args }), ok(JSON.stringify({ Stacks: [{ StackStatus: "REVIEW_IN_PROGRESS" }] })))
+        : run(command, args, o);
+    await deployAws(spikeOpts, w.deps);
+    expect(cdkCalls(w.calls)).toEqual(["diff", "deploy"]);
+  });
+
   it("refuses to create a stack that exists, or update one that does not", async () => {
     await expect(deployAws(spikeOpts, world({ stackExists: true }).deps)).rejects.toThrow(/already exists: use --update/);
     await expect(deployAws({ ...spikeOpts, update: true }, world().deps)).rejects.toThrow(/does not exist yet/);

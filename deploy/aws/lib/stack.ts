@@ -9,6 +9,7 @@ import {
   Aws,
   CfnOutput,
   CfnParameter,
+  DefaultStackSynthesizer,
   Duration,
   RemovalPolicy,
   Stack,
@@ -58,7 +59,14 @@ const SSO_DEPLOY_ROLE = "AWSReservedSSO_memory-anywhere-deploy_*";
 
 export class MemoryAnywhereStack extends Stack {
   constructor(scope: Construct, props: MemoryAnywhereStackProps) {
-    super(scope, stackName(props.stage), { ...props, analyticsReporting: false });
+    super(scope, stackName(props.stage), {
+      ...props,
+      analyticsReporting: false,
+      // No BootstrapVersion SSM parameter in the template: CloudFormation would resolve it
+      // with the cfn-exec role, which may read only stage parameters. The CDK CLI still
+      // checks the bootstrap version itself, through the CDK deploy role.
+      synthesizer: new DefaultStackSynthesizer({ generateBootstrapVersionRule: false }),
+    });
     const { stage } = props;
     const isProd = stage === "prod";
     const removal = isProd ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY;

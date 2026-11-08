@@ -77,9 +77,12 @@ describe("spike stack", () => {
     expect(spikeJson).not.toMatch(/Custom::|AWS::Lambda::/);
   });
 
-  it("takes the hostname and alert email only as parameters", () => {
+  it("takes the hostname and alert email only as parameters, and no SSM-resolved ones", () => {
     spike.hasParameter("Host", { Type: "String" });
     spike.hasParameter("AlertEmail", { Type: "String" });
+    // CloudFormation resolves SSM parameter types with the cfn-exec role, which may not read them.
+    expect(Object.keys(spike.toJSON()["Parameters"] as object).sort()).toEqual(["AlertEmail", "Host"]);
+    expect(spikeJson).not.toContain("AWS::SSM::Parameter::Value");
     expect(spikeJson).not.toMatch(/example\.com|@gmail|memory\.[a-z]+\.(com|org|net)/);
   });
 
