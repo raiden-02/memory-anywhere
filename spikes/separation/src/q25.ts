@@ -165,7 +165,11 @@ async function main(): Promise<void> {
     );
     for (const stage of ["prod", values.stage]) {
       const bucket = `memory-anywhere-backup-${acct}-${REGION}-${stage}`;
-      await check(`${stage} backup bucket cannot be read`, ["s3", "cp", `s3://${bucket}/litestream/q25-probe`, "-", ...asDeploy], "deniedOrMissing");
+      await check(
+        `${stage} backup bucket cannot be read`,
+        ["s3", "cp", `s3://${bucket}/litestream/q25-probe`, "-", ...asDeploy],
+        stage === "prod" ? "deniedOrMissingUntilM2" : "deniedOrMissing",
+      );
     }
 
     // 3. Nothing else in or beyond the account.
@@ -194,7 +198,7 @@ async function main(): Promise<void> {
       const env: NodeJS.ProcessEnv = { ...process.env, AWS_ACCESS_KEY_ID: c.AccessKeyId, AWS_SECRET_ACCESS_KEY: c.SecretAccessKey, AWS_SESSION_TOKEN: c.SessionToken };
       delete env["AWS_PROFILE"];
       const r = ["--region", REGION];
-      await check("lookup role: prod setup token", ["ssm", "get-parameter", "--name", "/memory-anywhere/setup-token", "--with-decryption", ...r], "deniedOrMissing", "cdk-lookup-role", env);
+      await check("lookup role: prod setup token", ["ssm", "get-parameter", "--name", "/memory-anywhere/setup-token", "--with-decryption", ...r], "deniedOrMissingUntilM2", "cdk-lookup-role", env);
       await check(
         `lookup role: ${values.stage} setup token`,
         ["ssm", "get-parameter", "--name", `${stagePrefix}/setup-token`, "--with-decryption", ...r],
@@ -204,7 +208,13 @@ async function main(): Promise<void> {
       );
       for (const stage of ["prod", values.stage]) {
         const bucket = `memory-anywhere-backup-${acct}-${REGION}-${stage}`;
-        await check(`lookup role: ${stage} backup bucket`, ["s3", "cp", `s3://${bucket}/litestream/q25-probe`, "-", ...r], "deniedOrMissing", "cdk-lookup-role", env);
+        await check(
+          `lookup role: ${stage} backup bucket`,
+          ["s3", "cp", `s3://${bucket}/litestream/q25-probe`, "-", ...r],
+          stage === "prod" ? "deniedOrMissingUntilM2" : "deniedOrMissing",
+          "cdk-lookup-role",
+          env,
+        );
       }
       await check("lookup role: ssm start-session", ["ssm", "start-session", "--target", instance, ...r], "denied", "cdk-lookup-role", env);
     }
@@ -223,7 +233,7 @@ async function main(): Promise<void> {
     });
   }
 
-  const summary = { pass: 0, fail: 0, pending: 0 };
+  const summary = { pass: 0, fail: 0, pending: 0, deferred: 0 };
   for (const r of records) summary[r.verdict]++;
   const report = { question: "Q25", label, stage: values.stage, ranAt: new Date().toISOString(), summary, checks: records };
   const here = dirname(fileURLToPath(import.meta.url));
@@ -232,7 +242,7 @@ async function main(): Promise<void> {
   writeFileSync(outFile, scrub(JSON.stringify(report, null, 2) + "\n", { domain }).text);
 
   for (const r of records) console.log(`${r.verdict.toUpperCase().padEnd(7)} [${r.as}] ${r.name} (${r.outcome})`);
-  console.log(`\n${summary.pass} pass, ${summary.fail} fail, ${summary.pending} pending -> ${outFile}`);
+  console.log(`\n${summary.pass} pass, ${summary.fail} fail, ${summary.pending} pending, ${summary.deferred} deferred to M2 -> ${outFile}`);
   process.exitCode = summary.fail > 0 ? 1 : 0;
 }
 

@@ -3,10 +3,12 @@
 export type Outcome = "allowed" | "denied" | "missing" | "error";
 
 /** What a check must observe to pass. `deniedOrMissing` is for resources the
- * spike stack has not created yet: "missing" then counts as pending, not pass. */
-export type Expectation = "allowed" | "denied" | "deniedOrMissing";
+ * spike stack has not created yet: "missing" then counts as pending, not pass.
+ * `deniedOrMissingUntilM2` is for prod resources, which exist only from M2:
+ * "missing" is then deferred, and M2 re-runs the check against the prod stack. */
+export type Expectation = "allowed" | "denied" | "deniedOrMissing" | "deniedOrMissingUntilM2";
 
-export type Verdict = "pass" | "fail" | "pending";
+export type Verdict = "pass" | "fail" | "pending" | "deferred";
 
 const DENIED = [
   /AccessDenied/i,
@@ -30,5 +32,6 @@ export function judge(expect: Expectation, outcome: Outcome): Verdict {
   if (expect === "allowed") return outcome === "allowed" ? "pass" : "fail";
   if (outcome === "denied") return "pass";
   if (expect === "deniedOrMissing" && outcome === "missing") return "pending";
+  if (expect === "deniedOrMissingUntilM2" && outcome === "missing") return "deferred";
   return "fail";
 }

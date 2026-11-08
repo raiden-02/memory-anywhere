@@ -45,6 +45,12 @@ describe("judge", () => {
     expect(judge("deniedOrMissing", "allowed")).toBe("fail");
   });
 
+  it("defers a prod resource that does not exist yet, but still fails if it is readable", () => {
+    expect(judge("deniedOrMissingUntilM2", "missing")).toBe("deferred");
+    expect(judge("deniedOrMissingUntilM2", "denied")).toBe("pass");
+    expect(judge("deniedOrMissingUntilM2", "allowed")).toBe("fail");
+  });
+
   it("requires success when success is expected", () => {
     expect(judge("allowed", "allowed")).toBe("pass");
     expect(judge("allowed", "denied")).toBe("fail");
