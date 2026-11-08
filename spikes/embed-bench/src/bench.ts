@@ -25,11 +25,16 @@ const BATCH = 32;
 
 let corpusDevice: "cpu" | "dml" = process.platform === "win32" ? "dml" : "cpu";
 
+/** Where document vectors are computed and cached (dml: DirectML GPU on Windows). */
+export function setCorpusDevice(d: "cpu" | "dml"): void {
+  corpusDevice = d;
+}
+
 function cacheFile(c: Candidate, qid: string): string {
   return join(CACHE, corpusDevice, c.id, `${qid}.f32`);
 }
 
-async function docVectors(e: Embedder, item: RetrievalItem): Promise<Float32Array[]> {
+export async function docVectors(e: Embedder, item: RetrievalItem): Promise<Float32Array[]> {
   const file = cacheFile(e.candidate, item.qid);
   const dims = e.candidate.dims;
   if (existsSync(file)) {
@@ -54,7 +59,7 @@ async function docVectors(e: Embedder, item: RetrievalItem): Promise<Float32Arra
   return out;
 }
 
-function topByDot(q: Float32Array, docs: Doc[], vecs: Float32Array[], k = 50): string[] {
+export function topByDot(q: Float32Array, docs: Doc[], vecs: Float32Array[], k = 50): string[] {
   return docs
     .map((d, i) => ({ id: d.id, s: dot(q, vecs[i] ?? new Float32Array()) }))
     .sort((a, b) => b.s - a.s)
@@ -140,7 +145,19 @@ async function main(): Promise<void> {
     );
   }
   console.log(`bm25 nDCG@10 ${bm25Result.metrics.ndcg10.mean.toFixed(3)}`);
-  if (values.out) writeFileSync(values.out, JSON.stringify(report, (k, v: unknown) => (k === "per_query" ? undefined : v), 2) + "\n");
+
+  // ADR-0005 tie rule: paired bootstrap of every pair of hybrids (a "tie" = the CI includes 0).
+  const hybrids = report.models.map((m) => m["hybrid"] as SuiteRResult);
+  const pairwise: ReturnType<typeof compare>[] = [];
+  for (const a of hybrids) {
+    for (const b of hybrids) {
+      if (a === b) continue;
+      const cmp = { ...compare(a, b, "ndcg10"), system: a.system };
+      pairwise.push(cmp);
+      console.log(`${a.system} vs ${b.system}: ${cmp.diff >= 0 ? "+" : ""}${cmp.diff.toFixed(3)} [${cmp.ci95.map((x) => x.toFixed(3)).join(", ")}]`);
+    }
+  }
+  if (values.out) writeFileSync(values.out, JSON.stringify({ ...report, pairwise_hybrid_ndcg10: pairwise }, null, 2) + "\n");
 }
 
 if (import.meta.main) await main();

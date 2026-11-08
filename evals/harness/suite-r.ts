@@ -9,8 +9,8 @@ import { bootstrapMean, pairedBootstrap, wilson, type Interval } from "./stats.t
 
 export interface RankingSystem {
   name: string;
-  /** Ranked document ids, best first. */
-  rank(docs: Doc[], query: string): Promise<string[]> | string[];
+  /** Ranked document ids, best first. `item` identifies the question (for cached embeddings). */
+  rank(docs: Doc[], query: string, item?: RetrievalItem): Promise<string[]> | string[];
 }
 
 export interface PerQuery {
@@ -42,7 +42,7 @@ export async function runSuiteR(system: RankingSystem, items: RetrievalItem[], m
   const started = Date.now();
   const per: PerQuery[] = [];
   for (const it of items) {
-    const ranked = await system.rank(it.docs, it.query);
+    const ranked = await system.rank(it.docs, it.query, it);
     const rel = new Set(it.relevant);
     per.push({ qid: it.qid, category: it.category, ndcg10: ndcgAt(ranked, rel), r5: recallAt(ranked, rel), returned: ranked.length });
   }
