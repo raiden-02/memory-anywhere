@@ -1,0 +1,21 @@
+# Q26 run 1, by the owner in member-account CloudShell as ma-operator (permission set
+# memory-anywhere-operator), 2026-11-08, release 0.0.1-m0.1. Verbatim output.
+# Result: CloudShell opens; ma-operator.sh from the reviewed commit runs; SSM Run Command
+# reaches the spike instance and executes. The stub then failed (its store path came from the
+# working directory, /usr/bin under Run Command); fixed in 0.0.1-m0.2.
+
+~ $ [ -d memory-anywhere ] || git clone -q https://github.com/raiden-02/memory-anywhere; cd memory-anywhere && git fetch -q origin && git checkout -q fd0ef2c544e3e2286da83d9f29642e82d8a965e4 && git rev-parse HEAD
+fd0ef2c544e3e2286da83d9f29642e82d8a965e4
+memory-anywhere $ bash deploy/aws/ma-operator.sh setup-link --stage spike
+Setup token missing or expiring; issuing a fresh 30-minute token on i-079de48c6feb2ef1b ...
+node:fs:1410
+  const result = binding.mkdir(
+                         ^
+
+Error: EACCES: permission denied, mkdir '/usr/bin/.stub-data'
+    at mkdirSync (node:fs:1410:26)
+    at new JsonlStore (file:///opt/memory-anywhere/releases/0.0.1-m0.1/app/src/store.ts:20:5)
+    at main (file:///opt/memory-anywhere/releases/0.0.1-m0.1/app/src/main.ts:62:17)
+    [... node stack frames omitted ...]
+failed to run commands: exit status 1
+ma-operator: setup-token --renew failed on i-079de48c6feb2ef1b (Failed)

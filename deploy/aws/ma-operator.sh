@@ -1,7 +1,8 @@
 #!/bin/bash
 # Operator tasks for memory-anywhere (deployment-aws.md §3.2 C, §5.5, §5.6).
 # Run in AWS CloudShell of the memory-anywhere account, signed in as ma-operator
-# (permission set memory-anywhere-operator). Never on the PC.
+# (permission set memory-anywhere-operator). Not on the PC, except during M0 under the
+# owner's temporary decision (spec-issues.md #13: AWS_PROFILE=memory-anywhere-operator).
 #
 #   ./ma-operator.sh setup-link    [--stage <stage>]
 #   ./ma-operator.sh set-llm-key   [--stage <stage>]
@@ -47,9 +48,19 @@ case "$cmd" in
   *) die "unknown command $cmd (see --help)" ;;
 esac
 command -v aws >/dev/null || die "the AWS CLI is required (CloudShell has it)"
-command -v python3 >/dev/null || die "python3 is required (CloudShell has it)"
+command -v node >/dev/null || die "Node.js is required (CloudShell has it)"
 
-aws_() { aws --region "$region" "$@"; }
+# On Windows (Git Bash) aws.exe ends lines with \r; strip it so captured values are clean.
+# pipefail (set above) keeps aws's exit status.
+aws_() { aws --region "$region" "$@" | tr -d '\r'; }
+
+# json_field <field>: one top-level field of the JSON on stdin ("" if absent).
+json_field() {
+  node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const v=JSON.parse(s)[process.argv[1]];process.stdout.write(v==null?"":String(v))})' "$1"
+}
+
+# native_path <path>: a path the AWS CLI can open (Windows form under Git Bash).
+native_path() { if command -v cygpath >/dev/null; then cygpath -w "$1"; else printf '%s' "$1"; fi; }
 
 # ---------- the stage's stack ----------
 output() { # output <key>
@@ -68,7 +79,7 @@ load_stack() {
 # ---------- SSM Run Command ----------
 run_on_instance() { # run_on_instance <description> <shell script>; prints its stdout, fails on non-zero
   local what=$1 script=$2 params id status
-  params=$(python3 -c 'import json,sys; print(json.dumps({"commands": [sys.argv[1]]}))' "$script")
+  params=$(node -e 'process.stdout.write(JSON.stringify({commands:[process.argv[1]]}))' "$script")
   id=$(aws_ ssm send-command --instance-ids "$instance" --document-name AWS-RunShellScript \
     --comment "ma-operator $cmd: $what" --parameters "$params" --query Command.CommandId --output text)
   aws_ ssm wait command-executed --command-id "$id" --instance-id "$instance" 2>/dev/null || true
@@ -90,8 +101,8 @@ setup_link() {
   local value token="" expires="" now
   value=$(get_secure "$prefix/setup-token")
   if [ -n "$value" ]; then
-    token=$(printf '%s' "$value" | python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])')
-    expires=$(printf '%s' "$value" | python3 -c 'import json,sys; print(json.load(sys.stdin)["expires_at"])')
+    token=$(printf '%s' "$value" | json_field token)
+    expires=$(printf '%s' "$value" | json_field expires_at)
   fi
   now=$(date -u +%s)
   if [ -z "$token" ] || [ "$(date -u -d "$expires" +%s 2>/dev/null || echo 0)" -le "$((now + 60))" ]; then
@@ -104,8 +115,8 @@ setup_link() {
       sleep 2
     done
     if [ -z "$value" ] || [ "$value" = "$before" ]; then die "the instance did not publish a new setup token within 60 s"; fi
-    token=$(printf '%s' "$value" | python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])')
-    expires=$(printf '%s' "$value" | python3 -c 'import json,sys; print(json.load(sys.stdin)["expires_at"])')
+    token=$(printf '%s' "$value" | json_field token)
+    expires=$(printf '%s' "$value" | json_field expires_at)
   fi
   echo "Open this link in a private window (valid until $expires):"
   echo "$admin_origin/setup#$token"
@@ -120,11 +131,12 @@ set_llm_key() {
   [ -n "$key" ] || die "empty key"
   input=$(mktemp)
   trap 'shred -u "$input" 2>/dev/null || rm -f "$input"' RETURN
-  python3 -c 'import json,sys; json.dump({"Name": sys.argv[1], "Type": "SecureString", "Overwrite": True, "Value": sys.stdin.read()}, open(sys.argv[2], "w"))' \
-    "$prefix/llm/api_key" "$input" <<<"$key"
+  # The key goes through stdin into a 0600 file, never onto a command line.
+  printf '%s' "$key" | node -e 'let v="";process.stdin.on("data",d=>v+=d).on("end",()=>require("fs").writeFileSync(process.argv[2],JSON.stringify({Name:process.argv[1],Type:"SecureString",Overwrite:true,Value:v}),{mode:0o600}))' \
+    "$prefix/llm/api_key" "$input"
   key=""
   # The AWS-managed SSM key, which the instance role can use through SSM; the stack CMK is for S3 only.
-  aws_ ssm put-parameter --cli-input-json "file://$input" >/dev/null
+  aws_ ssm put-parameter --cli-input-json "file://$(native_path "$input")" >/dev/null
   echo "Stored $prefix/llm/api_key. Restarting the secrets and server units ..."
   run_on_instance "restart secrets and server" "systemctl restart memory-anywhere-secrets.service memory-anywhere.service && systemctl is-active memory-anywhere.service"
 }
@@ -173,10 +185,9 @@ acme_account() {
 }
 
 new_ulid() { # 26-character Crockford base32: 48-bit ms time + 80 random bits
-  python3 -c 'import os,time
-a="0123456789ABCDEFGHJKMNPQRSTVWXYZ"
-n=(int(time.time()*1000)<<80)|int.from_bytes(os.urandom(10),"big")
-print("".join(a[(n>>(5*i))&31] for i in reversed(range(26))))'
+  node -e 'const a="0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+let n=(BigInt(Date.now())<<80n)|BigInt("0x"+require("crypto").randomBytes(10).toString("hex"));
+let s="";for(let i=0;i<26;i++){s=a[Number(n&31n)]+s;n>>=5n}process.stdout.write(s)'
 }
 
 import_export() {
@@ -218,20 +229,19 @@ EOF
   echo "This permanently deletes every object version in $backup_bucket and then the bucket."
   read -r -p "Type the stage name ($stage) to continue: " answer
   [ "$answer" = "$stage" ] || die "not confirmed"
-  python3 - "$backup_bucket" "$region" <<'EOF'
-import json, subprocess, sys
-bucket, region = sys.argv[1], sys.argv[2]
-def aws(*args):
-    return subprocess.run(["aws", "--region", region, *args], check=True, capture_output=True, text=True).stdout
-deleted = 0
-while True:
-    page = json.loads(aws("s3api", "list-object-versions", "--bucket", bucket, "--max-items", "1000", "--output", "json") or "{}")
-    objects = [{"Key": v["Key"], "VersionId": v["VersionId"]} for v in page.get("Versions", []) + page.get("DeleteMarkers", [])]
-    if not objects:
-        break
-    aws("s3api", "delete-objects", "--bucket", bucket, "--delete", json.dumps({"Objects": objects, "Quiet": True}))
-    deleted += len(objects)
-print(f"deleted {deleted} object versions")
+  node - "$backup_bucket" "$region" <<'EOF'
+const { execFileSync } = require("child_process");
+const [bucket, region] = process.argv.slice(2);
+const aws = (...args) => execFileSync("aws", ["--region", region, ...args], { encoding: "utf8" });
+let deleted = 0;
+for (;;) {
+  const page = JSON.parse(aws("s3api", "list-object-versions", "--bucket", bucket, "--max-items", "1000", "--output", "json") || "{}");
+  const objects = [...(page.Versions ?? []), ...(page.DeleteMarkers ?? [])].map((v) => ({ Key: v.Key, VersionId: v.VersionId }));
+  if (objects.length === 0) break;
+  aws("s3api", "delete-objects", "--bucket", bucket, "--delete", JSON.stringify({ Objects: objects, Quiet: true }));
+  deleted += objects.length;
+}
+console.log(`deleted ${deleted} object versions`);
 EOF
   aws_ s3api delete-bucket --bucket "$backup_bucket"
   echo "Deleted $backup_bucket."
