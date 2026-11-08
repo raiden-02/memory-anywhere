@@ -1,6 +1,6 @@
 # 0113 Identity Center separation (Q25), operator path (Q26), budgets in the member account (Q27)
 
-Status: proposed (bootstrap done; Q25 pre-stack pass, resource checks pending the spike stack; Q26 and Q27 pending)
+Status: proposed (bootstrap done; Q26 and Q27 pass; Q25 pre-stack pass, final run at M0 close-out after the temporary operator assignment is removed)
 Date: 2026-11-08
 Milestone: M0
 Question: Q25, Q26, Q27
@@ -54,11 +54,25 @@ Pending. The pre-stack result matches the design. The run labelled `with-stack` 
 
 ## Q26 Operator path
 
-Pending: needs the spike stack and `deploy/aws/ma-operator.sh`.
+### Method
+- Run 1, 2026-11-08, by the owner in member-account CloudShell as `ma-operator`, `ma-operator.sh` from the reviewed commit `fd0ef2c`: `setup-link --stage spike`. Evidence: [`q26-cloudshell-run1.txt`](../results/evidence/ADR-0113/q26-cloudshell-run1.txt).
+- Run 2, same day, under the owner's M0-only exception (spec-issues.md #13: the operator permission set is temporarily also assigned to `ma-deploy` and used from the PC through the `memory-anywhere-operator` profile): `spikes/separation/q26.sh` runs `setup-link` twice, `set-llm-key` with a dummy value, and one direct `AWS-RunShellScript` Run Command. Evidence: [`q26-run2.txt`](../results/evidence/ADR-0113/q26-run2.txt).
+
+### Result
+- Run 1: CloudShell opened as `ma-operator`; the script ran; SSM Run Command reached the instance and executed. The stub then failed (it opened its store under the working directory, `/usr/bin` under Run Command); fixed in release `0.0.1-m0.2`.
+- Run 2: every step succeeds. `setup-link` renewed the token on the instance through Run Command, the outbox helper stored it as a SecureString within a second, and a second call reused the unexpired token. `set-llm-key` stored the key and restarted the secrets and server units (`active`, `secrets.env` present). The direct Run Command published an SNS message and reported `caddy`, `memory-anywhere`, `memory-anywhere-outbox.path` and `memory-anywhere-secrets` active.
+- Running the script on Windows needed three portability fixes in `ma-operator.sh` (MSYS path conversion of `/…` parameter names, native temp paths, UTF-8 CLI output); none changes its behaviour in CloudShell.
+
+### Decision
+**Accepted: design as written.** The operator path works from CloudShell (run 1) with the same script. The PC use in run 2 is the owner's temporary M0 exception, removed before M0 closes (Q25 final run).
 
 ## Q27 Budgets and Cost Anomaly Detection in the member account
 
-Pending: needs the spike stack.
+### Result
+Evidence: [`q27.txt`](../results/evidence/ADR-0113/q27.txt). In the member account, with no management-account Cost Explorer change, CloudFormation created and AWS now runs: the budget `memory-anywhere-spike` (monthly, $30 limit, alerts at $25 forecast and $30 actual, both to SNS; it reports actual spend) and the Cost Anomaly Detection monitor with its subscription (`IMMEDIATE` to SNS, $5 absolute impact; spec-issues.md #7). The first test alert was published but not delivered, because the email subscription was still unconfirmed (SNS does not deliver to a pending subscription). After the owner's confirmation, the second was delivered to the owner's inbox.
+
+### Decision
+**Accepted: design as written**, with the anomaly subscription at `IMMEDIATE` frequency (SNS requires it). Operational note: confirming the SNS email is an owner step right after the first deploy, and no alert reaches the owner until it is done; `mema deploy` reminds the owner, and the M2 deploy checklist must include it.
 
 ## Consequences
 - Re-running the bootstrap later (for example after a cfn-exec or boundary fix) needs a temporary `AdministratorAccess` assignment again; permission-set fixes only need `bootstrap-identity.sh`.

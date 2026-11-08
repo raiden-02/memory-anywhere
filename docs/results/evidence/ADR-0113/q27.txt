@@ -42,4 +42,8 @@ $ aws budgets describe-notifications-for-budget --budget-name memory-anywhere-sp
     ]
 }
 
-Test notification: published from the instance via SNS during Q26 run 2 (see q26-run2.txt); owner confirmation of the email: pending.
+Test notification 1 (Q26 run 2, 19:34 UTC): published (MessageId 02290214-...), not delivered: the email subscription was still pending confirmation.
+2026-11-08 20:20 UTC: the owner's subscription confirmation email (received 12:13 local, at stack creation) was
+confirmed (with the owner's approval, Claude Code clicked its link; the page reported "Subscription confirmed!").
+Test notification 2 (20:21 UTC): published from the instance through SSM Run Command (MessageId 2eb80b62-...),
+delivered to the owner's inbox as "memory-anywhere spike: Q27 test" at 20:21 UTC.
