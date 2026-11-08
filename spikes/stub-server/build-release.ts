@@ -14,6 +14,7 @@ import { join, relative } from "node:path";
 const HERE = import.meta.dirname;
 const ROOT = join(HERE, "..", "..");
 const HOST_RELEASE = join(ROOT, "deploy", "aws", "host", "release");
+const PROBE_DIR = join(ROOT, "spikes", "litestream-probe");
 const VERSION = /^[0-9A-Za-z][0-9A-Za-z.+_-]{0,63}$/;
 
 /** On Windows, pnpm is either pnpm.exe (spawned directly) or a .cmd shim (needs cmd.exe). */
@@ -91,13 +92,17 @@ function main(): void {
       ].join("\n"),
     );
     cpSync(HOST_RELEASE, join(stage, "host"), { recursive: true });
+    // M0 only: the Litestream probe stands in for the server store in Q21 (deployment-aws.md §9).
+    mkdirSync(join(stage, "probe"));
+    cpSync(join(PROBE_DIR, "src", "probe.ts"), join(stage, "probe", "probe.ts"));
+    cpSync(join(PROBE_DIR, "q21.sh"), join(stage, "probe", "q21.sh"));
 
     const outDir = join(HERE, "out");
     mkdirSync(outDir, { recursive: true });
     const tarball = join(outDir, `memory-anywhere-server-${version}-linux-arm64.tar.gz`);
     if (existsSync(tarball)) rmSync(tarball);
     // bsdtar (Windows) and GNU tar both accept this; entries are relative to the release root.
-    run("tar", ["-czf", tarball, "-C", stage, "VERSION", "bin", "app", "host"]);
+    run("tar", ["-czf", tarball, "-C", stage, "VERSION", "bin", "app", "host", "probe"]);
     console.log(`built ${tarball}`);
   } finally {
     rmSync(stage, { recursive: true, force: true });
