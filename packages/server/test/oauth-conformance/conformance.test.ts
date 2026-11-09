@@ -234,6 +234,13 @@ describe("clients", () => {
     expect(back.searchParams.get("code")).toBeTruthy();
   });
 
+  test("8f. a request with the openid scope (as Grok sends) completes after one consent", async () => {
+    const s = await staticWindow("chatgpt");
+    const back = await authorize(issuer, owner, { client_id: s.id, redirect_uri: s.redirect, scope: "openid memory.read memory.write offline_access", ...S256() });
+    expect(`${back.origin}${back.pathname}`).toBe(s.redirect);
+    expect(back.searchParams.get("code")).toBeTruthy();
+  });
+
   test("8c. CIMD: the vendor's document works inside its window only, with its exact redirect", async () => {
     documents.set(CHATGPT_CIMD, cimdDoc(CHATGPT_CIMD, [CHATGPT_REDIRECT]));
     await expectErrorPage(await owner.fetch(authUrl(issuer, { client_id: CHATGPT_CIMD, redirect_uri: CHATGPT_REDIRECT, ...S256() }))); // no window

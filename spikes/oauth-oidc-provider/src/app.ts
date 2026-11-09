@@ -391,6 +391,8 @@ export function createApp(opts: AppOptions) {
     const bound = pairing.cookieMatches(w.id, cookies(req)["__Host-ma_pair"]);
 
     if (action === "") {
+      // What each vendor asks for (M0 config/vendors.json): no codes, no states.
+      console.log(JSON.stringify({ event: "consent_shown", vendor: w.vendor, client_id: clientId, scope: details.params["scope"], resource: details.params["resource"], prompt: details.prompt.name, reasons: details.prompt.reasons }));
       const client = await provider.Client.find(clientId);
       const name = client?.metadata()["client_name"];
       return html(
@@ -428,7 +430,11 @@ export function createApp(opts: AppOptions) {
       if (!w.client_id) pairing.attachClient(w.id, clientId);
       db.prepare("INSERT OR IGNORE INTO client_policy (client_id, vendor, refresh_rotation, created_at) VALUES (?, ?, 'rotate', ?)").run(clientId, w.vendor, now());
       const grant = new provider.Grant({ accountId: "owner", clientId });
-      grant.addOIDCScope("offline_access");
+      // Grant the OpenID scopes the request asked for (Grok asks for `openid`, M0 Q11), or the
+      // library opens a second consent for the same authorization. Only `openid` and
+      // `offline_access` exist here; resource scopes stay fixed per client below.
+      const missingOIDC = (details.prompt.details as { missingOIDCScope?: string[] }).missingOIDCScope ?? [];
+      grant.addOIDCScope(["offline_access", ...missingOIDC.filter((s) => s === "openid")].join(" "));
       grant.addResourceScope(mcpUrl, clientId === PC_CLIENT_ID ? "memory.read memory.write memory.capture" : "memory.read memory.write");
       const grantId = await grant.save();
       pairing.close(w.id, "granted");
