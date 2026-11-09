@@ -57,3 +57,11 @@ Schema changes tried while Flash failed (none changed Flash; kept, because Gemin
   memory_recall.") got "**Gemini can't save this info.**"
 - **Accepted:** "Use my Memory Anywhere app to save lasting facts and preferences I tell you about myself, and check it before answering
   anything that depends on who I am." (toast "Info saved"). It did not make Gemini call memory_save unprompted (run 9).
+
+## Refresh with rotation on (Q10)
+The access token from the 16:26 connection expired at about 17:26. The next Gemini tool use refreshed:
+```
+18:27:52Z POST /oauth/token 200 ua=OpenAuth        <- refresh_token grant, rotation on (client_policy rotate)
+18:27:53Z POST /mcp 200 initialize … 18:28:35Z POST /mcp 200 tools/call:memory_recall
+```
+Gemini accepts a rotated refresh token.

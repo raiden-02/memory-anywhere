@@ -102,3 +102,33 @@ Here are the truncation canaries from the memory_status tool description, verbat
 Truncation canary A: DESC-A41K.
 Truncation canary B: DESC-B93M.
 Truncation canary C: DESC-C27P.
+
+# Q05/Q06 canary prompt, Grok (grok.com, model Auto), 2026-11-09 (UTC)
+Same prompt, three fresh chats. Result: instruction canary 0/3; truncation canaries A, B and C 3/3.
+
+## Run 1 (verbatim)
+policy P1 (also reported as policy_version: "P1" by the memory_status tool).
+It appears as a trailing marker in the tool descriptions for the memory-anywhere connector (e.g., in memory_status, memory_recall, and memory_save) to verify that the full policy/instructions were received.
+Truncation canaries in the memory_status tool description (verbatim):
+Truncation canary A: DESC-A41K.
+Truncation canary B: DESC-B93M.
+Truncation canary C: DESC-C27P.
+These sit inside repeated filler sentences in the description returned by search_connected_tools for memory_anywhere___memory_status.
+
+## Run 2 (verbatim)
+Truncation canaries from the memory_anywhere___memory_status tool description (verbatim):
+Truncation canary A: DESC-A41K.
+Truncation canary B: DESC-B93M.
+Truncation canary C: DESC-C27P.
+These appear (embedded among repeated filler sentences about measuring client truncation of tool descriptions) in the description returned by search_connected_tools for that tool.
+Memory-anywhere instruction canary:
+The tool descriptions for the memory-anywhere tools (memory_status, memory_recall, and memory_save) consistently reference the policy as policy P1 (also “Pass policy_version "P1".” in the save tool). Calling memory_status returned "policy_version":"P1". No other distinct labeled “instruction canary” string appears in the connected-tool descriptions or results.
+
+## Run 3 (verbatim)
+Memory-anywhere instruction canary:
+Not found as a distinct named “instruction canary” in the memory-anywhere tools or related results. The memory_status tool description references “policy P1” (and the tool returns policy_version: "P1"), but there is no separate instruction canary string identified beyond the truncation markers below.
+Truncation canaries in the memory_status tool description (verbatim):
+Truncation canary A: DESC-A41K
+Truncation canary B: DESC-B93M
+Truncation canary C: DESC-C27P
+These appear inline in the long filler text of the memory_anywhere___memory_status tool description (the text used to measure where clients truncate tool descriptions).
