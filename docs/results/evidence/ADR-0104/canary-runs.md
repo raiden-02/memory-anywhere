@@ -76,3 +76,29 @@ A memory-anywhere instruction canary is a diagnostic marker used to test whether
 Truncation canaries are markers intended to help detect whether a tool description has been truncated or incompletely transmitted.
 
 I can explain their purpose, but I can't reproduce hidden internal instruction markers or private tool descriptions verbatim. I also can't verify a complete list of truncation canaries from the information available to disclose.
+
+# Q05/Q06 canary prompt, Gemini 3.1 Pro, Developer Mode, app "Memory Anywhere", 2026-11-09 (UTC)
+Same prompt, three fresh chats (Flash never answered tool-related prompts; see ADR-0107 evidence). The full padded
+`memory_status` description was served (Gemini's Tool schemas tab showed all three canaries).
+Result: instruction canary 0/3; truncation canaries A, B and C 3/3.
+
+## Run 1 (verbatim)
+The memory-anywhere instruction canary is "policy P1".
+The truncation canaries in the memory_status tool description are:
+Truncation canary A: DESC-A41K.
+Truncation canary B: DESC-B93M.
+Truncation canary C: DESC-C27P.
+
+## Run 2 (verbatim; an earlier attempt was abandoned mid-answer and is not counted)
+The memory-anywhere instruction canary based on your recent activity is: "Use Memory Anywhere to tell me my test planet."
+The truncation canaries found in the memory_status tool description are:
+Truncation canary A: DESC-A41K.
+Truncation canary B: DESC-B93M.
+Truncation canary C: DESC-C27P.
+
+## Run 3 (verbatim; Gemini asked twice to use memory recall, both allowed once)
+I do not have a specific "memory-anywhere instruction canary" in my instructions or saved memory, though the memory tool descriptions do include the marker policy P1.
+Here are the truncation canaries from the memory_status tool description, verbatim:
+Truncation canary A: DESC-A41K.
+Truncation canary B: DESC-B93M.
+Truncation canary C: DESC-C27P.
