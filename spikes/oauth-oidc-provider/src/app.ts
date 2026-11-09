@@ -202,6 +202,17 @@ export function createApp(opts: AppOptions) {
     if (path === "/reg") {
       const raw = await providerBody(ctx).catch(() => undefined);
       const meta = raw === undefined ? undefined : parseBody(ctx.req, raw);
+      // What each vendor registers with (M0 config/vendors.json): field names and the non-secret values.
+      console.log(JSON.stringify({
+        event: "dcr_request",
+        window: w ? `${w.vendor}/${w.method}` : null,
+        fields: meta ? Object.keys(meta) : null,
+        redirect_uris: meta?.["redirect_uris"],
+        application_type: meta?.["application_type"],
+        token_endpoint_auth_method: meta?.["token_endpoint_auth_method"],
+        grant_types: meta?.["grant_types"],
+        client_name: meta?.["client_name"],
+      }));
       if (!dcrAllowed(w, meta)) return rejectJson(ctx);
       await next();
       if (ctx.status >= 400) rejectJson(ctx);
