@@ -1,0 +1,38 @@
+{
+  "tool": "cursor",
+  "version": "3.29.9",
+  "event": "sessionStart",
+  "source": "Cursor Hooks output channel (the recorder could not run there; see ADR-0109)",
+  "command": "node \"<home>\\AppData\\Local\\memory-anywhere\\spike\\hook recorder\\record.mjs\" cursor sessionStart",
+  "exit_code": 1,
+  "payload": {
+    "conversation_id": "0a37e07f-3d2d-4fcc-8c7a-ec34399b853a",
+    "generation_id": "",
+    "model": "grok-4.7-high-fast",
+    "model_id": "grok-4.7",
+    "model_params": [
+      {
+        "id": "context",
+        "value": "256k"
+      },
+      {
+        "id": "reasoning_effort",
+        "value": "high"
+      },
+      {
+        "id": "fast",
+        "value": "true"
+      }
+    ],
+    "is_background_agent": false,
+    "composer_mode": "agent",
+    "session_id": "0a37e07f-3d2d-4fcc-8c7a-ec34399b853a",
+    "hook_event_name": "sessionStart",
+    "cursor_version": "3.29.9",
+    "workspace_roots": [
+      "<tmp>/cursor q12 ws"
+    ],
+    "user_email": "<owner email>",
+    "transcript_path": null
+  }
+}

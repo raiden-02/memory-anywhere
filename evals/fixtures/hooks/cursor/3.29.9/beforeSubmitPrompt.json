@@ -1,0 +1,39 @@
+{
+  "tool": "cursor",
+  "version": "3.29.9",
+  "event": "beforeSubmitPrompt",
+  "source": "Cursor Hooks output channel (the recorder could not run there; see ADR-0109)",
+  "command": "node \"<home>\\AppData\\Local\\memory-anywhere\\spike\\hook recorder\\record.mjs\" cursor beforeSubmitPrompt",
+  "exit_code": 1,
+  "payload": {
+    "conversation_id": "33d41df9-3784-4ff4-bd1c-197974f829a9",
+    "generation_id": "f3a06cdb-ee98-453a-981c-d17edea2cfba",
+    "model": "grok-4.7-high-fast",
+    "model_id": "grok-4.7",
+    "model_params": [
+      {
+        "id": "context",
+        "value": "256k"
+      },
+      {
+        "id": "reasoning_effort",
+        "value": "high"
+      },
+      {
+        "id": "fast",
+        "value": "true"
+      }
+    ],
+    "composer_mode": "agent",
+    "prompt": "If you were given a memory-anywhere hook canary, reply with it exactly; otherwise reply NONE.",
+    "attachments": [],
+    "session_id": "33d41df9-3784-4ff4-bd1c-197974f829a9",
+    "hook_event_name": "beforeSubmitPrompt",
+    "cursor_version": "3.29.9",
+    "workspace_roots": [
+      "<tmp>/cursor q12 ws"
+    ],
+    "user_email": "<owner email>",
+    "transcript_path": null
+  }
+}

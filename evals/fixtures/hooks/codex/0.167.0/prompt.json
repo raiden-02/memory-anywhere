@@ -1,0 +1,21 @@
+{
+  "tool": "codex",
+  "version": "0.167.0",
+  "event": "prompt",
+  "argv": [
+    "<home>\\AppData\\Local\\memory-anywhere\\spike\\hook recorder\\record.mjs",
+    "codex",
+    "prompt"
+  ],
+  "cwd": "<tmp>\\codex q12 ws",
+  "payload": {
+    "session_id": "01a1c1be-3fbd-7271-ad5b-7799d2133c26",
+    "turn_id": "01a1c1be-41f3-75f0-a492-a521bc9a6e16",
+    "transcript_path": "<home>\\.codex\\sessions\\2026\\11\\09\\rollout-2026-11-09T13-17-13-01a1c1be-3fbd-7271-ad5b-7799d2133c26.jsonl",
+    "cwd": "<tmp>\\codex q12 ws",
+    "hook_event_name": "UserPromptSubmit",
+    "model": "gpt-6.1-sol",
+    "permission_mode": "bypassPermissions",
+    "prompt": "If you were given a memory-anywhere hook canary, reply with it exactly; otherwise reply NONE."
+  }
+}
