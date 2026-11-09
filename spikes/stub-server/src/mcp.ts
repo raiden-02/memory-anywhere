@@ -1,7 +1,6 @@
 // The stub's MCP server: three tools with the real descriptions (m0-spike.md §1).
 
 import { fromJsonSchema, McpServer } from "@modelcontextprotocol/server";
-import { z } from "zod";
 import type { JsonlStore } from "./store.ts";
 import { DESC_MEMORY_RECALL, DESC_MEMORY_SAVE, DESC_MEMORY_STATUS, SERVER_INSTRUCTIONS } from "./texts.ts";
 
@@ -17,6 +16,23 @@ function toolMeta(): { _meta?: Record<string, unknown> } {
   return process.env["MA_STUB_ALWAYS_LOAD_META"] === "1" ? { _meta: { "anthropic/alwaysLoad": true } } : {};
 }
 
+/**
+ * Tool input schemas are plain JSON Schema, not generated from zod: Gemini accepts only a subset
+ * (no `$schema` key, no empty `properties` object), and every other client reads the same thing
+ * (M0 Q10, ADR-0107).
+ */
+interface SaveArgs {
+  text: string;
+  user_words: string;
+  explicit_request?: boolean;
+  why_durable?: string;
+  kind?: string;
+  expires_on?: string;
+  supersedes?: string;
+  change?: "correction" | "update";
+  policy_version?: string;
+}
+
 export function createStubServer(info: StubInfo): McpServer {
   const server = new McpServer(
     { name: "memory-anywhere", version: info.version },
@@ -25,7 +41,6 @@ export function createStubServer(info: StubInfo): McpServer {
 
   server.registerTool(
     "memory_status",
-    // No parameters: `{"type":"object"}` without an empty `properties`, which Gemini rejects (M0 Q10).
     { description: DESC_MEMORY_STATUS, inputSchema: fromJsonSchema<Record<string, never>>({ type: "object" }), ...toolMeta() },
     async () => ({
       content: [{ type: "text", text: JSON.stringify({ store: "m0-stub", healthy: true, policy_version: "P1", version: info.version, memories: info.store.all().length }) }],
@@ -37,16 +52,20 @@ export function createStubServer(info: StubInfo): McpServer {
     {
       ...toolMeta(),
       description: DESC_MEMORY_SAVE,
-      inputSchema: z.object({
-        text: z.string().min(1).max(400),
-        user_words: z.string().min(1),
-        explicit_request: z.boolean().optional(),
-        why_durable: z.string().optional(),
-        kind: z.string().optional(),
-        expires_on: z.string().optional(),
-        supersedes: z.string().optional(),
-        change: z.enum(["correction", "update"]).optional(),
-        policy_version: z.string().optional(),
+      inputSchema: fromJsonSchema<SaveArgs>({
+        type: "object",
+        properties: {
+          text: { type: "string", minLength: 1, maxLength: 400 },
+          user_words: { type: "string", minLength: 1 },
+          explicit_request: { type: "boolean" },
+          why_durable: { type: "string" },
+          kind: { type: "string" },
+          expires_on: { type: "string" },
+          supersedes: { type: "string" },
+          change: { type: "string", enum: ["correction", "update"] },
+          policy_version: { type: "string" },
+        },
+        required: ["text", "user_words"],
       }),
     },
     async (args) => {
@@ -57,7 +76,11 @@ export function createStubServer(info: StubInfo): McpServer {
 
   server.registerTool(
     "memory_recall",
-    { description: DESC_MEMORY_RECALL, inputSchema: z.object({ query: z.string().min(1) }), ...toolMeta() },
+    {
+      description: DESC_MEMORY_RECALL,
+      inputSchema: fromJsonSchema<{ query: string }>({ type: "object", properties: { query: { type: "string", minLength: 1 } }, required: ["query"] }),
+      ...toolMeta(),
+    },
     async ({ query }) => {
       const hits = info.store.recall(query);
       const text = hits.length ? hits.map((m) => `[${m.id}] ${m.text}`).join("\n") : "No memories match.";
