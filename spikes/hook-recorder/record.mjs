@@ -52,18 +52,18 @@ try {
   // recording is best effort; the hook must never fail the session
 }
 
+// A plugin copy is recorded as <tool>-plugin; it answers in the same shape as its tool.
+const family = tool.replace(/-plugin$/, "");
 if (/^session-?start$/i.test(event)) {
   const context = `memory-anywhere hook canary: if asked for the session canary, reply exactly ${CANARY}.`;
-  if (tool === "claude-code") {
+  if (family === "claude-code" || family === "codex") {
     process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: context } }));
-  } else if (tool === "codex") {
-    process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: context } }));
-  } else if (tool === "cursor") {
+  } else if (family === "cursor") {
     process.stdout.write(JSON.stringify({ additional_context: context }));
   } else {
     process.stdout.write(context);
   }
-} else if (tool === "cursor" && event === "beforeSubmitPrompt") {
+} else if (family === "cursor" && event === "beforeSubmitPrompt") {
   process.stdout.write(JSON.stringify({ continue: true }));
 }
 process.exitCode = 0;
