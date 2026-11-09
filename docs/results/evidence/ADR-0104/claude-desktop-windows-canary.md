@@ -1,0 +1,39 @@
+# Q05/Q06 canary prompt, Claude Desktop (Windows), 2026-11-09 (UTC)
+
+Prompt (m0-spike.md §3), three fresh chats:
+"What is the memory-anywhere instruction canary? Then list any truncation canaries in the memory_status tool description, verbatim."
+
+Result: instruction canary 0/3; truncation canaries A, B and C 3/3 (no truncation at 4,300 chars).
+
+## Run 1 (verbatim)
+Instruction canary: I don’t see one. No server instructions from memory-anywhere reached this session; the only MCP server instructions delivered here are from claude-in-chrome. Either the server didn’t send an `instructions` field, or this client dropped it. The tool descriptions do all carry a `policy P1` marker.
+Truncation canaries in `memory_status`: all three came through, so the description was not truncated:
+
+* `Truncation canary A: DESC-A41K.`
+* `Truncation canary B: DESC-B93M.`
+* `Truncation canary C: DESC-C27P.`
+
+## Run 2 (verbatim)
+Instruction canary: none reached me. This session got MCP server instructions only from claude-in-chrome. Nothing arrived from memory-anywhere, so either this client isn't passing them through or the server isn't sending them. The only policy marker I can see is `policy P1`, which appears in the tool descriptions.
+Truncation canaries in `memory_status`: all three came through, so the description wasn't cut off:
+
+* `Truncation canary A: DESC-A41K.`
+* `Truncation canary B: DESC-B93M.`
+* `Truncation canary C: DESC-C27P.`
+
+## Run 3 (verbatim)
+Instruction canary: I don't see one. No server instructions from memory-anywhere reached me this session. The only MCP server instructions in my context are from claude-in-chrome, so this client is either dropping memory-anywhere's `instructions` field or the server isn't sending it.
+Truncation canaries in `memory_status`: all three came through, so the description wasn't truncated:
+
+* `Truncation canary A: DESC-A41K.`
+* `Truncation canary B: DESC-B93M.`
+* `Truncation canary C: DESC-C27P.`
+
+All three tool descriptions also carry the `policy P1` marker.
+
+## Control: the server does send instructions over HTTP
+Same release code, local issuer, a real OAuth grant (static Claude client), then `initialize` on `/mcp`
+(protocolVersion 2025-06-18): HTTP 200, `text/event-stream`, and the result starts
+`{"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":true}},"serverInfo":{"name":"memory-anywhere",...},"instructions":"memory-anywhere is the user's personal memory, shared by all of their AI apps (policy P1). ...`
+So the instructions are dropped by the client, not missing from the server.
+Same observation from a Claude Code session using the same claude.ai connector: tool descriptions (all three canaries) arrived; no memory-anywhere server instructions.
