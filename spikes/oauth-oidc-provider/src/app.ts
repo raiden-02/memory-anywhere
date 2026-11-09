@@ -379,6 +379,12 @@ export function createApp(opts: AppOptions) {
       .map((c) => (c.method === "tools/call" && typeof c.params?.name === "string" ? `tools/call:${c.params.name}` : String(c.method)))
       .join(",");
     (res as ServerResponse & { maClient?: string | undefined }).maClient = token.clientId;
+    // What each client declares (M0 Q09: elicitation capability; protocol revision; client name).
+    for (const c of calls) {
+      if (c.method !== "initialize" && c.method !== "server/discover") continue;
+      const params = (c as { params?: Record<string, unknown> }).params ?? {};
+      console.log(JSON.stringify({ event: "client_hello", method: c.method, client_id: token.clientId, clientInfo: params["clientInfo"], protocolVersion: params["protocolVersion"], capabilities: params["capabilities"] }));
+    }
     return void mcpNode(req as unknown as NodeIncomingMessageLike, res, body);
   }
 
