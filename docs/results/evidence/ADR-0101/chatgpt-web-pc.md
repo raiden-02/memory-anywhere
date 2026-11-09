@@ -43,3 +43,8 @@ ChatGPT's own memory still works with the custom MCP server installed. Run 1 sho
 
 ## Plugin page
 The plugin page shows "Review status DEVELOPMENT". The plugin's default permission is "Allow low-risk tools".
+
+## Q24 Secure MCP Tunnel (informational), 2026-11-09
+ChatGPT Plus (personal plan): Plugins → Add → "Add custom MCP server" → Connection offers **Server URL** or **Tunnel**; with Tunnel
+the field takes a tunnel id (placeholder `tunnel_…`), with the same OAuth options. Available on a personal plan; no tunnel was
+created (it needs OpenAI's tunnel client running beside the local server). Documented as an option for local-mode users.
