@@ -284,6 +284,21 @@ describe("clients", () => {
     expect((await callMcp(issuer, String(first.data["access_token"]))).status).toBe(401);
   });
 
+  test("11c. without offline_access (as ChatGPT asks) the grant outlives the owner's consent session", async () => {
+    const s = await staticWindow("chatgpt");
+    const p = pkce();
+    const back = await authorize(issuer, owner, { client_id: s.id, redirect_uri: s.redirect, code_challenge: p.challenge, code_challenge_method: "S256", scope: "memory.read memory.write" });
+    const auth = { id: s.id, secret: s.secret };
+    const t = await token(issuer, { grant_type: "authorization_code", code: back.searchParams.get("code") ?? "", redirect_uri: s.redirect, code_verifier: p.verifier }, auth);
+    expect(t.data["refresh_token"]).toBeTruthy();
+    // The owner's browser session at the authorization server ends (10 minutes in production).
+    issuer.db.prepare("DELETE FROM oidc_store WHERE model = 'Session'").run();
+    expect((await callMcp(issuer, String(t.data["access_token"]))).status).toBe(200);
+    const r = await token(issuer, { grant_type: "refresh_token", refresh_token: String(t.data["refresh_token"]) }, auth);
+    expect(r.status).toBe(200);
+    expect((await callMcp(issuer, String(r.data["access_token"]))).status).toBe(200);
+  });
+
   test("11b. a `fixed` client policy keeps the refresh token (Gemini static, §5.3)", async () => {
     const g = await staticGrant("claude", { rotation: "fixed" });
     const auth = { id: g.id, secret: g.secret };

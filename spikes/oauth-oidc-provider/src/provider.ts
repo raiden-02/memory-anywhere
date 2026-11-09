@@ -101,7 +101,11 @@ export function createProvider(opts: ProviderOptions): Provider {
       const clientId = ctx.oidc.entities.Client?.clientId ?? "";
       return (rotation.get(clientId) as { refresh_rotation: string } | undefined)?.refresh_rotation !== "fixed";
     },
+    // Vendors ask for `memory.read memory.write` without `offline_access` (ChatGPT does), and the
+    // library would then bind their tokens to the owner's 10-minute consent session: the grant
+    // would die with it. A grant lives by its own lifetimes (§5.2), never by that browser session.
     issueRefreshToken: async (_ctx, client) => client.grantTypeAllowed("refresh_token"),
+    expiresWithSession: async () => false,
     // Consent is never remembered (§4.6): only the grant the owner approved in this very
     // interaction is used, never one from an earlier authorization.
     loadExistingGrant: async (ctx) => {
