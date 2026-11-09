@@ -2,7 +2,7 @@
 
 import { fromJsonSchema, McpServer } from "@modelcontextprotocol/server";
 import type { JsonlStore } from "./store.ts";
-import { DESC_MEMORY_RECALL, DESC_MEMORY_SAVE, DESC_MEMORY_STATUS, SERVER_INSTRUCTIONS } from "./texts.ts";
+import { DESC_MEMORY_RECALL, DESC_MEMORY_SAVE, DESC_MEMORY_STATUS, POLICY_DESC_MEMORY_STATUS, SERVER_INSTRUCTIONS } from "./texts.ts";
 
 export interface StubInfo {
   version: string;
@@ -12,6 +12,11 @@ export interface StubInfo {
 }
 
 /** M0 Q07: MA_STUB_ALWAYS_LOAD_META=1 marks every tool with _meta["anthropic/alwaysLoad"]. */
+/** M0 Q10: MA_STUB_SHORT_STATUS=1 serves memory_status without the canary padding (A/B for clients that reject long descriptions). */
+function statusDescription(): string {
+  return process.env["MA_STUB_SHORT_STATUS"] === "1" ? POLICY_DESC_MEMORY_STATUS : DESC_MEMORY_STATUS;
+}
+
 function toolMeta(): { _meta?: Record<string, unknown> } {
   return process.env["MA_STUB_ALWAYS_LOAD_META"] === "1" ? { _meta: { "anthropic/alwaysLoad": true } } : {};
 }
@@ -41,7 +46,7 @@ export function createStubServer(info: StubInfo): McpServer {
 
   server.registerTool(
     "memory_status",
-    { description: DESC_MEMORY_STATUS, inputSchema: fromJsonSchema<Record<string, never>>({ type: "object" }), ...toolMeta() },
+    { description: statusDescription(), inputSchema: fromJsonSchema<Record<string, never>>({ type: "object" }), ...toolMeta() },
     async () => ({
       content: [{ type: "text", text: JSON.stringify({ store: "m0-stub", healthy: true, policy_version: "P1", version: info.version, memories: info.store.all().length }) }],
     }),
