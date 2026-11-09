@@ -1,6 +1,6 @@
 // The stub's MCP server: three tools with the real descriptions (m0-spike.md §1).
 
-import { McpServer } from "@modelcontextprotocol/server";
+import { fromJsonSchema, McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
 import type { JsonlStore } from "./store.ts";
 import { DESC_MEMORY_RECALL, DESC_MEMORY_SAVE, DESC_MEMORY_STATUS, SERVER_INSTRUCTIONS } from "./texts.ts";
@@ -25,7 +25,8 @@ export function createStubServer(info: StubInfo): McpServer {
 
   server.registerTool(
     "memory_status",
-    { description: DESC_MEMORY_STATUS, inputSchema: z.object({}), ...toolMeta() },
+    // No parameters: `{"type":"object"}` without an empty `properties`, which Gemini rejects (M0 Q10).
+    { description: DESC_MEMORY_STATUS, inputSchema: fromJsonSchema<Record<string, never>>({ type: "object" }), ...toolMeta() },
     async () => ({
       content: [{ type: "text", text: JSON.stringify({ store: "m0-stub", healthy: true, policy_version: "P1", version: info.version, memories: info.store.all().length }) }],
     }),
