@@ -10,7 +10,7 @@ import { issueSetupToken, openDb } from "./db.ts";
 
 if (import.meta.main) {
   process.exitCode = await main(process.argv.slice(2), {
-    createServer: (o) => createApp({ publicOrigin: o.publicOrigin, dataDir: o.dataDir, version: o.version }).server,
+    createServer: (o) => createApp({ publicOrigin: o.publicOrigin, dataDir: o.dataDir, version: o.version, accessLog: true }).server,
     issueSetupToken: ({ dataDir, ttlMs }) => {
       const db = openDb(join(dataDir, "oauth.db"));
       try {

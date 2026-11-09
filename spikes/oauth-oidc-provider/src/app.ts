@@ -34,6 +34,8 @@ export interface AppOptions {
   /** Tests only: replaces the network for CIMD fetches. */
   fetch?: Configuration["fetch"];
   now?: () => number;
+  /** One JSON line per request on stdout (the instance's journal); off in tests. */
+  accessLog?: boolean;
 }
 
 const DCR_FIELDS = new Set(["redirect_uris", "client_name", "grant_types", "response_types", "token_endpoint_auth_method", "application_type"]);
@@ -494,6 +496,23 @@ export function createApp(opts: AppOptions) {
   }
 
   const server: Server = createServer((req, res) => {
+    if (opts.accessLog) {
+      // One line per request, written when the connection closes (also for streams that never end
+      // normally). No query strings: they carry codes and states.
+      const started = performance.now();
+      res.once("close", () => {
+        console.log(JSON.stringify({
+          event: "http",
+          method: req.method,
+          path: req.url?.split("?")[0],
+          status: res.statusCode,
+          completed: res.writableFinished,
+          ms: Math.round(performance.now() - started),
+          type: res.getHeader("content-type"),
+          ua: req.headers["user-agent"]?.slice(0, 120),
+        }));
+      });
+    }
     handle(req, res).catch((err: unknown) => {
       console.error(JSON.stringify({ event: "request_failed", path: req.url?.split("?")[0], error: err instanceof Error ? err.message : String(err) }));
       if (!res.headersSent) json(res, 500, { error: "server_error" });
