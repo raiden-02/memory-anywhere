@@ -77,14 +77,14 @@ describe("HTTP routes", () => {
     }
   });
 
-  it("answers MCP tools/list with the three tools and their descriptions (2025 stateless)", async () => {
+  it("answers MCP tools/list with the three memory tools, their descriptions, and the M0 Q09 test tool (2025 stateless)", async () => {
     const headers = { "content-type": "application/json", accept: "application/json, text/event-stream", "mcp-protocol-version": "2025-06-18" };
     const res = await fetch(`${base}/mcp`, { method: "POST", headers, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} }) });
     expect(res.status).toBe(200);
     const text = await res.text();
     const payload = text.startsWith("{") ? text : (/^data: (.*)$/m.exec(text)?.[1] ?? "{}");
     const tools = (JSON.parse(payload) as { result: { tools: { name: string; description: string }[] } }).result.tools;
-    expect(tools.map((t) => t.name).sort()).toEqual(["memory_recall", "memory_save", "memory_status"]);
+    expect(tools.map((t) => t.name).sort()).toEqual(["m0_confirm_test", "memory_recall", "memory_save", "memory_status"]);
     expect(tools.find((t) => t.name === "memory_status")?.description).toBe(DESC_MEMORY_STATUS);
   });
 
