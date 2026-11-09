@@ -63,9 +63,13 @@ export function createProvider(opts: ProviderOptions): Provider {
         enabled: true,
         defaultResource: () => mcpUrl,
         useGrantedResource: () => true,
-        getResourceServerInfo: (_ctx, resource) => {
+        // The scopes a client can hold (§5.4): memory.capture only for the PC client. Anything
+        // else a client asks for is dropped, not refused: Grok requests every advertised scope
+        // (M0 Q11), and an ungrantable scope would otherwise reopen consent forever.
+        getResourceServerInfo: (_ctx, resource, client) => {
           if (resource !== mcpUrl) throw new errors.InvalidTarget();
-          return { scope: "memory.read memory.write memory.capture", audience: mcpUrl, accessTokenTTL: 3600, accessTokenFormat: "opaque" };
+          const scope = client.clientId === PC_CLIENT_ID ? "memory.read memory.write memory.capture" : "memory.read memory.write";
+          return { scope, audience: mcpUrl, accessTokenTTL: 3600, accessTokenFormat: "opaque" };
         },
       },
       clientIdMetadataDocument: {

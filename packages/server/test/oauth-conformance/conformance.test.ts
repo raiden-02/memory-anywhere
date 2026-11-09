@@ -241,6 +241,15 @@ describe("clients", () => {
     expect(back.searchParams.get("code")).toBeTruthy();
   });
 
+  test("8g. a vendor asking for every advertised scope (as Grok does) gets read and write after one consent", async () => {
+    const s = await staticWindow("chatgpt");
+    const p = pkce();
+    const back = await authorize(issuer, owner, { client_id: s.id, redirect_uri: s.redirect, scope: "memory.read memory.write memory.capture", code_challenge: p.challenge, code_challenge_method: "S256" });
+    expect(`${back.origin}${back.pathname}`).toBe(s.redirect);
+    const t = await token(issuer, { grant_type: "authorization_code", code: back.searchParams.get("code") ?? "", redirect_uri: s.redirect, code_verifier: p.verifier }, { id: s.id, secret: s.secret });
+    expect(t.data["scope"]).toBe("memory.read memory.write");
+  });
+
   test("8c. CIMD: the vendor's document works inside its window only, with its exact redirect", async () => {
     documents.set(CHATGPT_CIMD, cimdDoc(CHATGPT_CIMD, [CHATGPT_REDIRECT]));
     await expectErrorPage(await owner.fetch(authUrl(issuer, { client_id: CHATGPT_CIMD, redirect_uri: CHATGPT_REDIRECT, ...S256() }))); // no window
