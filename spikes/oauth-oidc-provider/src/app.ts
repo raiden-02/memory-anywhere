@@ -352,7 +352,21 @@ export function createApp(opts: AppOptions) {
     const policy = token ? (db.prepare("SELECT revoked_at FROM client_policy WHERE client_id = ?").get(token.clientId ?? "") as { revoked_at: number | null } | undefined) : undefined;
     if (!token || token.isExpired || !audOk || !grant || !policy || policy.revoked_at !== null) return json(res, 401, { error: "invalid_token" }, challenge);
     delete req.headers.cookie; // /mcp ignores cookies (§5.5)
-    return void mcpNode(req as unknown as NodeIncomingMessageLike, res);
+    if (req.method !== "POST") return void mcpNode(req as unknown as NodeIncomingMessageLike, res);
+    // Read the JSON-RPC body here so the access log can name what each client calls; the adapter
+    // takes the parsed body as its third argument.
+    let body: unknown;
+    try {
+      body = JSON.parse(await readBody(req));
+    } catch {
+      return json(res, 400, { jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error" } });
+    }
+    const calls = (Array.isArray(body) ? body : [body]) as { method?: unknown; params?: { name?: unknown } }[];
+    (res as ServerResponse & { maRpc?: string }).maRpc = calls
+      .map((c) => (c.method === "tools/call" && typeof c.params?.name === "string" ? `tools/call:${c.params.name}` : String(c.method)))
+      .join(",");
+    (res as ServerResponse & { maClient?: string | undefined }).maClient = token.clientId;
+    return void mcpNode(req as unknown as NodeIncomingMessageLike, res, body);
   }
 
   async function consent(req: IncomingMessage, res: ServerResponse, uid: string, action: string): Promise<void> {
@@ -509,6 +523,8 @@ export function createApp(opts: AppOptions) {
           completed: res.writableFinished,
           ms: Math.round(performance.now() - started),
           type: res.getHeader("content-type"),
+          rpc: (res as ServerResponse & { maRpc?: string }).maRpc,
+          client: (res as ServerResponse & { maClient?: string }).maClient,
           ua: req.headers["user-agent"]?.slice(0, 120),
         }));
       });
