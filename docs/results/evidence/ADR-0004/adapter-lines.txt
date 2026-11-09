@@ -1,0 +1,19 @@
+# node spikes/oauth-oidc-provider/count-adapter.ts
+adapter code (exists only because the library is node-oidc-provider):
+  105  provider.ts (library configuration)
+   45  db.ts Adapter class
+   94  app.ts gates, mount, discovery, events
+    9  app.ts PROVIDER_ROUTES
+  253  TOTAL adapter (limit 400)
+
+whole spike, per file:
+  438  app.ts
+   71  config.ts
+   82  db.ts
+   18  main.ts
+   40  mrtr.ts
+  121  pages.ts
+   79  pairing.ts
+  101  passkey.ts
+  105  provider.ts
+ 1055  TOTAL spike

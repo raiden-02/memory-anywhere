@@ -2,19 +2,17 @@
 // checks in auth-and-security.md. Tests share one issuer and run in order: a pairing window is
 // server-wide state, exactly as in production.
 
-import { readFileSync } from "node:fs";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
-import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { RequestStates } from "../../../../spikes/oauth-oidc-provider/src/mrtr.ts";
+import { routeInventory } from "./routes.ts";
 import { authorize, authUrl, Browser, callMcp, openWindow, ownerSetup, pkce, startIssuer, token, type Issuer } from "./issuer.ts";
 
 const CLAUDE_REDIRECT = "https://claude.ai/api/mcp/auth_callback";
 const CHATGPT_REDIRECT = "https://chatgpt.com/connector_platform_oauth_redirect";
 const CHATGPT_CIMD = "https://chatgpt.com/oauth/client.json";
 const CLAUDE_CODE_CIMD = "https://claude.ai/oauth/claude-code-client-metadata";
-const ROUTES = readFileSync(join(import.meta.dirname, "..", "routes.allow.txt"), "utf8");
 
 // ---- the network seen by CIMD fetches ----
 
@@ -352,44 +350,10 @@ describe("clients", () => {
 // ---- 15–20: surfaces and owner binding ----
 
 describe("surfaces", () => {
-  /** METHOD /path rules from routes.allow.txt; `:name` matches one path segment. */
-  const allowed = ROUTES.split(/\r?\n/)
-    .map((l) => l.replace(/#.*/, "").trim())
-    .filter(Boolean)
-    .map((l) => {
-      const [method = "", path = ""] = l.split(/\s+/);
-      return { method, path, re: new RegExp(`^${path.replace(/:[a-z_]+/g, "[^/]+")}$`) };
-    });
-  const isAllowed = (method: string, path: string) => allowed.some((a) => (a.method === method || a.method === "*") && a.re.test(path));
-
   test("15. route inventory: nothing outside routes.allow.txt answers", async () => {
-    const candidates = [
-      "/", "/favicon.ico", "/robots.txt", "/mcp/", "/mcp/x", "/v1", "/v1/x", "/v1/health/x", "/sse", "/messages",
-      "/.well-known/webfinger", "/.well-known/oauth-protected-resource", "/.well-known/oauth-protected-resource/x", "/.well-known/jwks.json",
-      "/oauth", "/oauth/", "/oauth/.well-known/openid-configuration", "/oauth/.well-known/oauth-authorization-server", "/oauth/.well-known/webfinger",
-      "/oauth/auth", "/oauth/auth/x", "/oauth/token", "/oauth/token/introspection", "/oauth/token/revocation", "/oauth/jwks", "/oauth/reg", "/oauth/reg/x",
-      "/oauth/me", "/oauth/userinfo", "/oauth/session/end", "/oauth/session/end/confirm", "/oauth/session/end/success", "/oauth/device", "/oauth/device/auth",
-      "/oauth/device/x", "/oauth/request", "/oauth/backchannel", "/oauth/challenge", "/oauth/credential", "/oauth/interaction/x", "/interaction/x",
-      "/pair", "/pair/x", "/pair/abcdefghijklmnop", "/consent", "/consent/x", "/consent/x/y", "/consent/x/approve",
-      "/admin/", "/admin/x", "/admin/api", "/admin/api/x", "/admin/api/windows/x", "/setup/", "/setup/x", "/recover", "/api/x",
-    ];
-    // Every listed route, with sample parameters, plus routes that must not exist.
-    for (const a of allowed) candidates.push(a.path.replace(/:[a-z_]+/g, "abcdefghijklmnop"));
-    const answered = new Set<string>();
-    const violations: string[] = [];
-    for (const path of candidates) {
-      for (const method of ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]) {
-        const res = await fetch(`${issuer.origin}${path}`, { method, redirect: "manual", ...(method === "POST" || method === "PUT" || method === "PATCH" ? { body: "{}", headers: { "content-type": "application/json" } } : {}) });
-        await res.arrayBuffer();
-        if (res.status === 404) continue;
-        answered.add(`${method} ${path}`);
-        if (!isAllowed(method, path)) violations.push(`${method} ${path} -> ${res.status}`);
-      }
-    }
-    expect(violations.join("\n")).toBe("");
-    // ...and the list holds nothing that does not answer, so it stays exact.
-    const silent = allowed.filter((a) => !answered.has(`${a.method} ${a.path.replace(/:[a-z_]+/g, "abcdefghijklmnop")}`)).map((a) => `${a.method} ${a.path}`);
-    expect(silent.join("\n")).toBe("");
+    const { unlisted, silent } = await routeInventory(issuer.origin);
+    expect(unlisted).toEqual([]);
+    expect(silent).toEqual([]);
   }, 60_000);
 
   test("16. /mcp ignores cookies and rejects a browser Origin", async () => {
