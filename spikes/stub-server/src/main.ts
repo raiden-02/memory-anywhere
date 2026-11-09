@@ -9,7 +9,8 @@
 
 import { randomBytes } from "node:crypto";
 import { chmodSync, existsSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import type { Server } from "node:http";
+import { dirname, join } from "node:path";
 import { parseArgs } from "node:util";
 import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import { createHttpServer } from "./http.ts";
@@ -17,10 +18,22 @@ import { createStubServer } from "./mcp.ts";
 import { JsonlStore } from "./store.ts";
 
 const HERE = import.meta.dirname;
+/** The release's VERSION file: the nearest one above this file (the release root on the instance). */
 const VERSION = (() => {
-  for (const p of [join(HERE, "..", "..", "VERSION"), join(HERE, "..", "VERSION")]) if (existsSync(p)) return readFileSync(p, "utf8").trim();
+  for (let dir = HERE, i = 0; i < 6; i++, dir = dirname(dir)) {
+    const p = join(dir, "VERSION");
+    if (existsSync(p)) return readFileSync(p, "utf8").trim();
+  }
   return "0.0.0-dev";
 })();
+
+/** What a spike built on the stub replaces (the OAuth spike: its HTTP app and real setup tokens). */
+export interface ServerHooks {
+  /** The HTTP server for `start`. Default: the stub's, with no authorization. */
+  createServer?(o: { version: string; publicOrigin: string; dataDir: string }): Server;
+  /** A fresh setup token the server will accept. Default: a random value nothing checks. */
+  issueSetupToken?(o: { dataDir: string; ttlMs: number }): string;
+}
 
 /** The few keys the stub reads from server.toml (`key = "value"` lines only). */
 export function readSimpleToml(text: string): Record<string, string> {
@@ -52,7 +65,7 @@ function writeOutbox(name: string, content: string): void {
   renameSync(tmp, join(OUTBOX, name));
 }
 
-async function main(argv: string[]): Promise<number> {
+export async function main(argv: string[], hooks: ServerHooks = {}): Promise<number> {
   const [command, ...rest] = argv;
   const { values } = parseArgs({
     args: rest,
@@ -69,7 +82,9 @@ async function main(argv: string[]): Promise<number> {
   switch (command) {
     case "start": {
       const publicOrigin = cfg["server.public_origin"] ?? `http://127.0.0.1:${values.port ?? "8787"}`;
-      const server = createHttpServer({ version: VERSION, store: openStore(), publicOrigin });
+      const server = hooks.createServer
+        ? hooks.createServer({ version: VERSION, publicOrigin, dataDir })
+        : createHttpServer({ version: VERSION, store: openStore(), publicOrigin });
       const socket = cfg["server.socket"];
       if (socket) {
         if (existsSync(socket)) unlinkSync(socket);
@@ -92,7 +107,7 @@ async function main(argv: string[]): Promise<number> {
         console.error("usage: setup-token --renew");
         return 1;
       }
-      const token = randomBytes(32).toString("base64url");
+      const token = hooks.issueSetupToken?.({ dataDir, ttlMs: SETUP_TOKEN_TTL_MS }) ?? randomBytes(32).toString("base64url");
       const expires_at = new Date(Date.now() + SETUP_TOKEN_TTL_MS).toISOString();
       writeOutbox("setup-token", JSON.stringify({ token, expires_at }));
       console.log(`setup token issued, valid until ${expires_at}`);

@@ -1,5 +1,5 @@
-// Build the stub's linux-arm64 release tarball for the spike stack
-// (deployment-aws.md §7.3 layout). Runs on the PC (Windows included):
+// Build the spike's linux-arm64 release tarball (deployment-aws.md §7.3 layout): the OAuth spike
+// (spikes/oauth-oidc-provider) serving the stub's MCP tools. Runs on the PC (Windows included):
 //
 //   node spikes/stub-server/build-release.ts <version>
 //
@@ -7,7 +7,7 @@
 // (signed later by `mema deploy aws --release-file`, never here).
 
 import { spawnSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 
@@ -15,6 +15,7 @@ const HERE = import.meta.dirname;
 const ROOT = join(HERE, "..", "..");
 const HOST_RELEASE = join(ROOT, "deploy", "aws", "host", "release");
 const PROBE_DIR = join(ROOT, "spikes", "litestream-probe");
+const STUB_SRC = join(ROOT, "spikes", "stub-server", "src");
 const VERSION = /^[0-9A-Za-z][0-9A-Za-z.+_-]{0,63}$/;
 
 /** On Windows, pnpm is either pnpm.exe (spawned directly) or a .cmd shim (needs cmd.exe). */
@@ -74,7 +75,7 @@ function main(): void {
     // App and production dependencies for linux-arm64 glibc, without lifecycle scripts.
     run("pnpm", [
       "--filter",
-      "@memory-anywhere/spike-stub-server",
+      "@memory-anywhere/spike-oauth-oidc-provider",
       "deploy",
       "--prod",
       "--cpu",
@@ -89,7 +90,14 @@ function main(): void {
       join(stage, "app"),
     ]);
     assertFlatNodeModules(join(stage, "app"));
-    // The stub is pure JavaScript; a native module would need an arm64 build check.
+    // The sources keep their repo layout under app/ (the OAuth spike imports the stub's modules
+    // relatively), and resolve their dependencies from app/node_modules. Node does not strip
+    // types under node_modules, so the stub cannot be a package dependency.
+    const spikes = join(stage, "app", "spikes");
+    mkdirSync(join(spikes, "oauth-oidc-provider"), { recursive: true });
+    renameSync(join(stage, "app", "src"), join(spikes, "oauth-oidc-provider", "src"));
+    cpSync(STUB_SRC, join(spikes, "stub-server", "src"), { recursive: true });
+    // The spike is pure JavaScript; a native module would need an arm64 build check.
     const natives = walk(join(stage, "app")).filter((f) => f.endsWith(".node"));
     if (natives.length) throw new Error(`unexpected native modules: ${natives.map((f) => relative(stage, f)).join(", ")}`);
 
@@ -99,9 +107,9 @@ function main(): void {
       join(stage, "bin", "memory-anywhere-server"),
       [
         "#!/bin/sh",
-        "# M0 stub launcher: the pinned Node from host/install.sh runs the TypeScript sources directly.",
+        "# M0 spike launcher: the pinned Node from host/install.sh runs the TypeScript sources directly.",
         'here=$(dirname "$(readlink -f "$0")")',
-        'exec /opt/memory-anywhere/node/bin/node "$here/../app/src/main.ts" "$@"',
+        'exec /opt/memory-anywhere/node/bin/node "$here/../app/spikes/oauth-oidc-provider/src/main.ts" "$@"',
         "",
       ].join("\n"),
     );
