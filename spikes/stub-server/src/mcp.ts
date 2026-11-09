@@ -12,6 +12,11 @@ export interface StubInfo {
   client: string;
 }
 
+/** M0 Q07: MA_STUB_ALWAYS_LOAD_META=1 marks every tool with _meta["anthropic/alwaysLoad"]. */
+function toolMeta(): { _meta?: Record<string, unknown> } {
+  return process.env["MA_STUB_ALWAYS_LOAD_META"] === "1" ? { _meta: { "anthropic/alwaysLoad": true } } : {};
+}
+
 export function createStubServer(info: StubInfo): McpServer {
   const server = new McpServer(
     { name: "memory-anywhere", version: info.version },
@@ -20,7 +25,7 @@ export function createStubServer(info: StubInfo): McpServer {
 
   server.registerTool(
     "memory_status",
-    { description: DESC_MEMORY_STATUS, inputSchema: z.object({}) },
+    { description: DESC_MEMORY_STATUS, inputSchema: z.object({}), ...toolMeta() },
     async () => ({
       content: [{ type: "text", text: JSON.stringify({ store: "m0-stub", healthy: true, policy_version: "P1", version: info.version, memories: info.store.all().length }) }],
     }),
@@ -29,6 +34,7 @@ export function createStubServer(info: StubInfo): McpServer {
   server.registerTool(
     "memory_save",
     {
+      ...toolMeta(),
       description: DESC_MEMORY_SAVE,
       inputSchema: z.object({
         text: z.string().min(1).max(400),
@@ -50,7 +56,7 @@ export function createStubServer(info: StubInfo): McpServer {
 
   server.registerTool(
     "memory_recall",
-    { description: DESC_MEMORY_RECALL, inputSchema: z.object({ query: z.string().min(1) }) },
+    { description: DESC_MEMORY_RECALL, inputSchema: z.object({ query: z.string().min(1) }), ...toolMeta() },
     async ({ query }) => {
       const hits = info.store.recall(query);
       const text = hits.length ? hits.map((m) => `[${m.id}] ${m.text}`).join("\n") : "No memories match.";

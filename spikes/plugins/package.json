@@ -1,0 +1,5 @@
+{
+  "name": "@memory-anywhere/spike-plugins",
+  "private": true,
+  "type": "module"
+}
