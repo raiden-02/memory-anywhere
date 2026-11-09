@@ -35,8 +35,10 @@ export const VENDORS: Record<Vendor, VendorRule> = {
     methods: ["static", "cimd", "dcr"],
     loopback: false,
   },
-  gemini: { label: "Gemini", redirects: [], redirectHosts: [], cimd: [], methods: ["static", "dcr"], loopback: false },
-  grok: { label: "Grok", redirects: [], redirectHosts: [], cimd: [], methods: ["static", "cimd", "dcr"], loopback: false },
+  // Gemini's redirect is per user and per server (…/r/user_bound_custom-mcp-<google id>-<host>): the owner pastes it (M0 Q10).
+  gemini: { label: "Gemini", redirects: [], redirectHosts: ["oauth-redirect.googleusercontent.com"], cimd: [], methods: ["static", "dcr"], loopback: false },
+  // Grok's form takes only a URL; it registers by DCR with this redirect (M0 Q11).
+  grok: { label: "Grok", redirects: ["https://grok.com/connectors-oauth-exchange-code/"], redirectHosts: ["grok.com"], cimd: [], methods: ["dcr"], loopback: false },
   "claude-code": {
     label: "Claude Code (direct)",
     redirects: [],

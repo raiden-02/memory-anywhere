@@ -176,7 +176,9 @@ export function createApp(opts: AppOptions) {
     };
     const https = uris.every(onHosts);
     const loopback = uris.every((u: string) => isLoopback(u));
-    const appType = meta["application_type"];
+    // RFC 7591 §2: an omitted application_type means "web" (Grok omits it, M0 Q11); a loopback
+    // redirect still needs an explicit "native" in a desktop-app window.
+    const appType = meta["application_type"] ?? "web";
     const ok = (https && appType === "web") || (loopback && w.desktop === 1 && w.vendor === "other" && appType === "native");
     if (!ok) {
       if (!https && !loopback) pairing.close(w.id, "registration_race"); // foreign redirect

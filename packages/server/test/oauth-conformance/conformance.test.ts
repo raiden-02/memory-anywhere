@@ -224,6 +224,16 @@ describe("clients", () => {
     expect(back.searchParams.get("code")).toBeTruthy();
   });
 
+  test("8e. DCR as Grok sends it (no application_type) registers inside a Grok window", async () => {
+    const grok = { client_name: "Grok", redirect_uris: ["https://grok.com/connectors-oauth-exchange-code/"], grant_types: ["authorization_code", "refresh_token"], response_types: ["code"], token_endpoint_auth_method: "none" };
+    expect((await register(grok)).status).toBe(400);
+    await openWindow(issuer, owner, { vendor: "grok", method: "dcr" });
+    const reg = await register(grok);
+    expect(reg.status).toBe(201);
+    const back = await authorize(issuer, owner, { client_id: String(reg.data["client_id"]), redirect_uri: grok.redirect_uris[0] ?? "", ...S256() });
+    expect(back.searchParams.get("code")).toBeTruthy();
+  });
+
   test("8c. CIMD: the vendor's document works inside its window only, with its exact redirect", async () => {
     documents.set(CHATGPT_CIMD, cimdDoc(CHATGPT_CIMD, [CHATGPT_REDIRECT]));
     await expectErrorPage(await owner.fetch(authUrl(issuer, { client_id: CHATGPT_CIMD, redirect_uri: CHATGPT_REDIRECT, ...S256() }))); // no window
@@ -347,7 +357,7 @@ describe("clients", () => {
       expect(await register({ ...dcrClaude, ...extra })).toEqual({ status: 400, data: { error: "invalid_request" } });
       expect(issuer.pairing.get(w.window_id)?.registration_used).toBe(0);
     }
-    for (const bad of [{ application_type: "native" }, { application_type: undefined }, { grant_types: ["client_credentials"] }, { response_types: ["token"] }, { client_name: "x".repeat(65) }, { redirect_uris: [CLAUDE_REDIRECT, CLAUDE_REDIRECT, CLAUDE_REDIRECT] }]) {
+    for (const bad of [{ application_type: "native" }, { application_type: "browser" }, { grant_types: ["client_credentials"] }, { response_types: ["token"] }, { client_name: "x".repeat(65) }, { redirect_uris: [CLAUDE_REDIRECT, CLAUDE_REDIRECT, CLAUDE_REDIRECT] }]) {
       await openWindow(issuer, owner, { vendor: "claude", method: "dcr" });
       expect((await register({ ...dcrClaude, ...bad })).status).toBe(400);
     }
