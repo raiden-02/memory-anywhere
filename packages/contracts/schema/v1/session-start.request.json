@@ -1,0 +1,34 @@
+{
+  "type": "object",
+  "properties": {
+    "tool": {
+      "type": "string",
+      "enum": [
+        "claude-code",
+        "codex",
+        "cursor"
+      ]
+    },
+    "repo_key": {
+      "type": "string",
+      "pattern": "^(?:rk_[0-9a-f]{32}|none)$"
+    },
+    "session_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "max_chars": {
+      "type": "integer",
+      "minimum": 200,
+      "maximum": 10000
+    }
+  },
+  "required": [
+    "tool",
+    "repo_key",
+    "session_id",
+    "max_chars"
+  ],
+  "additionalProperties": false
+}

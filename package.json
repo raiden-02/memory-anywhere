@@ -13,7 +13,8 @@
     "test": "vitest run",
     "check": "pnpm typecheck && pnpm lint && pnpm test",
     "scrub": "node scripts/scrub-evidence.mjs",
-    "eval": "node evals/harness/cli.ts"
+    "eval": "node evals/harness/cli.ts",
+    "gen": "node scripts/gen.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

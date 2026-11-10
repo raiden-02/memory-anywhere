@@ -1,0 +1,28 @@
+{
+  "type": "object",
+  "properties": {
+    "profile": {
+      "type": "string"
+    },
+    "repo_context": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "etag": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "profile",
+    "repo_context",
+    "etag",
+    "generated_at"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,32 @@
+{
+  "type": "object",
+  "properties": {
+    "estimate_usd": {
+      "type": "number",
+      "minimum": 0
+    },
+    "input_tokens": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "output_tokens": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "cache_hits": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "import_budget_remaining_usd": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "estimate_usd",
+    "input_tokens",
+    "output_tokens",
+    "cache_hits",
+    "import_budget_remaining_usd"
+  ],
+  "additionalProperties": false
+}

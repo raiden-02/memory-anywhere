@@ -1,0 +1,52 @@
+{
+  "type": "object",
+  "properties": {
+    "query": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "section": {
+      "type": "string",
+      "maxLength": 32,
+      "description": "Narrow to one section by name, e.g. Preferences"
+    },
+    "scope": {
+      "default": "any",
+      "type": "string",
+      "enum": [
+        "any",
+        "global",
+        "repo"
+      ]
+    },
+    "kinds": {
+      "maxItems": 4,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "fact",
+          "preference",
+          "instruction",
+          "event"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "as_of": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "limit": {
+      "default": 6,
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10
+    }
+  },
+  "required": [
+    "query"
+  ],
+  "additionalProperties": false
+}

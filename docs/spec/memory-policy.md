@@ -111,7 +111,7 @@ A match anywhere in `content`, `user_words` or `why_durable` rejects the save. F
 
 ## 4. Policy files
 
-All live in `packages/server/policy/`, are versioned with the policy, and are copied into the client build where the client needs them (redaction runs on the PC).
+All live in `packages/server/policy/` and are versioned with the policy. The two the client needs (redaction runs on the PC) are compiled by `pnpm gen` into `packages/contracts/src/generated/policy-data.ts`, which client and server both import (spec-issues #31).
 
 | File | Used by |
 | --- | --- |

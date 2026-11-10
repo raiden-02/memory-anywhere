@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "properties": {
+    "command": {
+      "type": "string",
+      "enum": [
+        "repo-enable",
+        "repo-disable",
+        "project-track",
+        "project-add",
+        "export",
+        "import",
+        "review"
+      ]
+    },
+    "args": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "command",
+    "args"
+  ],
+  "additionalProperties": false
+}

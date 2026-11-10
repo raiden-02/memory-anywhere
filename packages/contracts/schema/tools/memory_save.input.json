@@ -1,0 +1,83 @@
+{
+  "type": "object",
+  "properties": {
+    "content": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 400
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "fact",
+        "preference",
+        "instruction",
+        "event"
+      ]
+    },
+    "why_durable": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "user_words": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "explicit_request": {
+      "default": false,
+      "type": "boolean"
+    },
+    "section": {
+      "type": "string",
+      "maxLength": 32
+    },
+    "entity": {
+      "default": "self",
+      "type": "string",
+      "maxLength": 80
+    },
+    "attribute": {
+      "type": "string",
+      "maxLength": 48
+    },
+    "scope": {
+      "default": "global",
+      "type": "string",
+      "enum": [
+        "global",
+        "repo"
+      ]
+    },
+    "supersedes": {
+      "type": "string",
+      "pattern": "^mem_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "change": {
+      "default": "update",
+      "type": "string",
+      "enum": [
+        "update",
+        "correction"
+      ]
+    },
+    "valid_from": {
+      "type": "string",
+      "pattern": "^\\d{4}(-\\d{2}(-\\d{2})?)?$"
+    },
+    "expires_on": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "policy_version": {
+      "type": "string",
+      "maxLength": 16
+    }
+  },
+  "required": [
+    "content",
+    "kind",
+    "why_durable"
+  ],
+  "additionalProperties": false
+}

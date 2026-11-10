@@ -345,7 +345,7 @@ JSON over HTTPS, `Authorization: Bearer`, `Content-Type: application/json`, requ
 | Method and path | Scope | Request | Response |
 | --- | --- | --- | --- |
 | `GET /v1/health` | none | — | `{ok: bool, version, schema_version: int, policy_version, min_client_version}` |
-| `POST /v1/session-start` | capture | `{tool: "claude-code"\|"codex"\|"cursor", repo_key: string\|"none", session_id: string, max_chars: int}` | `{context: string, profile_etag, repo_enabled: bool, capture_enabled: bool, policy_version, notices: string[]}` |
+| `POST /v1/session-start` | capture | `{tool: "claude-code"\|"codex"\|"cursor", repo_key: string\|"none", session_id: string, max_chars: int}` | `{context: string, profile_etag, profile: string, repo_enabled: bool, capture_enabled: bool, policy_version, notices: string[]}`; `profile` refreshes the client's offline `profile.md` (spec-issues #30) |
 | `GET /v1/projection?repo_key=&etag=` | capture | — | 304, or `{profile: string, repo_context: string\|null, etag, generated_at}` |
 | `POST /v1/writes` | capture or write per op | `{entries: Entry[1..100], dry_run?: bool}` | `{results: [{idempotency_key, outcome, reason, id?}]}` |
 | `POST /v1/recall` | read | memory_recall input + `repo_key` | memory_recall output |
