@@ -39,7 +39,7 @@ the ADR-0101, 0103, 0107 and 0108 evidence.
 | Gemini 3.1 Pro (Developer Mode) | custom app | 0/3 | 3/3 each |
 | Grok (Auto) | custom connector | 0/3 | 3/3 each |
 | Codex CLI 0.167.0 | stdio | **3/3** | 3/3 each |
-| Cursor 3.29.9 | stdio | pending the owner's run | pending |
+| Cursor 3.29.9 | stdio | **1/1**: answered before any tool call. Cursor stores each server's instructions in `~/.cursor/projects/<workspace>/mcps/<server>/INSTRUCTIONS.md` and gives them to the model | full: fetched with Cursor's `GetDynamicTools`; all three present |
 
 **Control.** The spike's `initialize` result contains the `instructions` field (verified over HTTP with a real grant). So the
 remote clients drop the instructions; the server does send them.
@@ -52,7 +52,7 @@ remote clients drop the instructions; the server does send them.
 | Grok | Settings → Customize → Custom → "How should Grok behave?" | none shown | not needed: Grok saves and recalls unprompted without it |
 
 ## Decision
-- **Q05: server instructions reach the model only over stdio** (Claude Code, Codex; Cursor pending). For every remote client
+- **Q05: server instructions reach the model only over stdio** (Claude Code, Codex, Cursor; Cursor from one run plus the stored instructions file). For every remote client
   (Claude apps, ChatGPT, Gemini, Grok), the policy relies on the tool descriptions plus the custom instruction. clients.md flags
   this per client.
   - The server still sends instructions, because they are free and the stdio clients use them.

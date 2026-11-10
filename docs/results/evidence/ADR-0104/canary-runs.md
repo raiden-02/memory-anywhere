@@ -155,3 +155,16 @@ Result: instruction canary **3/3**; truncation canaries A, B and C 3/3.
 
 The same Claude Code, connected to the same server through the claude.ai connector, received the tool descriptions but **not** the
 server instructions (see above). The instructions are lost on the claude.ai connector path, not in Claude Code.
+
+## Cursor 3.29.9 (agent model as the owner left it), 2026-11-10
+The stub is configured over stdio in the test workspace's `.cursor/mcp.json`; the owner's own Cursor config is untouched. There
+was one owner-run chat. Reply (verbatim):
+"The instruction canary is a fixed reply. I'll pull the full `memory_status` description next and quote any truncation canaries
+in it." Then the tool call `GetDynamicTools {namespace: "project-0-cursor q12 ws-memory-anywhere", toolName: "memory_status"}`, then:
+"INSTR-7Q2X / Truncation canaries in the `memory_status` tool description: Truncation canary A: DESC-A41K. / … B: DESC-B93M. /
+… C: DESC-C27P."
+- **The instructions were already in context.** The model named the canary as "a fixed reply" before any tool call.
+- **Where Cursor keeps them.** Cursor writes `~/.cursor/projects/<workspace>/mcps/project-0-cursor_q12_ws-memory-anywhere/INSTRUCTIONS.md`
+  (which contains `INSTR-7Q2X`), plus `SERVER_METADATA.json` and one JSON file per tool. `memory_status.json` holds the full
+  description, `DESC-C27P` included.
+- **Result:** instruction canary 1/1; truncation canaries A, B and C present.

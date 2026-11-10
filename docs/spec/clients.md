@@ -8,7 +8,7 @@ Any MCP-capable harness works with memory-anywhere through the standard path alo
 
 1. Streamable HTTP at `https://{host}/mcp`.
 2. Standard OAuth discovery: 401 + `WWW-Authenticate` → protected-resource metadata (RFC 9728) → authorization-server metadata (RFC 8414) → client registration by CIMD, DCR or pre-registered credentials (each only inside a pairing window, auth-and-security.md §4) → authorization code + PKCE S256.
-3. The policy travels with the server: server instructions, tool descriptions, and the outcome messages returned by `memory_save`. Server instructions reach the model only through stdio clients (Claude Code, Codex). Every remote chat app tested in M0 drops them, so for those apps the tool descriptions and the custom instruction carry the policy (ADR-0104).
+3. The policy travels with the server: server instructions, tool descriptions, and the outcome messages returned by `memory_save`. Server instructions reach the model only through stdio clients (Claude Code, Codex, Cursor). Every remote chat app tested in M0 drops them, so for those apps the tool descriptions and the custom instruction carry the policy (ADR-0104).
 
 Hooks, plugins, skills, rules, projections and custom instructions are optional enhancements. No feature of the store depends on them. The server identifies clients only by the OAuth grant (`client_policy`), never by user agent or headers.
 

@@ -34,7 +34,7 @@ Evidence: [`docs/results/evidence/ADR-0103/claude-desktop-windows.md`](../result
   - Claude Desktop: `memory_save` wrote `Test color is teal`.
   - Claude Code: the connector appeared with no setup.
   - Claude web: saved and recalled.
-- **Mobile:** see the *Mobile* section below (owner's phone check).
+- **Mobile:** the Claude phone app recalled and saved with the connector added on the web, with no setup on the phone (see *Mobile* below).
 - **Q08 tool loading is account-wide.** Settings → Capabilities → Advanced → "Connectors in new chats" offers "Only when a chat
   needs them" (the default) and "At the start of every chat".
 - **Per connector**, only Tool permissions exist: Needs approval / Always allow / Blocked.
@@ -42,7 +42,7 @@ Evidence: [`docs/results/evidence/ADR-0103/claude-desktop-windows.md`](../result
   own memory takes "remember…" (run 1).
 
 ### Mobile
-Pending the owner's phone check ("What is my test planet?" in the Claude app). Recorded here when done.
+Owner's phone, Claude app, 2026-11-10: "What is my test planet?" was recalled (`tools/call:memory_recall`, ua `Claude-User`). "Remember that my test color is amber." was saved (row `The user's test color is amber.`). Evidence: [`../results/evidence/ADR-0019/phone-and-desktop.md`](../results/evidence/ADR-0019/phone-and-desktop.md).
 
 ## Decision
 - **Q04:** static confidential client, redirect `https://claude.ai/api/mcp/auth_callback`. CIMD and DCR are not needed for Claude.

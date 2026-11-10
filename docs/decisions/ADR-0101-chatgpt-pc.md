@@ -32,7 +32,7 @@ Evidence: [`docs/results/evidence/ADR-0101/chatgpt-web-pc.md`](../results/eviden
   - Every save showed an approval card (Always allow · Deny · Allow once), with the warning "Suspicious Instruction" about the
     policy-like tool descriptions.
   - Recall ran without approval under the plugin's default "Allow low-risk tools".
-- **Q01 (desktop app):** pending the owner's check. Recorded here when done.
+- **Q01 (desktop app):** recall works in the ChatGPT desktop app on Windows (2026-11-10, `tools/call:memory_recall` from the same grant; [ADR-0019 evidence](../results/evidence/ADR-0019/phone-and-desktop.md)).
 - **Q02: native memory works.** "Remember that my test drink is chai." gave "Memory updated", and a later chat recalled it.
   Without a custom instruction, ChatGPT used its own memory, not memory-anywhere.
 - **Q24: the tunnel exists on Plus.** Add custom MCP server → Connection → **Tunnel** (a `tunnel_…` id, same OAuth options). Not
