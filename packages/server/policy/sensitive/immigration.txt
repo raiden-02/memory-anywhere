@@ -1,0 +1,32 @@
+# Sensitive category `immigration` (memory-policy.md §7.1): visa and immigration status. Policy P1.
+# Words and phrases matched on word boundaries against norm(content) and norm(user_words), and
+# against recall queries (§7.2 rule 7). Only unambiguous terms: a hit blocks or holds a save.
+h-1b
+h1b
+h 1b
+green card
+permanent resident
+permanent residency
+citizenship
+naturalization
+naturalized
+asylum
+refugee
+undocumented
+immigration status
+work permit
+ead card
+deportation
+deported
+visa status
+residence permit
+pr application
+express entry
+work visa
+student visa
+tourist visa
+visa application
+on a visa
+f-1 visa
+l-1 visa
+o-1 visa

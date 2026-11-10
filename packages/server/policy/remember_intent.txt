@@ -1,0 +1,16 @@
+# Remember-intent phrases (memory-policy.md §3.4). Policy P1.
+# Matched as substrings of norm(user_words).
+remember
+save this
+save that
+note that
+keep in mind
+don't forget
+do not forget
+add to memory
+add this to memory
+store this
+make a note
+for future reference
+from now on
+going forward

@@ -1,0 +1,10 @@
+# Past markers (retrieval.md §2 step 2): a query containing one also returns superseded and historical versions. Policy P1.
+# Matched as substrings of the normalized query.
+used to
+previously
+before
+formerly
+history of
+what changed
+last year
+in 20

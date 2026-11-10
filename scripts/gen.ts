@@ -1,6 +1,7 @@
 // `pnpm gen`: writes every generated file that is committed to the repository.
 //   - packages/contracts/schema/**.json        JSON Schemas from the zod definitions
 //   - packages/contracts/src/generated/policy-data.ts   secrets and stopwords from the policy
+//   - packages/server/src/policy/generated.ts            channel texts, lexicons, attribute patterns
 // `pnpm gen --check` writes nothing and exits 1 if any committed file is out of date. Tests run
 // the same comparison (scripts/gen.test.ts), so CI fails on a stale file.
 
@@ -10,6 +11,7 @@ import { parseArgs } from "node:util";
 import { schemaFileText } from "../packages/contracts/src/json-schema.ts";
 import { SCHEMA_FILES } from "../packages/contracts/src/schema-catalog.ts";
 import { renderPolicyData } from "../packages/server/scripts/policy-data.ts";
+import { renderPolicyTexts } from "../packages/server/scripts/policy-texts.ts";
 
 export const ROOT = join(import.meta.dirname, "..");
 
@@ -23,6 +25,7 @@ export function generatedFiles(): GeneratedFile[] {
   return [
     ...SCHEMA_FILES.map((f) => ({ path: `packages/contracts/schema/${f.path}`, text: schemaFileText(f.build()) })),
     { path: "packages/contracts/src/generated/policy-data.ts", text: renderPolicyData(join(ROOT, "packages/server/policy")) },
+    { path: "packages/server/src/policy/generated.ts", text: renderPolicyTexts(join(ROOT, "packages/server/policy")) },
   ];
 }
 
