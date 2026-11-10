@@ -132,3 +132,26 @@ Truncation canary A: DESC-A41K
 Truncation canary B: DESC-B93M
 Truncation canary C: DESC-C27P
 These appear inline in the long filler text of the memory_anywhere___memory_status tool description (the text used to measure where clients truncate tool descriptions).
+
+# Q05/Q06 canary prompt, coding tools with the stub over stdio (Windows), 2026-11-09 (UTC)
+Same prompt, three fresh headless sessions each, run from a working folder with a space that holds no project files. The server is
+`node spikes/stub-server/src/main.ts stdio`, the same stub that serves the spike.
+
+## Codex CLI 0.167.0
+`codex exec --json --disable apps -c mcp_servers.memory-anywhere.command="node" -c mcp_servers.memory-anywhere.args=[…,"stdio"]`
+(`--disable apps` hides the ChatGPT-account copies of the connector). No tool or shell call in any run, so the answers came from
+the context alone.
+Result: instruction canary **3/3**; truncation canaries A, B and C 3/3.
+- Run 1 (verbatim): "INSTR-7Q2X" followed by the three lines "Truncation canary A: DESC-A41K." / "…B: DESC-B93M." / "…C: DESC-C27P."
+- Run 2: "Instruction canary: `INSTR-7Q2X`" and the same three lines.
+- Run 3: "INSTR-7Q2X" and the same three lines.
+
+## Claude Code 2.1.319 (claude-haiku-5-5)
+`claude -p … --strict-mcp-config --mcp-config <stub stdio>`. The tools were deferred: each run called ToolSearch once, then answered.
+Result: instruction canary **3/3**; truncation canaries A, B and C 3/3.
+- Run 1 (verbatim, first sentence): "The memory-anywhere instruction canary is **INSTR-7Q2X**. It comes from the memory-anywhere
+  server's instructions, which say to reply with that exact string when asked for it." Then all three truncation lines.
+- Runs 2 and 3: the same answer, nearly word for word.
+
+The same Claude Code, connected to the same server through the claude.ai connector, received the tool descriptions but **not** the
+server instructions (see above). The instructions are lost on the claude.ai connector path, not in Claude Code.

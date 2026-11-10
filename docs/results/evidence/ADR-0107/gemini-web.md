@@ -65,3 +65,13 @@ The access token from the 16:26 connection expired at about 17:26. The next Gemi
 18:27:53Z POST /mcp 200 initialize … 18:28:35Z POST /mcp 200 tools/call:memory_recall
 ```
 Gemini accepts a rotated refresh token.
+
+## Second refresh: the rotated refresh token is kept (Q10), 2026-11-10
+The access token from the 18:27 refresh expired at about 19:28. In a fresh Developer Mode chat (3.1 Pro) the next morning,
+"Use Memory Anywhere to tell me my test planet." → approval → Allow once → "Your test planet is Neptune."
+```
+00:20:02Z POST /oauth/token 200 ua=OpenAuth        <- refresh_token grant with the token issued by the 18:27 rotation
+00:20:03Z POST /mcp 200 initialize (client ma_gCHe…) … 00:20:20Z POST /mcp 200 tools/call:memory_recall
+```
+No `grant.error` was logged. Gemini stores and uses each rotated refresh token, so rotation stays on. The rotation-off run in
+Q10's method was not needed, because the spec runs it only to choose `fixed` when rotation fails.
