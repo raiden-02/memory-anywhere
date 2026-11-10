@@ -1,0 +1,26 @@
+{
+  "name": "memory-anywhere-workspace",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.18.0",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "prepare": "git config core.hooksPath .githooks",
+    "typecheck": "tsc -p tsconfig.json && tsc -p deploy/aws/tsconfig.json",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "check": "pnpm typecheck && pnpm lint && pnpm test",
+    "scrub": "node scripts/scrub-evidence.mjs",
+    "eval": "node evals/harness/cli.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.19.2",
+    "eslint": "10.14.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1",
+    "vitest": "5.1.0"
+  }
+}

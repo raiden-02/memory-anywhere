@@ -15,3 +15,16 @@ Option 2. With the store on AWS, the named pipe is only a local-mode concern, an
 
 ## Consequences
 The client installs with zero native modules and zero install scripts. A stolen PC token can save T2 memories in enabled repos and recall within budgets until revoked (accepted residual, auth-and-security.md §1.5). M0 Q22 may later remove better-sqlite3 from the server via node:sqlite.
+
+## Update 2026-11-08: M0 Q22, node:sqlite
+
+Question: Q22. Does `node:sqlite` on Node 24 support FTS5, WAL and the PRAGMAs of data-model.md §1?
+
+### Method
+`spikes/sqlite-check/src/q22.ts` opens a file database in a directory whose path has a space and checks: FTS5 in the compile options; `journal_mode = WAL`, `synchronous = NORMAL`, `busy_timeout = 5000`, `foreign_keys = ON`, `secure_delete = ON`, `wal_autocheckpoint = 0` (each read back); the `memory_fts` table of data-model.md §2 with `porter unicode61 remove_diacritics 2` (stemming and accent folding by query); column filters and `bm25()` column weights; enforced foreign keys; JSON functions; the purge sequence (delete, FTS `optimize`, `wal_checkpoint(TRUNCATE)`), then a byte scan of the database and WAL files for a canary; `VACUUM INTO` with `integrity_check` on the copy (the `ma-maint` step). The same checks run as a test on every CI runner: Windows x64, Ubuntu x64 and arm64, macOS arm64, Node 24.22.2 and 26.
+
+### Result
+All 17 checks pass on the owner's PC (Windows 11, Node v24.22.2, SQLite 3.53.4). Evidence: [`q22-windows-x64.json`](../results/evidence/ADR-0006/q22-windows-x64.json); the CI runs of `spikes/sqlite-check/test/q22.test.ts` cover the other platforms. The purge canary is present before the purge and absent from both files after it.
+
+### Decision
+**Accepted.** `node:sqlite` provides everything data-model.md needs, on every supported platform, with no native module. M1 builds the server on `node:sqlite` instead of `better-sqlite3`, which removes one prebuilt native dependency from the server tarball and from `onlyBuiltDependencies` (config-and-cli.md §2 is updated in M1 when the dependency list is pinned). `node:sqlite` is still marked as a release candidate in Node's documentation; if a Node release changes its API, the store's thin database layer absorbs it.

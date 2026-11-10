@@ -1,0 +1,73 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "InstanceAgentsSessionManagerRunCommand",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:UpdateInstanceInformation",
+        "ssmmessages:CreateControlChannel", "ssmmessages:CreateDataChannel",
+        "ssmmessages:OpenControlChannel", "ssmmessages:OpenDataChannel",
+        "ec2messages:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "InstanceStageParameters",
+      "Effect": "Allow",
+      "Action": ["ssm:GetParameter", "ssm:GetParameters", "ssm:PutParameter", "ssm:DeleteParameter"],
+      "Resource": ["arn:aws:ssm:${REGION}:${ACCOUNT_ID}:parameter/memory-anywhere/*", "arn:aws:ssm:${REGION}:${ACCOUNT_ID}:parameter/memory-anywhere-*"]
+    },
+    {
+      "Sid": "InstanceAlerts",
+      "Effect": "Allow",
+      "Action": "sns:Publish",
+      "Resource": "arn:aws:sns:${REGION}:${ACCOUNT_ID}:memory-anywhere-alerts-*"
+    },
+    {
+      "Sid": "InstanceBuckets",
+      "Effect": "Allow",
+      "Action": ["s3:GetBucketLocation", "s3:ListBucket", "s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+      "Resource": ["arn:aws:s3:::memory-anywhere-*"]
+    },
+    {
+      "Sid": "InstanceKmsViaS3",
+      "Effect": "Allow",
+      "Action": ["kms:GenerateDataKey", "kms:Decrypt"],
+      "Resource": "arn:aws:kms:${REGION}:${ACCOUNT_ID}:key/*",
+      "Condition": { "StringEquals": { "kms:ViaService": "s3.${REGION}.amazonaws.com" } }
+    },
+    {
+      "Sid": "InstanceLogs",
+      "Effect": "Allow",
+      "Action": ["logs:CreateLogStream", "logs:PutLogEvents"],
+      "Resource": "arn:aws:logs:${REGION}:${ACCOUNT_ID}:log-group:/memory-anywhere/*"
+    },
+    {
+      "Sid": "DlmServiceRoleManagedPolicyEc2",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:CreateSnapshot", "ec2:CreateSnapshots", "ec2:DeleteSnapshot", "ec2:DescribeInstances", "ec2:DescribeVolumes",
+        "ec2:DescribeSnapshots", "ec2:EnableFastSnapshotRestores", "ec2:DescribeFastSnapshotRestores",
+        "ec2:DisableFastSnapshotRestores", "ec2:CopySnapshot", "ec2:ModifySnapshotAttribute", "ec2:DescribeSnapshotAttribute",
+        "ec2:DescribeSnapshotTierStatus", "ec2:ModifySnapshotTier", "ec2:DescribeAvailabilityZones"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "DlmServiceRoleManagedPolicyTags",
+      "Effect": "Allow",
+      "Action": "ec2:CreateTags",
+      "Resource": "arn:aws:ec2:*::snapshot/*"
+    },
+    {
+      "Sid": "DlmServiceRoleManagedPolicyEvents",
+      "Effect": "Allow",
+      "Action": [
+        "events:PutRule", "events:DeleteRule", "events:DescribeRule", "events:EnableRule", "events:DisableRule",
+        "events:ListTargetsByRule", "events:PutTargets", "events:RemoveTargets"
+      ],
+      "Resource": "arn:aws:events:*:*:rule/AwsDataLifecycleRule.managed-cwe.*"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "@memory-anywhere/client",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "mema": "./src/cli.ts",
+    "memory-anywhere": "./src/cli.ts"
+  },
+  "dependencies": {
+    "@memory-anywhere/contracts": "workspace:*",
+    "@memory-anywhere/deploy-aws": "workspace:*"
+  }
+}

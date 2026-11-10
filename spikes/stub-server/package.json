@@ -1,0 +1,13 @@
+{
+  "name": "@memory-anywhere/spike-stub-server",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "memory-anywhere-server": "./src/main.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/node": "2.1.2",
+    "@modelcontextprotocol/server": "2.4.0",
+    "zod": "4.6.7"
+  }
+}

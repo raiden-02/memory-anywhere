@@ -1,0 +1,7 @@
+# Q25, observed by the owner on 2026-11-08: the AWS console opened from the access
+# portal as ma-deploy (permission set memory-anywhere-deploy) cannot start CloudShell.
+# Verbatim console error, scrubbed.
+
+Unable to create the environment. This may be due to insufficient permissions to create environments, or because the environment no longer exists. To use CloudShell terminal, choose Open us-east-1 or Create VPC environment. If the issue persists, contact your IAM administrator
+System error
+User: arn:aws:sts::<aws-account-id>:assumed-role/AWSReservedSSO_memory-anywhere-deploy_6d0986b2a5ed3216/ma-deploy is not authorized to perform: cloudshell:CreateEnvironment on resource: * with an explicit deny in an identity-based policy

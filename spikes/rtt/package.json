@@ -1,0 +1,8 @@
+{
+  "name": "@memory-anywhere/spike-rtt",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "rtt": "node src/rtt.ts"
+  }
+}

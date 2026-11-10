@@ -1,0 +1,8 @@
+{
+  "name": "@memory-anywhere/contracts",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./paths": "./src/paths.ts"
+  }
+}

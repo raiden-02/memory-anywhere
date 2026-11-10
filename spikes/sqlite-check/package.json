@@ -1,0 +1,5 @@
+{
+  "name": "@memory-anywhere/spike-sqlite-check",
+  "private": true,
+  "type": "module"
+}

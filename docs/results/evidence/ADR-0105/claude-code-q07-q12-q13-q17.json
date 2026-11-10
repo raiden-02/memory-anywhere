@@ -1,0 +1,234 @@
+{
+  "claude_code_version": "2.1.319",
+  "model": "claude-haiku-5-5",
+  "platform": "win32-x64",
+  "q12_hooks": {
+    "sessions": 3,
+    "session_start_calls": 3,
+    "prompt_calls": 3,
+    "session_start_payload_keys": [
+      "cwd",
+      "hook_event_name",
+      "scratchpad_dir",
+      "session_id",
+      "source",
+      "transcript_path"
+    ],
+    "prompt_payload_keys": [
+      "cwd",
+      "hook_event_name",
+      "permission_mode",
+      "prompt",
+      "prompt_id",
+      "scratchpad_dir",
+      "session_id",
+      "transcript_path"
+    ],
+    "session_start_sources": [
+      "startup",
+      "startup",
+      "startup"
+    ],
+    "context_reached_model": [
+      {
+        "answer": "HOOK-CANARY-5RJ8",
+        "ok": true
+      },
+      {
+        "answer": "HOOK-CANARY-5RJ8",
+        "ok": true
+      },
+      {
+        "answer": "HOOK-CANARY-5RJ8",
+        "ok": true
+      }
+    ],
+    "hook_env_variable_names": [
+      "CLAUDE_AGENT_SDK_MCP_NO_PREFIX",
+      "CLAUDE_AGENT_SDK_VERSION",
+      "CLAUDE_CODE_ACCOUNT_UUID",
+      "CLAUDE_CODE_CHILD_SESSION",
+      "CLAUDE_CODE_DESKTOP_APP_VERSION",
+      "CLAUDE_CODE_DESKTOP_WORKFLOW_LIMIT_WAIT",
+      "CLAUDE_CODE_DISABLE_CRON",
+      "CLAUDE_CODE_DISABLE_TERMINAL_TITLE",
+      "CLAUDE_CODE_EAGER_FLUSH",
+      "CLAUDE_CODE_EMIT_STARTUP_TIMING",
+      "CLAUDE_CODE_EMIT_TOOL_USE_SUMMARIES",
+      "CLAUDE_CODE_ENABLE_ASK_USER_QUESTION_TOOL",
+      "CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING",
+      "CLAUDE_CODE_ENTRYPOINT",
+      "CLAUDE_CODE_EXECPATH",
+      "CLAUDE_CODE_HOST_SESSION_ID",
+      "CLAUDE_CODE_HOST_SHORT_TEMP_DIRS",
+      "CLAUDE_CODE_MESSAGING_SOCKET",
+      "CLAUDE_CODE_MESSAGING_TOKEN",
+      "CLAUDE_CODE_OAUTH_SCOPES",
+      "CLAUDE_CODE_ORGANIZATION_UUID",
+      "CLAUDE_CODE_REPORT_FINDINGS",
+      "CLAUDE_CODE_SDK_HAS_HOST_AUTH_REFRESH",
+      "CLAUDE_CODE_SESSION_ATTENDED",
+      "CLAUDE_CODE_SESSION_ID",
+      "CLAUDE_CODE_SIMPLE",
+      "CLAUDE_CODE_STARTUP_FAILURE_RESULTS",
+      "CLAUDE_CODE_TERMINAL_MCP_TOOLS",
+      "CLAUDE_CODE_USER_EMAIL",
+      "CLAUDE_EFFORT",
+      "CLAUDE_ENV_FILE",
+      "CLAUDE_PID",
+      "CLAUDE_PLUGIN_DATA",
+      "CLAUDE_PLUGIN_ROOT",
+      "CLAUDE_PREVIEW_CLASSIFIER_FLOOR",
+      "CLAUDE_PROJECT_DIR"
+    ]
+  },
+  "q07_deferral": [
+    {
+      "variant": "no flag",
+      "ENABLE_TOOL_SEARCH": "true",
+      "tool_uses": [
+        "ToolSearch",
+        "mcp__plugin_memory-anywhere_memory-anywhere__memory_status"
+      ],
+      "deferred": true,
+      "answer": "m0-stub"
+    },
+    {
+      "variant": "no flag",
+      "ENABLE_TOOL_SEARCH": "auto",
+      "tool_uses": [
+        "ToolSearch",
+        "mcp__plugin_memory-anywhere_memory-anywhere__memory_status"
+      ],
+      "deferred": true,
+      "answer": "m0-stub"
+    },
+    {
+      "variant": ".mcp.json alwaysLoad",
+      "ENABLE_TOOL_SEARCH": "true",
+      "tool_uses": [
+        "mcp__plugin_memory-anywhere_memory-anywhere__memory_status"
+      ],
+      "deferred": false,
+      "answer": "m0-stub"
+    },
+    {
+      "variant": ".mcp.json alwaysLoad",
+      "ENABLE_TOOL_SEARCH": "auto",
+      "tool_uses": [
+        "mcp__plugin_memory-anywhere_memory-anywhere__memory_status"
+      ],
+      "deferred": false,
+      "answer": "m0-stub"
+    },
+    {
+      "variant": "tool _meta[\"anthropic/alwaysLoad\"]",
+      "ENABLE_TOOL_SEARCH": "true",
+      "tool_uses": [
+        "mcp__plugin_memory-anywhere_memory-anywhere__memory_status"
+      ],
+      "deferred": false,
+      "answer": "m0-stub"
+    },
+    {
+      "variant": "tool _meta[\"anthropic/alwaysLoad\"]",
+      "ENABLE_TOOL_SEARCH": "auto",
+      "tool_uses": [
+        "mcp__plugin_memory-anywhere_memory-anywhere__memory_status"
+      ],
+      "deferred": false,
+      "answer": "m0-stub"
+    }
+  ],
+  "q13_plugin_settings_deny": [
+    {
+      "plugin_settings_deny": true,
+      "tool_uses": [
+        "Bash"
+      ],
+      "permission_denials": [],
+      "tool_errors": [],
+      "answer": "The command ran and printed:\n\n```\nq13-denied-marker\n```\n\nThe shell's working directory was reset to `<home>\\AppData\\Local\\Temp\\ma cc spike oNb4g3\\work dir`."
+    },
+    {
+      "plugin_settings_deny": false,
+      "tool_uses": [
+        "Bash"
+      ],
+      "permission_denials": [],
+      "tool_errors": [],
+      "answer": "The command ran and printed:\n\n```\nq13-denied-marker\n```\n\nThe shell's working directory was reset to `<home>\\AppData\\Local\\Temp\\ma cc spike oNb4g3\\work dir`."
+    }
+  ],
+  "q12_headless_flags": [
+    {
+      "flags": "(none)",
+      "mcp_servers": [
+        "plugin:plugin:memory-anywhere:memory-anywhere:connected",
+        "user:unreal-mcp:connected",
+        "user:unreal-engine:connected",
+        "user:blender:connected",
+        "user:flopperam-unreal:failed",
+        "claudeai:claude.ai Claude Docs:connected",
+        "claudeai:claude.ai Google Drive:needs-auth",
+        "claudeai:claude.ai Gmail:needs-auth"
+      ]
+    },
+    {
+      "flags": "--strict-mcp-config --mcp-config {\"mcpServers\":{}}",
+      "mcp_servers": []
+    },
+    {
+      "flags": "--setting-sources user",
+      "mcp_servers": [
+        "plugin:plugin:memory-anywhere:memory-anywhere:connected",
+        "user:unreal-mcp:connected",
+        "user:unreal-engine:connected",
+        "user:blender:connected",
+        "user:flopperam-unreal:failed",
+        "claudeai:claude.ai Claude Docs:connected",
+        "claudeai:claude.ai Google Drive:needs-auth",
+        "claudeai:claude.ai Gmail:needs-auth"
+      ]
+    },
+    {
+      "flags": "--setting-sources ",
+      "mcp_servers": [
+        "plugin:plugin:memory-anywhere:memory-anywhere:connected",
+        "claudeai:claude.ai Claude Docs:connected",
+        "claudeai:claude.ai Google Drive:needs-auth",
+        "claudeai:claude.ai Gmail:needs-auth"
+      ]
+    }
+  ],
+  "q17_disabledMcpjsonServers": [
+    {
+      "settings": "(none)",
+      "project_server": [
+        {
+          "name": "memory-anywhere",
+          "status": "connected",
+          "source": "project"
+        }
+      ],
+      "claude_ai_connectors": [
+        "claude.ai Claude Docs",
+        "claude.ai Google Drive",
+        "claude.ai Gmail"
+      ]
+    },
+    {
+      "settings": {
+        "disabledMcpjsonServers": [
+          "memory-anywhere"
+        ]
+      },
+      "project_server": [],
+      "claude_ai_connectors": [
+        "claude.ai Claude Docs",
+        "claude.ai Google Drive",
+        "claude.ai Gmail"
+      ]
+    }
+  ]
+}

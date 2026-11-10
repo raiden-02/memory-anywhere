@@ -1,0 +1,8 @@
+{
+  "app": "node bin/app.ts",
+  "output": "cdk.out",
+  "context": {
+    "@aws-cdk/aws-ec2:restrictDefaultSecurityGroup": false,
+    "@aws-cdk/core:validateAgainstDefaultRules": true
+  }
+}

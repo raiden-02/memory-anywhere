@@ -1,0 +1,45 @@
+# Spike destroy (m0-spike.md §6), owner's PC, 2026-11-10 (UTC; terminal times are UTC-6). mema destroy aws --stage spike.
+# The owner confirmed with "y" on a real terminal (the command refuses without one). Excerpts verbatim, scrubbed.
+
+## Run 1 (release of mema at fe47497): stopped while emptying the CloudTrail bucket
+Destroy MemoryAnywhere-spike (instance, Elastic IP, buckets and their contents)? [y/N] y
+Delete these records in Cloudflare (zone of {host}):
+  A    spike.{host}  ->  98.95.4.37   DNS only (grey cloud), TTL Auto
+Waiting: spike.{host} still resolve(s) to 98.95.4.37 (checking every 30 s) ...   [9 times]
+No record resolves to the Elastic IP any more.
+  memory-anywhere-backup-<aws-account-id>-us-east-1-spike: deleted 21 object versions
+  memory-anywhere-releases-<aws-account-id>-us-east-1-spike: deleted 34 object versions
+mema destroy aws: Error: spawn ENAMETOOLONG
+    at emptyBucket (packages/client/src/deploy/aws.ts:293:15)
+destroy exit code: 1
+-> fixed in 3d87669: the delete list goes through a temp file (file://), at most 1,000 keys per request.
+
+The A record was deleted in the Cloudflare dashboard (at the owner's request, by Claude Code in the owner's Chrome) while run 1
+waited; only "spike.memory" A 98.95.4.37 was removed. The CAA record "0 issue \"letsencrypt.org\"" stays.
+
+## Run 2 (3d87669)
+No record resolves to the Elastic IP any more.
+  memory-anywhere-trail-<aws-account-id>-us-east-1-spike: deleted 1000 object versions
+  memory-anywhere-trail-<aws-account-id>-us-east-1-spike: deleted 1219 object versions
+MemoryAnywhere-spike |  22 | 6:59:57 PM | DELETE_COMPLETE         | AWS::EC2::EIP                         | ElasticIp
+MemoryAnywhere-spike |  35 | 7:00:29 PM | DELETE_COMPLETE         | AWS::EC2::Instance                    | Instance
+MemoryAnywhere-spike |  43 | 7:00:33 PM | DELETE_COMPLETE         | AWS::S3::Bucket                       | BackupBucket (BackupBucket26B8E51C)
+MemoryAnywhere-spike |  46 | 7:00:35 PM | DELETE_COMPLETE         | AWS::KMS::Key                         | Key (Key961B73FD)
+MemoryAnywhere-spike |  50 | 7:01:18 PM | DELETE_COMPLETE         | AWS::CloudFormation::Stack            | MemoryAnywhere-spike
+✅  MemoryAnywhere-spike: destroyed
+MemoryAnywhere-spike destroyed; its Elastic IP is released and its key is scheduled for deletion (30 days).
+destroy exit code: 0
+
+## Audit after the destroy (deploy profile)
+cloudformation describe-stacks MemoryAnywhere-spike   -> "Stack with id MemoryAnywhere-spike does not exist"
+ec2 describe-addresses                                -> none
+ec2 describe-instances (pending/running/stopping/stopped) -> none
+ec2 describe-volumes                                  -> none
+s3api head-bucket backup / releases / trail (spike)   -> 404 Not Found (all three)
+DoH A spike.{host}                                         -> Status 3 (NXDOMAIN), no answers
+ec2 describe-snapshots --owner-ids self               -> snap-0ce81aa25a2e5036d (DLM "daily", tag memory-anywhere:stage=spike, 20 GiB, 2026-11-09)  LEFT OVER
+ssm get-parameter /memory-anywhere-spike/setup-token       -> exists (SecureString under the spike CMK, now pending deletion)  LEFT OVER
+ssm get-parameter /memory-anywhere-spike/llm/api_key       -> exists (SecureString, dummy value from Q26)  LEFT OVER
+ssm get-parameter /memory-anywhere-spike/acme/account-uri  -> exists (String)  LEFT OVER
+ssm get-parameter /memory-anywhere-spike/release/desired   -> exists (String)  LEFT OVER
+(The deploy role cannot list log groups, KMS aliases or all parameters; the stack's log group and key were deleted by CloudFormation above.)

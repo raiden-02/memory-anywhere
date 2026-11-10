@@ -8,7 +8,7 @@ Any MCP-capable harness works with memory-anywhere through the standard path alo
 
 1. Streamable HTTP at `https://{host}/mcp`.
 2. Standard OAuth discovery: 401 + `WWW-Authenticate` → protected-resource metadata (RFC 9728) → authorization-server metadata (RFC 8414) → client registration by CIMD, DCR or pre-registered credentials (each only inside a pairing window, auth-and-security.md §4) → authorization code + PKCE S256.
-3. The policy travels with the server: server instructions, tool descriptions, and the outcome messages returned by `memory_save`.
+3. The policy travels with the server: server instructions, tool descriptions, and the outcome messages returned by `memory_save`. Server instructions reach the model only through stdio clients (Claude Code, Codex, Cursor). Every remote chat app tested in M0 drops them, so for those apps the tool descriptions and the custom instruction carry the policy (ADR-0104).
 
 Hooks, plugins, skills, rules, projections and custom instructions are optional enhancements. No feature of the store depends on them. The server identifies clients only by the OAuth grant (`client_policy`), never by user agent or headers.
 
@@ -16,13 +16,13 @@ Hooks, plugins, skills, rules, projections and custom instructions are optional 
 
 | Client | Route | Registration (default → fallback) | Grant scopes | Client policy defaults | Owner steps |
 | --- | --- | --- | --- | --- | --- |
-| Claude web, desktop, mobile | Vendor cloud → `/mcp` | Static confidential client (client id and secret entered in the custom-connector dialog) → CIMD (hosted Claude client id recorded in M0 Q04) → DCR in pairing window | read, write | class chat; sections all; save_floor none | Pair in admin UI; add custom connector on claude.ai; set tool access mode (M0 Q08) |
-| ChatGPT (Plus, Developer Mode): web on the PC; on the phone through the app or the phone browser if M0 Q01 shows either works | Vendor cloud → `/mcp` | Static confidential client created in the pairing window, redirect `https://chatgpt.com/connector_platform_oauth_redirect` → CIMD (`https://chatgpt.com/oauth/client.json`) → DCR (M0 Q03) | read, write; read only if M0 Q01 fails | class chat; save_floor none | Enable Developer Mode; create the app; pair |
-| Gemini web and mobile | Vendor cloud → `/mcp` | Static confidential client entered under "Advanced features → Show more" → DCR in pairing window (M0 Q10) | read, write | class chat; sections Profile, Preferences, Interests, Tools and setup; save_floor observation; refresh_rotation fixed | Pair; add custom app at gemini.google.com (Keep Activity must be on) |
-| Grok (grok.com) | Vendor cloud → `/mcp` | Decided in M0 Q11: OAuth (static → CIMD → DCR) or a static bearer header token | read, write | class chat; sections as Gemini; save_floor observation | Pair; add custom connector at grok.com/connectors |
+| Claude web, desktop, mobile | Vendor cloud → `/mcp` | Static confidential client (client id and secret entered in the custom-connector dialog; works, ADR-0103) → CIMD → DCR in pairing window | read, write | class chat; sections all; save_floor none | Pair in admin UI; add custom connector on claude.ai; optionally set its Tool permissions to Always allow; paste the custom instruction |
+| ChatGPT (Plus, Developer Mode): web on the PC; on the phone through the app or the phone browser if M0 Q01 shows either works | Vendor cloud → `/mcp` | Static confidential client created in the pairing window, redirect `https://chatgpt.com/connector_platform_oauth_redirect` → CIMD (`https://chatgpt.com/oauth/client.json`) → DCR. Static works (ADR-0102) | read, write (ADR-0101) | class chat; save_floor none | Pair; chatgpt.com/plugins → Add → Add custom MCP server → OAuth → Advanced OAuth settings → User-Defined OAuth Client (`client_secret_basic`); paste the custom instruction |
+| Gemini web (Developer Mode, 3.1 Pro) | Vendor cloud → `/mcp` | Static confidential client entered under Developer Mode → Create new → Connect to an MCP server → Additional settings; redirect per user and server, matched by the rule in `config/vendors.json` (ADR-0107) → DCR in pairing window | read, write | class chat; sections Profile, Preferences, Interests, Tools and setup; save_floor observation; refresh_rotation fixed (rotation also tested and works, ADR-0107) | Pair; add the app at gemini.google.com and finish with "Save your custom app" → Connect (Keep Activity must be on) |
+| Grok (grok.com) | Vendor cloud → `/mcp` | DCR inside the pairing window: its dialog takes only a name and URL (ADR-0108) | read, write | class chat; sections as Gemini; save_floor observation | Pair; grok.com/connectors → New Connector → Custom; authorize in Grok's popup |
 | Claude Code | stdio → `mema mcp --tool claude-code` → `/mcp` | PC grant (`mema login`) | PC grant | class coding | Install plugin; approve hooks if asked; `mema enable` per repo |
 | Codex (CLI, desktop app, IDE extension) | stdio → `mema mcp --tool codex` → `/mcp` | PC grant | PC grant | class coding | Install plugin (CLI, desktop) and trust hooks in `/hooks`; IDE extension uses `config.toml` only |
-| Cursor (paid) | stdio → `mema mcp --tool cursor` → `/mcp` | PC grant | PC grant | class coding | Install plugin or let `mema init` write `~/.cursor/mcp.json` and `~/.cursor/hooks.json` |
+| Cursor (paid) | stdio → `mema mcp --tool cursor` → `/mcp` | PC grant | PC grant | class coding | Install the plugin (MCP server and rule); `mema init` writes `~/.cursor/hooks.json` (ADR-0110) |
 | Claude Code (direct HTTP, no plugin) | Claude Code → `/mcp` over HTTP | CIMD `https://claude.ai/oauth/claude-code-client-metadata` with loopback redirect, inside a pairing window | read, write | class chat; sections as Gemini; save_floor observation (no repo key, so no repo scoping or capture) | Pair as "Claude Code (direct)"; `claude mcp add --transport http …`. The plugin is recommended instead |
 | Any other MCP client | Its own route | Generic pairing (auth-and-security.md §4.4) | read, write (owner chooses) | class chat; sections as Gemini; save_floor observation | Pair; add the URL in that client |
 
@@ -30,8 +30,8 @@ Notes:
 - **Claude desktop** uses the claude.ai connector, which syncs from the account. `mema init` never writes a stdio entry into `%APPDATA%\Claude\claude_desktop_config.json`, so tools do not appear twice.
 - **Claude mobile** picks up a connector added on web or desktop at next login ([Claude custom connectors](https://support.claude.com/en/articles/11175166)).
 - **ChatGPT on the phone is a goal** (owner decision). Developer Mode is documented for "the web" only ([Developer Mode](https://developers.openai.com/api/docs/guides/developer-mode)), so M0 Q01 tests both the ChatGPT phone app and chatgpt.com in the phone's browser. Each one that works gets its own row in suite X. If neither works, ADR-0019 records it as a known limitation with re-test triggers; the design does not change, because ChatGPT uses the standard path and any future mobile support needs no work on our side.
-- **Gemini** connects only on the web and then works on mobile; requires a personal account, US, 18+, English and Keep Activity on; asks before every write; may share data from the chat, Connected Apps and Personal Intelligence (including other people's emails) with the app ([Gemini custom apps](https://support.google.com/gemini/answer/17209137)). This is why its saves are floored to observation and its sections are narrowed.
-- **Grok**: docs say custom connectors are available to all Grok users and the server must be publicly reachable. Auth methods, write approval behaviour and mobile availability are unknown until M0 Q11.
+- **Gemini** connects only on the web (Developer Mode). Google documents that the app then works on mobile, but M0 did not test the phone, and in M0 only 3.1 Pro called the tools (ADR-0107). Gemini requires a personal account, US, 18+, English and Keep Activity on; asks before every write; may share data from the chat, Connected Apps and Personal Intelligence (including other people's emails) with the app ([Gemini custom apps](https://support.google.com/gemini/answer/17209137)). This is why its saves are floored to observation and its sections are narrowed.
+- **Grok**: custom connectors are available to all Grok users, and the server must be publicly reachable. Grok registers by DCR, asks for every advertised scope (`memory.capture` is dropped for it), asks for no write approval, and finds the tools by search (ADR-0108).
 - **Floors and sections**: the save floor follows the section allow-list (write-path.md §5). When the owner grants a client "all sections" in the admin UI (for example Grok after Q11), the UI offers to lift its save floor too; restricted clients always keep the floor.
 - **Cursor web or background agents** are not a separate client in v1. If the owner wants one, it pairs as "Other" (DCR with its documented callback `https://www.cursor.com/agents/mcp/oauth/callback`, [Cursor MCP](https://cursor.com/docs/context/mcp)).
 - **Enterprise accounts** of any vendor are out of scope. The README says so, and `mema init` asks the owner to confirm personal accounts only.
@@ -59,11 +59,10 @@ plugins/claude-code/
   .mcp.json                       {"mcpServers":{"memory-anywhere":{"command":"node","args":["${CLAUDE_PLUGIN_ROOT}/dist/memory-anywhere.mjs","mcp","--tool","claude-code"],"alwaysLoad":true}}}
   hooks/hooks.json                (below)
   skills/memory-anywhere/SKILL.md (memory-policy.md §6.10)
-  settings.json                   {"permissions":{"deny":["Bash(mema export*)","Bash(memory-anywhere export*)","Bash(mema import*)","Bash(memory-anywhere import*)","Bash(mema review*)","Bash(mema enable*)","Bash(mema project*)","Bash(aws *)"]}}
   dist/memory-anywhere.mjs        esbuild bundle of the client (pure JS)
 ```
 
-The `alwaysLoad` key and plugin-level `settings.json` permissions are applied only if M0 Q07 and Q13 confirm Claude Code honours them; otherwise they are omitted and the ADR records it. The deny list is defence in depth, not the boundary (auth-and-security.md §6).
+`alwaysLoad` (and the tools' `_meta["anthropic/alwaysLoad"]`) keeps the tools loaded at turn 1 (ADR-0105). The plugin has no `settings.json`: Claude Code does not apply a plugin's `permissions.deny` (ADR-0110), and auth-and-security.md §6 is the boundary.
 
 `hooks/hooks.json`:
 
@@ -92,9 +91,9 @@ The `alwaysLoad` key and plugin-level `settings.json` permissions are applied on
 
 No `Stop`, `SessionEnd` or transcript reading. Capture uses only the `prompt` field (ADR-0014).
 
-**Duplicate connector.** Connectors added on claude.ai are available in Claude Code automatically, and a local server deduplicates only against a connector at the same URL ([Claude Code MCP](https://code.claude.com/docs/en/mcp)). The plugin's stdio server and the claude.ai connector would both load. `mema init` disables the claude.ai memory-anywhere connector inside Claude Code using the mechanism M0 Q17 confirms (per-connector toggle, or `disableClaudeAiConnectors` if only an all-or-nothing switch exists, in which case `init` asks the owner first). `mema doctor` fails the check `claude-code.duplicate-connector` when both appear in `claude mcp list`.
+**Duplicate connector.** Connectors added on claude.ai are available in Claude Code automatically, and a local server deduplicates only against a connector at the same URL ([Claude Code MCP](https://code.claude.com/docs/en/mcp)). The plugin's stdio server and the claude.ai connector would both load. `mema init` disables the claude.ai memory-anywhere connector inside Claude Code by adding `{"serverName": "claude.ai <connector name>"}` to `deniedMcpServers` in `~/.claude/settings.json`. The name is the one the owner gave the connector on claude.ai, read from `claude mcp list`. Claude Code then prints "blocked by enterprise policy" at start-up, which `init` explains (ADR-0105). `mema doctor` fails the check `claude-code.duplicate-connector` when both appear in `claude mcp list`.
 
-**Repo-defined shadow servers.** `mema doctor` warns when any project `.mcp.json` or Claude Code settings in a known repo defines a server whose name contains `memory-anywhere` or `mema`, or whose URL is `{host}`. `mema init` adds `"disabledMcpjsonServers": ["memory-anywhere"]` to the user-level `~/.claude/settings.json` if M0 Q17 confirms the key.
+**Repo-defined shadow servers.** `mema doctor` warns when any project `.mcp.json` or Claude Code settings in a known repo defines a server whose name contains `memory-anywhere` or `mema`, or whose URL is `{host}`. `mema init` adds `"disabledMcpjsonServers": ["memory-anywhere"]` to the user-level `~/.claude/settings.json`. The key removes a project `.mcp.json` server of that name (ADR-0105).
 
 **Evals** run Claude Code headless with explicit settings (evals.md §8).
 
@@ -104,14 +103,17 @@ Plugin `plugins/codex/` ([Codex plugins](https://developers.openai.com/codex/plu
 
 ```
 plugins/codex/
-  plugin.json        {"name":"memory-anywhere","version":"<semver>","description":"Personal memory across AI apps"}
-  mcp.json           {"mcpServers":{"memory-anywhere":{"type":"stdio","command":"node","args":["<abs>/memory-anywhere.mjs","mcp","--tool","codex"]}}}
-  hooks/hooks.json   SessionStart → hook codex session-start; UserPromptSubmit → hook codex prompt; each with "commandWindows"
+  .codex-plugin/plugin.json  {"name":"memory-anywhere","version":"<semver>","description":"Personal memory across AI apps",
+                              "mcpServers":"./.mcp.json",
+                              "hooks":{"hooks":{SessionStart → hook codex session-start; UserPromptSubmit → hook codex prompt; each with "commandWindows"}}}
+  .mcp.json                  {"mcpServers":{"memory-anywhere":{"type":"stdio","command":"node","args":["<abs>/memory-anywhere.mjs","mcp","--tool","codex"]}}}
   dist/memory-anywhere.mjs
 ```
 
+- Codex 0.167 loads a plugin only from `.codex-plugin/plugin.json`. A root `plugin.json` (the layout in OpenAI's plugin docs) installs but loads nothing (ADR-0110).
 - `<abs>` is filled by `mema init` when it writes the local marketplace file `~/.agents/plugins/marketplace.json`.
-- Installing a plugin does not trust its hooks; the owner trusts them in `/hooks`, and again after any hook change ([Codex hooks](https://learn.chatgpt.com/docs/hooks)). `mema doctor` reports untrusted hooks.
+- Installing a plugin does not trust its hooks. Untrusted hooks are skipped silently, so `init` ends by asking the owner to trust both in `/hooks` (CLI) or Settings → Hooks (desktop). Trust is again needed after any plugin change, because it is stored as a content hash ([Codex hooks](https://learn.chatgpt.com/docs/hooks)). `mema doctor` reports untrusted hooks.
+- A ChatGPT custom app on the owner's account also appears in Codex as `codex_apps/memory_anywhere_*` tools. `doctor` warns when both copies are present (ADR-0110).
 - The Codex IDE extension does not load plugins. For it, `mema init --clients codex` also writes `[mcp_servers.memory-anywhere]` (command `node`, args as above) into `~/.codex/config.toml` (backup + diff). The IDE then has tools but no hooks.
 - The plugin bundles no skill. The standalone skill at `~/.agents/skills/memory-anywhere/SKILL.md` serves Codex and Cursor, so it appears once in each.
 
@@ -122,16 +124,21 @@ plugins/codex/
 
 ### 3.4 Cursor
 
-- MCP: `~/.cursor/mcp.json` entry `memory-anywhere` (stdio, `node <abs>/memory-anywhere.mjs mcp --tool cursor`), or the Cursor plugin `plugins/cursor/.cursor-plugin/plugin.json` bundling the same MCP server and hooks ([Cursor plugins](https://cursor.com/docs/reference/plugins.md)). M0 Q13 picks one; `init` uses it.
-- Hooks: user-level `~/.cursor/hooks.json` with `"version": 1` (project hooks need a trusted workspace; user-level hooks avoid repo files) ([Cursor hooks](https://cursor.com/docs/agent/hooks)).
+- MCP and rule: the Cursor plugin `plugins/cursor/` ([Cursor plugins](https://cursor.com/docs/plugins)) holds three things:
+  - `.cursor-plugin/plugin.json`;
+  - `mcp.json` with the stdio server `node ${CURSOR_PLUGIN_ROOT}/dist/memory-anywhere.mjs mcp --tool cursor` (Cursor documents the variable; the M0 test used an absolute path);
+  - `rules/memory-anywhere.mdc` (`alwaysApply: true`, the policy text of memory-policy.md §6.9, no memory content).
+
+  A plugin rule applies in every workspace (ADR-0110).
+- Hooks: Cursor 3.29 does not run a plugin's hooks (ADR-0110). `mema init` writes user-level `~/.cursor/hooks.json` with `"version": 1`, with backup and diff. Project hooks would need a trusted workspace, and user-level hooks avoid repo files ([Cursor hooks](https://cursor.com/docs/agent/hooks)).
 
 | Event | Input fields used | Action | Output |
 | --- | --- | --- | --- |
-| `sessionStart` | common fields incl. `workspace_roots` (fixture M0 Q12) | as Claude Code, `max_chars: 6000` | `{"additional_context": "<context>"}`; fire-and-forget, so recall may arrive after the first turn |
+| `sessionStart` | common fields incl. `workspace_roots` (fixture M0 Q12; there is no `cwd`: use `workspace_roots[0]` converted from `/C:/…`, else `CURSOR_PROJECT_DIR`) | as Claude Code, `max_chars: 6000` | `{"additional_context": "<context>"}`; fire-and-forget, so recall may arrive after the first turn; it may even fire after `beforeSubmitPrompt` (ADR-0109) |
 | `beforeSubmitPrompt` | `prompt` | as Claude Code prompt hook | `{"continue": true}` (never blocks) |
 
-- Windows: Cursor runs hooks through PowerShell and appends `.ps1` to a script name without `.ps1`, `.bat` or `.cmd`. The hook command is `node "<abs>\memory-anywhere.mjs" hook cursor <event>` if M0 Q12 shows a `node` command line is passed through unchanged; otherwise `init` writes a one-line `memory-anywhere-hook.cmd` next to the bundle and calls that.
-- Rule: Cursor has no user-level rules file (user rules live in Settings). The policy reaches Cursor through server instructions (if Cursor passes them, M0 Q05), tool descriptions, and, in enabled repos only, `.cursor/rules/memory-anywhere.mdc` containing the policy text of memory-policy.md §6.9 and **no memory content**. Before writing it, the client appends `.cursor/rules/memory-anywhere.mdc` to `.git/info/exclude` and confirms with `git check-ignore`; if that fails it does not write. If M0 Q13 shows plugin rules apply in every workspace, the plugin carries the rule instead and no repo file is written.
+- Windows: the hook command is `node "<abs>memory-anywhere.mjs" hook cursor <event>`, which Cursor passes through unchanged, spaces included; no `.cmd` shim is needed. `<abs>` is the installed Cursor plugin's folder under `~/.cursor`, never `%LOCALAPPDATA%`: Cursor's hook process cannot load a script from there (ADR-0109).
+- Rule: the plugin's `rules/memory-anywhere.mdc` carries the policy text to every workspace, so the client writes no rule file into any repository (ADR-0110). Cursor's server instructions: see ADR-0104.
 
 ### 3.5 Generic coding harness
 
@@ -145,9 +152,9 @@ Any MCP client that can launch a stdio server can run `mema mcp --tool generic`.
 2. In the vendor app, add the connector with URL `https://{host}/mcp` and, for static methods, the client id and secret the admin UI shows.
 3. Complete the vendor's OAuth flow: the consent page shows the vendor host, the exact redirect URI and the registration time, and requires a passkey.
 4. In the vendor app, run "What does memory_status say?" The admin UI shows the grant as connected.
-5. Paste the custom instruction (memory-policy.md §6.11) where the app supports one (M0 Q19).
+5. Paste the custom instruction (memory-policy.md §6.11) where the app supports one. `mema init --print-custom-instruction` prints each app's path and limit (ADR-0104). Gemini gets its own plain wording, because it refuses text that names tools. Grok needs none.
 
-Claude only: set the connector's tool access mode to "Always available" where possible. The mode is per conversation with options Auto (default), Always available and On demand ([Claude tool access](https://support.claude.com/en/articles/13730515)); M0 Q08 records whether a per-connector default exists and where.
+Claude only: there is no per-connector loading mode. "Connectors in new chats" (Settings → Capabilities → Advanced) is account-wide: "Only when a chat needs them" (the default) or "At the start of every chat". The default is kept, because the custom instruction alone makes Claude save and recall unprompted. Per connector, only Tool permissions exist (Needs approval / Always allow / Blocked) (ADR-0103).
 
 ### 4.2 Approval friction (documented, accepted)
 
@@ -155,8 +162,8 @@ Claude only: set the connector's tool access mode to "Always available" where po
 | --- | --- |
 | Claude | Read-only tools vs write tools are grouped for allow settings; `memory_save` is not destructive, `memory_forget` is (prompts every time) |
 | ChatGPT | Tools without `readOnlyHint` need approval once per conversation |
-| Gemini | Confirmation for every write action |
-| Grok | M0 Q11 |
+| Gemini | An approval card for every tool call, reads included (ADR-0107) |
+| Grok | None: saves and recalls run without approval (ADR-0108) |
 
 An MCP Apps guided-save widget is out of scope for v1.
 
@@ -177,12 +184,12 @@ No memory content is written outside `{data}`. Coding tools get memory at sessio
 
 Rules:
 - Never write inside Claude Code's `autoMemoryDirectory` (which relocates Claude's own auto memory; [memory](https://code.claude.com/docs/en/memory)).
-- The only file the client writes inside a repository is the policy-only Cursor rule (§3.4). If a file already exists at that path and was not written by this client (its content differs from the generated policy text), the client leaves it untouched and `doctor` warns.
+- The client writes no file inside any repository. The Cursor rule travels in the Cursor plugin (§3.4, ADR-0110).
 - Importers skip any file carrying a memory-anywhere marker (`generated by memory-anywhere`).
 
 ## 6. Install and doctor
 
-`mema init` (config-and-cli.md §3) does, in order: confirm personal accounts; `mema connect` and `mema login`; detect installed tools; install plugins (Claude Code: `claude plugin marketplace add <dir>` then `claude plugin install memory-anywhere@memory-anywhere --scope user`; Codex: local marketplace; Cursor: per M0 Q13), backing up every file it changes as `<file>.ma-bak-<timestamp>` and printing a unified diff first (`--dry-run` stops there); write the standalone skill; ask for the repo deny-list; optionally register the sync task; print the custom instruction; run `doctor`.
+`mema init` (config-and-cli.md §3) does, in order: confirm personal accounts; `mema connect` and `mema login`; detect installed tools; install plugins (Claude Code: `claude plugin marketplace add <dir>` then `claude plugin install memory-anywhere@memory-anywhere --scope user`; Codex: local marketplace, then the owner trusts the hooks; Cursor: copy the plugin to `~/.cursor/plugins/local/memory-anywhere/`, write `~/.cursor/hooks.json`, then ask the owner to run Developer: Reload Window), backing up every file it changes as `<file>.ma-bak-<timestamp>` and printing a unified diff first (`--dry-run` stops there); write the standalone skill; ask for the repo deny-list; optionally register the sync task; print the custom instruction; run `doctor`.
 
 `mema doctor` checks, each with pass/warn/fail and a fix line:
 
@@ -196,11 +203,11 @@ Rules:
 | `claude-code.hooks` | both hooks present and pointing at the current bundle |
 | `claude-code.duplicate-connector` | memory-anywhere tools appear once |
 | `codex.plugin`, `codex.hooks-trusted` | plugin installed; hooks trusted |
-| `cursor.mcp`, `cursor.hooks` | entries present |
+| `cursor.plugin`, `cursor.hooks` | plugin present in `~/.cursor/plugins/local/`; both hooks present and pointing at the plugin's bundle |
 | `skill.single` | the skill exists once across `~/.agents/skills`, `~/.claude/skills`, `~/.codex/skills`, `~/.cursor/skills` |
 | `shadow-servers` | no repo config defines a memory-anywhere-like server |
 | `foreign-hooks` | no user or known-repo hook config mentions `mema`/`memory-anywhere` except the ones this client installed |
 | `repos.enabled` | lists enabled repos and the deny-list |
 | `spool` | below 80% of limits |
-| `caches` | caches fresh (< 24 h); the Cursor rule in each enabled repo matches the generated text |
+| `caches` | caches fresh (< 24 h) |
 | `policy` | each chat client's reported policy version is current |

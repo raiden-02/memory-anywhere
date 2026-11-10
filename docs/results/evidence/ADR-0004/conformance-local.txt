@@ -1,0 +1,216 @@
+﻿# conformance tests 1-20 against a local issuer, Windows 11, Node v24.22.2, oidc-provider 9.13.3, 2026-11-09T00:41:39Z
+# npx vitest run packages/server/test/oauth-conformance --reporter=verbose --silent=false
+
+
+ RUN  v5.1.0 C:/Users/mayur/Desktop/Desktop/Repos/memory-anywhere
+
+ ↓ packages/server/test/oauth-conformance/remote.test.ts > deployed stage > 1. unauthenticated /mcp: 401 with the resource metadata challenge
+ ↓ packages/server/test/oauth-conformance/remote.test.ts > deployed stage > 2. PRM resource is the MCP URL exactly; one authorization server
+ ↓ packages/server/test/oauth-conformance/remote.test.ts > deployed stage > 3 and 17. both discovery paths: the same metadata, issuer = origin
+ ↓ packages/server/test/oauth-conformance/remote.test.ts > deployed stage > 5. /token takes form encoding; a dead refresh token is invalid_grant
+ ↓ packages/server/test/oauth-conformance/remote.test.ts > deployed stage > 6. discovery and token answer within 10 s
+ ↓ packages/server/test/oauth-conformance/remote.test.ts > deployed stage > 15. route inventory: nothing outside routes.allow.txt answers
+ ↓ packages/server/test/oauth-conformance/remote.test.ts > deployed stage > 16. /mcp ignores cookies and rejects a browser Origin
+ ↓ packages/server/test/oauth-conformance/remote.test.ts > deployed stage > 18. reg and auth failures are the one normalised response
+stdout | packages/server/test/oauth-conformance/conformance.test.ts > discovery > 4. authorization responses include iss
+{"event":"grant_created","vendor":"claude","client_id":"ma_hikW42qxjMDcjmu2","redirect_uri":"https://claude.ai/api/mcp/auth_callback"}
+
+stdout | packages/server/test/oauth-conformance/conformance.test.ts > discovery > 5. /token takes form encoding; a dead refresh token is invalid_grant
+{"event":"grant_created","vendor":"claude","client_id":"ma_V04GM_tW9n1b3Xvt","redirect_uri":"https://claude.ai/api/mcp/auth_callback"}
+
+node.exe : stderr | packages/server/test/oauth-conformance/conformance.test.ts > discovery > 5. /token takes form 
+encoding; a dead refresh token is invalid_grant
+At line:1 char:1
++ & "C:\nvm4w\nodejs/node.exe" "C:\nvm4w\nodejs/node_modules/npm/bin/np ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (stderr | packag...s invalid_grant:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+oidc-provider WARNING: already parsed request body detected, having upstream middleware parser is not recommended, 
+resolving to use req.body or request.body instead
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > discovery > 5. /token takes form encoding; a 
+dead refresh token is invalid_grant
+{"event":"grant.error","error":"invalid_grant","description":"grant request is invalid"}
+
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > discovery > 1. unauthenticated /mcp: 401 with the resource metadata challenge 2ms
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > discovery > 2. PRM resource is the MCP URL exactly; one authorization server 2ms
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > discovery > 3. AS metadata advertises CIMD, `none`, iss and S256 only 4ms
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > discovery > 4. authorization responses include iss 29ms
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > discovery > 5. /token takes form encoding; a dead refresh token is invalid_grant 25ms
+stdout | packages/server/test/oauth-conformance/conformance.test.ts > discovery > 6. a cold server answers discovery, registration and token within 10 s, refresh within 30 s
+{"event":"grant_created","vendor":"claude","client_id":"EW0ynkohEHBVj5OKp87fJ70pbAuOCPTU8VCRX97jvmQ","redirect_uri":"https://claude.ai/api/mcp/auth_callback"}
+
+stdout | packages/server/test/oauth-conformance/conformance.test.ts > discovery > 6. a cold server answers discovery, registration and token within 10 s, refresh within 30 s
+{"test":6,"startMs":76,"discoveryMs":1,"registrationMs":3,"tokenMs":3,"refreshMs":2}
+
+stdout | packages/server/test/oauth-conformance/conformance.test.ts > clients > 7. the PC client's loopback redirect matches any port on localhost and 127.0.0.1
+{"event":"grant_created","vendor":"pc","client_id":"memory-anywhere-cli","redirect_uri":"http://127.0.0.1:53111/callback"}
+
+stdout | packages/server/test/oauth-conformance/conformance.test.ts > clients > 7. the PC client's loopback redirect matches any port on localhost and 127.0.0.1
+{"event":"grant_created","vendor":"pc","client_id":"memory-anywhere-cli","redirect_uri":"http://localhost:61002/callback"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > clients > 7. the PC client's loopback redirect 
+matches any port on localhost and 127.0.0.1
+{"event":"authorization.error","error":"invalid_redirect_uri","description":"redirect_uri did not match any of the 
+client's registered redirect_uris"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > clients > 7. the PC client's loopback redirect 
+matches any port on localhost and 127.0.0.1
+{"event":"authorization.error","error":"invalid_redirect_uri","description":"redirect_uri did not match any of the 
+client's registered redirect_uris"}
+
+stdout | packages/server/test/oauth-conformance/conformance.test.ts > clients > 8a. static clients: authorize inside their window only
+{"event":"grant_created","vendor":"chatgpt","client_id":"ma_APmkPMVS-rIlE0zP","redirect_uri":"https://chatgpt.com/connector_platform_oauth_redirect"}
+
+stdout | packages/server/test/oauth-conformance/conformance.test.ts > clients > 8b. DCR: the vendor's exact redirect registers inside a window, never outside; a foreign redirect closes it
+{"event":"grant_created","vendor":"chatgpt","client_id":"umf2NuWn5rRT6TUL-yof7sZyv9g3mEdIc2m8X5DYBcV","redirect_uri":"https://chatgpt.com/connector_platform_oauth_redirect"}
+
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > discovery > 6. a cold server answers discovery, registration and token within 10 s, refresh within 30 s 84ms
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > clients > 7. the PC client's loopback redirect matches any port on localhost and 127.0.0.1 43ms
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > clients > 8a. static clients: authorize inside their window only 18ms
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > clients > 8b. DCR: the vendor's exact redirect registers inside a window, never outside; a foreign redirect closes it 26ms
+stdout | packages/server/test/oauth-conformance/conformance.test.ts > clients > 8c. CIMD: the vendor's document works inside its window only, with its exact redirect
+{"event":"grant_created","vendor":"chatgpt","client_id":"https://chatgpt.com/oauth/client.json","redirect_uri":"https://chatgpt.com/connector_platform_oauth_redirect"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > clients > 8c. CIMD: the vendor's document works 
+inside its window only, with its exact redirect
+{"event":"authorization.error","error":"invalid_client","description":"client is not allowed"}
+
+stdout | packages/server/test/oauth-conformance/conformance.test.ts > clients > 8d. Claude Code (direct): CIMD with a loopback redirect on any port
+{"event":"grant_created","vendor":"claude-code","client_id":"https://claude.ai/oauth/claude-code-client-metadata","redirect_uri":"http://localhost:49152/callback"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > clients > 9. PKCE plain and a missing challenge 
+are refused with the error page
+{"event":"authorization.error","error":"invalid_request","description":"not supported value of code_challenge_method"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > clients > 9. PKCE plain and a missing challenge 
+are refused with the error page
+{"event":"authorization.error","error":"invalid_request","description":"Authorization Server policy requires PKCE to 
+be used for this request"}
+
+stdout | packages/server/test/oauth-conformance/conformance.test.ts > clients > 10. reusing an authorization code fails and revokes what it issued
+{"event":"grant_created","vendor":"claude","client_id":"ma_JQDlInvOMWlbk8vt","redirect_uri":"https://claude.ai/api/mcp/auth_callback"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > clients > 10. reusing an authorization code 
+fails and revokes what it issued
+{"event":"grant.error","error":"invalid_grant","description":"grant request is invalid"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > clients > 10. reusing an authorization code 
+fails and revokes what it issued
+{"event":"grant.error","error":"invalid_grant","description":"grant request is invalid"}
+
+stdout | packages/server/test/oauth-conformance/conformance.test.ts > clients > 11. refresh reuse within 30 s returns the same pair; after 30 s it revokes the grant
+{"event":"grant_created","vendor":"claude","client_id":"ma_pR5j6Uz0RzEZg-YO","redirect_uri":"https://claude.ai/api/mcp/auth_callback"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > clients > 11. refresh reuse within 30 s returns 
+the same pair; after 30 s it revokes the grant
+{"event":"grant.error","error":"invalid_grant","description":"grant request is invalid"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > clients > 11. refresh reuse within 30 s returns 
+the same pair; after 30 s it revokes the grant
+{"event":"grant.error","error":"invalid_grant","description":"grant request is invalid"}
+
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > clients > 8c. CIMD: the vendor's document works inside its window only, with its exact redirect 41ms
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > clients > 8d. Claude Code (direct): CIMD with a loopback redirect on any port 15ms
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > clients > 9. PKCE plain and a missing challenge are refused with the error page 6ms
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > clients > 10. reusing an authorization code fails and revokes what it issued 22ms
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > clients > 11. refresh reuse within 30 s returns the same pair; after 30 s it revokes the grant 23ms
+stdout | packages/server/test/oauth-conformance/conformance.test.ts > clients > 11b. a `fixed` client policy keeps the refresh token (Gemini static, §5.3)
+{"event":"grant_created","vendor":"claude","client_id":"ma_rQUK15JIhyD3lAfH","redirect_uri":"https://claude.ai/api/mcp/auth_callback"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > clients > 12. an invalid redirect_uri or 
+client_id yields the error page, not a redirect
+{"event":"authorization.error","error":"invalid_redirect_uri","description":"redirect_uri did not match any of the 
+client's registered redirect_uris"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > clients > 12. an invalid redirect_uri or 
+client_id yields the error page, not a redirect
+{"event":"authorization.error","error":"invalid_redirect_uri","description":"redirect_uri did not match any of the 
+client's registered redirect_uris"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > clients > 12. an invalid redirect_uri or 
+client_id yields the error page, not a redirect
+{"event":"authorization.error","error":"invalid_target","description":"resource indicator is missing, or unknown"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > clients > 13. CIMD URL shapes and targets 
+outside the rules are refused
+{"event":"authorization.error","error":"invalid_client","description":"client_id metadata document fetch failed"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > clients > 13. CIMD URL shapes and targets 
+outside the rules are refused
+{"event":"authorization.error","error":"invalid_client","description":"client_id metadata document fetch failed"}
+
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > clients > 11b. a `fixed` client policy keeps the refresh token (Gemini static, §5.3) 21ms
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > clients > 12. an invalid redirect_uri or client_id yields the error page, not a redirect 10ms
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > clients > 13. CIMD URL shapes and targets outside the rules are refused 32ms
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > clients > 14. DCR fields outside the allow-list are refused; RFC 7592 endpoints are 404 35ms
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > surfaces > 15. route inventory: nothing outside 
+routes.allow.txt answers
+{"event":"authorization.error","error":"invalid_request","description":"authorization request has expired"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > surfaces > 15. route inventory: nothing outside 
+routes.allow.txt answers
+{"event":"grant.error","error":"invalid_request","description":"only application/x-www-form-urlencoded content-type 
+bodies are supported on POST /token"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > surfaces > 15. route inventory: nothing outside 
+routes.allow.txt answers
+{"event":"revocation.error","error":"invalid_request","description":"only application/x-www-form-urlencoded 
+content-type bodies are supported on POST /token/revocation"}
+
+stdout | packages/server/test/oauth-conformance/conformance.test.ts > surfaces > 16. /mcp ignores cookies and rejects a browser Origin
+{"event":"grant_created","vendor":"claude","client_id":"ma_LiRhLi__ybPCc0TI","redirect_uri":"https://claude.ai/api/mcp/auth_callback"}
+
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > surfaces > 15. route inventory: nothing outside routes.allow.txt answers 186ms
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > surfaces > 16. /mcp ignores cookies and rejects a browser Origin 21ms
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > surfaces > 18. failures on reg, auth and token 
+are byte-identical with and without an open window
+{"event":"grant.error","error":"invalid_client","description":"client authentication failed"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > surfaces > 18. failures on reg, auth and token 
+are byte-identical with and without an open window
+{"event":"grant.error","error":"invalid_grant","description":"grant request is invalid"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > surfaces > 18. failures on reg, auth and token 
+are byte-identical with and without an open window
+{"event":"grant.error","error":"invalid_client","description":"client authentication failed"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > surfaces > 18. failures on reg, auth and token 
+are byte-identical with and without an open window
+{"event":"grant.error","error":"invalid_grant","description":"grant request is invalid"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > surfaces > 18. failures on reg, auth and token 
+are byte-identical with and without an open window
+{"event":"authorization.error","error":"invalid_request","description":"Authorization Server policy requires PKCE to 
+be used for this request"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > surfaces > 18. failures on reg, auth and token 
+are byte-identical with and without an open window
+{"event":"grant.error","error":"invalid_client","description":"client authentication failed"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > surfaces > 18. failures on reg, auth and token 
+are byte-identical with and without an open window
+{"event":"grant.error","error":"invalid_grant","description":"grant request is invalid"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > surfaces > 18. failures on reg, auth and token 
+are byte-identical with and without an open window
+{"event":"grant.error","error":"invalid_client","description":"client authentication failed"}
+
+stderr | packages/server/test/oauth-conformance/conformance.test.ts > surfaces > 18. failures on reg, auth and token 
+are byte-identical with and without an open window
+{"event":"grant.error","error":"invalid_grant","description":"grant request is invalid"}
+
+stdout | packages/server/test/oauth-conformance/conformance.test.ts > surfaces > 19. consent needs the window's pair cookie or its pair code
+{"event":"grant_created","vendor":"claude","client_id":"ma_4iL43Ah5CuegvfxF","redirect_uri":"https://claude.ai/api/mcp/auth_callback"}
+
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > surfaces > 17. both discovery paths return the same metadata with the host's issuer 1ms
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > surfaces > 18. failures on reg, auth and token are byte-identical with and without an open window 26ms
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > surfaces > 19. consent needs the window's pair cookie or its pair code 25ms
+ ✓ packages/server/test/oauth-conformance/conformance.test.ts > surfaces > 20. MRTR requestState: tampered, expired, replayed or other-grant state falls back 0ms
+
+ Test Files  1 passed | 1 skipped (2)
+      Tests  24 passed | 8 skipped (32)
+   Start at  18:42:01
+   Duration  1.75s (tests 53%, import 45%, transform 2%)
+

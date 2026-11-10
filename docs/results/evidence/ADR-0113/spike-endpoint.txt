@@ -1,0 +1,15 @@
+# Spike endpoint check (m0-spike.md section 2), from the owner's PC, 2026-11-08 12:22 local.
+# Deploy: mema deploy aws --stage spike --release-file memory-anywhere-server-0.0.1-m0.1-linux-arm64.tar.gz (dev-signed).
+
+$ curl https://spike.{host}/.well-known/oauth-protected-resource/mcp
+{"resource":"https://spike.{host}/mcp","authorization_servers":["https://spike.{host}/oauth"],"bearer_methods_supported":["header"],"resource_name":"memory-anywhere (M0 spike)"}
+
+$ curl https://spike.{host}/v1/health
+{"status":"ok","version":"0.0.1-m0.1"}
+
+TLS: curl verified the certificate chain (Let's Encrypt, TLS-ALPN-01 on 443; no HTTP-01).
+TCP connect to spike.{host}:80: no answer within 8 s (security group allows only 443 in).
+TCP connect to spike.{host}:22: no answer within 8 s.
+
+DNS (DoH, cloudflare-dns.com): first seen proxied (104.21.52.87, 172.67.197.71) and refused by mema deploy;
+after the owner set the record to DNS only it resolved to the Elastic IP 98.95.4.37 and the deploy continued.

@@ -1,0 +1,961 @@
+{
+  "question": "Q16",
+  "model": "claude-haiku-5-5",
+  "harness": "Claude Code headless (owner subscription, no API key)",
+  "labels": "author",
+  "prompt": "memory-policy.md §6.12 extractor-prompt",
+  "runs": [
+    {
+      "run": 1,
+      "calls": 5,
+      "json_only_calls": 5,
+      "items": 32,
+      "recall": {
+        "k": 25,
+        "n": 26,
+        "p": 0.9615384615384616,
+        "ci95": [
+          0.8110722092608273,
+          0.9931780150820144
+        ]
+      },
+      "precision": {
+        "k": 31,
+        "n": 32,
+        "p": 0.96875,
+        "ci95": [
+          0.8425573603233156,
+          0.9944621398972968
+        ]
+      },
+      "negatives_with_extraction": {
+        "k": 0,
+        "n": 24,
+        "ids": [],
+        "p": 0,
+        "ci95": [
+          0,
+          0.13797620655132792
+        ]
+      },
+      "secret_or_unknown_id_items": 0,
+      "spans_not_verbatim_or_short": 0,
+      "content_over_400": 0,
+      "invalid_kind": 0,
+      "extracted": [
+        {
+          "content": "Prefers short answers of two or three sentences to quick questions.",
+          "kind": "preference",
+          "span": "keep answers to quick questions short, two or three sentences max",
+          "prompt_id": "p01",
+          "attribute": "response_length",
+          "entity": null
+        },
+        {
+          "content": "Works as a backend engineer.",
+          "kind": "fact",
+          "span": "I work as a backend engineer",
+          "prompt_id": "p02",
+          "attribute": "role",
+          "entity": null
+        },
+        {
+          "content": "Works at Freightly, a logistics startup.",
+          "kind": "fact",
+          "span": "I work as a backend engineer at a logistics startup called Freightly",
+          "prompt_id": "p02",
+          "attribute": "employer",
+          "entity": "Freightly"
+        },
+        {
+          "content": "Has a sister named Priya.",
+          "kind": "fact",
+          "span": "my sister Priya",
+          "prompt_id": "p03",
+          "attribute": "sibling",
+          "entity": "Priya"
+        },
+        {
+          "content": "Plans to move to Lisbon in March.",
+          "kind": "event",
+          "span": "I'm moving to Lisbon in March",
+          "prompt_id": "p04",
+          "attribute": "location",
+          "entity": "Lisbon"
+        },
+        {
+          "content": "Uses a Framework 13 laptop running Fedora for all development work.",
+          "kind": "fact",
+          "span": "I use a Framework 13 laptop running Fedora",
+          "prompt_id": "p05",
+          "attribute": "device",
+          "entity": "Framework 13"
+        },
+        {
+          "content": "Prefers code examples in TypeScript rather than Python.",
+          "kind": "preference",
+          "span": "always give code examples in TypeScript, not Python",
+          "prompt_id": "p06",
+          "attribute": "code_language",
+          "entity": "TypeScript"
+        },
+        {
+          "content": "Is building a habit-tracking side project with SvelteKit and Supabase.",
+          "kind": "fact",
+          "span": "My side project is a habit-tracking app built with SvelteKit and Supabase",
+          "prompt_id": "p07",
+          "attribute": "project",
+          "entity": "habit-tracking app"
+        },
+        {
+          "content": "Aims to launch the habit-tracking side project in June.",
+          "kind": "fact",
+          "span": "I'm aiming to launch in June",
+          "prompt_id": "p07",
+          "attribute": "launch_target",
+          "entity": "habit-tracking app"
+        },
+        {
+          "content": "Decided to replace MongoDB with Postgres on the Freightly ingest service because transactions are needed.",
+          "kind": "event",
+          "span": "We decided to drop MongoDB for Postgres on the Freightly ingest service because we need transactions",
+          "prompt_id": "p08",
+          "attribute": "architecture_decision",
+          "entity": "Freightly ingest service"
+        },
+        {
+          "content": "Is vegetarian; recipe suggestions should exclude meat and fish.",
+          "kind": "preference",
+          "span": "I'm vegetarian, so recipe suggestions should never include meat or fish",
+          "prompt_id": "p09",
+          "attribute": "diet",
+          "entity": null
+        },
+        {
+          "content": "Reports to manager Dana Kim in a weekly Thursday check-in.",
+          "kind": "fact",
+          "span": "My manager is Dana Kim",
+          "prompt_id": "p10",
+          "attribute": "manager",
+          "entity": "Dana Kim"
+        },
+        {
+          "content": "Is studying for the AWS Solutions Architect certification exam.",
+          "kind": "fact",
+          "span": "I'm studying for the AWS Solutions Architect exam",
+          "prompt_id": "p11",
+          "attribute": "study_goal",
+          "entity": "AWS Solutions Architect exam"
+        },
+        {
+          "content": "Prefers metric units for all measurements.",
+          "kind": "preference",
+          "span": "I prefer metric units for everything.",
+          "prompt_id": "p12",
+          "attribute": "units",
+          "entity": null
+        },
+        {
+          "content": "Plays bass in a jazz trio on weekends.",
+          "kind": "fact",
+          "span": "I play bass in a jazz trio on weekends.",
+          "prompt_id": "p13",
+          "attribute": "hobby",
+          "entity": "jazz trio"
+        },
+        {
+          "content": "Wants the assistant to never use emojis in replies.",
+          "kind": "preference",
+          "span": "Don't use emojis in your replies to me, ever.",
+          "prompt_id": "p14",
+          "attribute": "response_style",
+          "entity": null
+        },
+        {
+          "content": "Has a daughter named Maya.",
+          "kind": "fact",
+          "span": "My daughter Maya just started first grade.",
+          "prompt_id": "p15",
+          "attribute": "child",
+          "entity": "Maya"
+        },
+        {
+          "content": "Team switched from Jira to Linear and plans to keep using Linear.",
+          "kind": "fact",
+          "span": "Our team switched from Jira to Linear last quarter",
+          "prompt_id": "p16",
+          "attribute": "team_tool",
+          "entity": "Linear"
+        },
+        {
+          "content": "Lives in Denver.",
+          "kind": "fact",
+          "span": "I live in Denver now",
+          "prompt_id": "p17",
+          "attribute": "location",
+          "entity": "Denver"
+        },
+        {
+          "content": "Moved from Hyderabad to Denver.",
+          "kind": "event",
+          "span": "we moved from Hyderabad last June",
+          "prompt_id": "p17",
+          "attribute": "location_history",
+          "entity": "Hyderabad"
+        },
+        {
+          "content": "Chose Stripe for payments in the habit app because it supports Portugal payouts.",
+          "kind": "fact",
+          "span": "I chose Stripe for payments because it supports Portugal payouts",
+          "prompt_id": "p18",
+          "attribute": "project_decision",
+          "entity": "habit app"
+        },
+        {
+          "content": "Wants blunt, unsoftened feedback when their writing is reviewed.",
+          "kind": "preference",
+          "span": "When you review my writing, be blunt; I don't need softening.",
+          "prompt_id": "p19",
+          "attribute": "feedback_style",
+          "entity": null
+        },
+        {
+          "content": "Native language is Telugu.",
+          "kind": "fact",
+          "span": "My native language is Telugu",
+          "prompt_id": "p20",
+          "attribute": "native_language",
+          "entity": "Telugu"
+        },
+        {
+          "content": "Prefers replies in English.",
+          "kind": "preference",
+          "span": "I prefer replies in English.",
+          "prompt_id": "p20",
+          "attribute": "response_language",
+          "entity": null
+        },
+        {
+          "content": "Usually codes on a split keyboard with a Colemak layout.",
+          "kind": "fact",
+          "span": "I usually code on a split keyboard with a Colemak layout.",
+          "prompt_id": "p21",
+          "attribute": "input device",
+          "entity": null
+        },
+        {
+          "content": "Is the on-call lead for the payments team every other week.",
+          "kind": "fact",
+          "span": "I'm the on-call lead for the payments team every other week",
+          "prompt_id": "p22",
+          "attribute": "role",
+          "entity": "payments team"
+        },
+        {
+          "content": "Has a partner named Sam.",
+          "kind": "fact",
+          "span": "My partner Sam is a ceramic artist",
+          "prompt_id": "p23",
+          "attribute": "relationship",
+          "entity": "Sam"
+        },
+        {
+          "content": "Partner Sam is a ceramic artist.",
+          "kind": "fact",
+          "span": "My partner Sam is a ceramic artist; we share a studio.",
+          "prompt_id": "p23",
+          "attribute": "occupation",
+          "entity": "Sam"
+        },
+        {
+          "content": "Shares a studio with partner Sam.",
+          "kind": "fact",
+          "span": "we share a studio",
+          "prompt_id": "p23",
+          "attribute": "workplace",
+          "entity": "Sam"
+        },
+        {
+          "content": "Prefers Europe/Lisbon as the time zone from April onward.",
+          "kind": "preference",
+          "span": "my preferred time zone is Europe/Lisbon",
+          "prompt_id": "p25",
+          "attribute": "time zone",
+          "entity": null
+        },
+        {
+          "content": "Is lactose intolerant.",
+          "kind": "fact",
+          "span": "I'm lactose intolerant",
+          "prompt_id": "p26",
+          "attribute": "dietary restriction",
+          "entity": null
+        },
+        {
+          "content": "Wants recipes to be dairy-free.",
+          "kind": "preference",
+          "span": "recipes should be dairy-free",
+          "prompt_id": "p26",
+          "attribute": "diet",
+          "entity": null
+        }
+      ]
+    },
+    {
+      "run": 2,
+      "calls": 5,
+      "json_only_calls": 5,
+      "items": 36,
+      "recall": {
+        "k": 25,
+        "n": 26,
+        "p": 0.9615384615384616,
+        "ci95": [
+          0.8110722092608273,
+          0.9931780150820144
+        ]
+      },
+      "precision": {
+        "k": 34,
+        "n": 36,
+        "p": 0.9444444444444444,
+        "ci95": [
+          0.8185534265532164,
+          0.9846300134744463
+        ]
+      },
+      "negatives_with_extraction": {
+        "k": 0,
+        "n": 24,
+        "ids": [],
+        "p": 0,
+        "ci95": [
+          0,
+          0.13797620655132792
+        ]
+      },
+      "secret_or_unknown_id_items": 0,
+      "spans_not_verbatim_or_short": 0,
+      "content_over_400": 0,
+      "invalid_kind": 0,
+      "extracted": [
+        {
+          "content": "Prefers short answers of two or three sentences max to quick questions.",
+          "kind": "preference",
+          "span": "keep answers to quick questions short, two or three sentences max.",
+          "prompt_id": "p01",
+          "attribute": "response_length",
+          "entity": null
+        },
+        {
+          "content": "Works as a backend engineer.",
+          "kind": "fact",
+          "span": "I work as a backend engineer at a logistics startup called Freightly.",
+          "prompt_id": "p02",
+          "attribute": "role",
+          "entity": null
+        },
+        {
+          "content": "Works at Freightly, a logistics startup.",
+          "kind": "fact",
+          "span": "I work as a backend engineer at a logistics startup called Freightly.",
+          "prompt_id": "p02",
+          "attribute": "employer",
+          "entity": "Freightly"
+        },
+        {
+          "content": "Has a sister named Priya.",
+          "kind": "fact",
+          "span": "Remember that my sister Priya is a pediatric nurse in Toronto.",
+          "prompt_id": "p03",
+          "attribute": "sibling",
+          "entity": "Priya"
+        },
+        {
+          "content": "Plans to move to Lisbon, Portugal in March.",
+          "kind": "event",
+          "span": "I'm moving to Lisbon in March",
+          "prompt_id": "p04",
+          "attribute": "location",
+          "entity": "Lisbon, Portugal"
+        },
+        {
+          "content": "Wants plans scheduled around Portugal time after the move to Lisbon.",
+          "kind": "preference",
+          "span": "plan things around Portugal time after that",
+          "prompt_id": "p04",
+          "attribute": "time_zone",
+          "entity": "Portugal"
+        },
+        {
+          "content": "Uses a Framework 13 laptop for all development work.",
+          "kind": "fact",
+          "span": "I use a Framework 13 laptop running Fedora for all my dev work.",
+          "prompt_id": "p05",
+          "attribute": "device",
+          "entity": "Framework 13 laptop"
+        },
+        {
+          "content": "Runs Fedora on their development laptop.",
+          "kind": "fact",
+          "span": "I use a Framework 13 laptop running Fedora",
+          "prompt_id": "p05",
+          "attribute": "operating_system",
+          "entity": "Fedora"
+        },
+        {
+          "content": "Prefers code examples in TypeScript rather than Python.",
+          "kind": "preference",
+          "span": "always give code examples in TypeScript, not Python",
+          "prompt_id": "p06",
+          "attribute": "programming_language",
+          "entity": "TypeScript"
+        },
+        {
+          "content": "Is building a habit-tracking app as a side project.",
+          "kind": "fact",
+          "span": "My side project is a habit-tracking app",
+          "prompt_id": "p07",
+          "attribute": "project",
+          "entity": "habit-tracking app"
+        },
+        {
+          "content": "Builds the habit-tracking app with SvelteKit and Supabase.",
+          "kind": "fact",
+          "span": "built with SvelteKit and Supabase",
+          "prompt_id": "p07",
+          "attribute": "tech_stack",
+          "entity": "habit-tracking app"
+        },
+        {
+          "content": "Aims to launch the habit-tracking app in June.",
+          "kind": "event",
+          "span": "I'm aiming to launch in June",
+          "prompt_id": "p07",
+          "attribute": "launch_target",
+          "entity": "habit-tracking app"
+        },
+        {
+          "content": "Decided to replace MongoDB with Postgres for the Freightly ingest service because transactions are required.",
+          "kind": "event",
+          "span": "We decided to drop MongoDB for Postgres on the Freightly ingest service because we need transactions.",
+          "prompt_id": "p08",
+          "attribute": "decision",
+          "entity": "Freightly ingest service"
+        },
+        {
+          "content": "Is vegetarian and wants recipe suggestions to exclude meat and fish.",
+          "kind": "preference",
+          "span": "I'm vegetarian, so recipe suggestions should never include meat or fish.",
+          "prompt_id": "p09",
+          "attribute": "diet",
+          "entity": null
+        },
+        {
+          "content": "Has a manager named Dana Kim.",
+          "kind": "fact",
+          "span": "My manager is Dana Kim",
+          "prompt_id": "p10",
+          "attribute": "manager",
+          "entity": "Dana Kim"
+        },
+        {
+          "content": "Reports to Dana Kim weekly on Thursdays.",
+          "kind": "fact",
+          "span": "I report to her weekly on Thursdays",
+          "prompt_id": "p10",
+          "attribute": "reporting_schedule",
+          "entity": "Dana Kim"
+        },
+        {
+          "content": "Prefers metric units for all measurements.",
+          "kind": "preference",
+          "span": "I prefer metric units for everything",
+          "prompt_id": "p12",
+          "attribute": "measurement_units",
+          "entity": null
+        },
+        {
+          "content": "Plays bass in a jazz trio on weekends.",
+          "kind": "fact",
+          "span": "I play bass in a jazz trio on weekends.",
+          "prompt_id": "p13",
+          "attribute": "hobby",
+          "entity": "jazz trio"
+        },
+        {
+          "content": "Does not want emojis in the assistant's replies.",
+          "kind": "preference",
+          "span": "Don't use emojis in your replies to me, ever.",
+          "prompt_id": "p14",
+          "attribute": "emoji_use",
+          "entity": null
+        },
+        {
+          "content": "Has a daughter named Maya.",
+          "kind": "fact",
+          "span": "My daughter Maya just started first grade.",
+          "prompt_id": "p15",
+          "attribute": "child",
+          "entity": "Maya"
+        },
+        {
+          "content": "Team uses Linear for issue tracking after switching from Jira.",
+          "kind": "fact",
+          "span": "switched from Jira to Linear last quarter",
+          "prompt_id": "p16",
+          "attribute": "issue_tracker",
+          "entity": "Linear"
+        },
+        {
+          "content": "Lives in Denver.",
+          "kind": "fact",
+          "span": "I live in Denver now",
+          "prompt_id": "p17",
+          "attribute": "city",
+          "entity": "Denver"
+        },
+        {
+          "content": "Is building a habit app.",
+          "kind": "fact",
+          "span": "For the habit app",
+          "prompt_id": "p18",
+          "attribute": "project",
+          "entity": "habit app"
+        },
+        {
+          "content": "Chose Stripe for payments in the habit app because it supports payouts to Portugal.",
+          "kind": "fact",
+          "span": "I chose Stripe for payments because it supports Portugal payouts",
+          "prompt_id": "p18",
+          "attribute": "payments_provider",
+          "entity": "Stripe"
+        },
+        {
+          "content": "Wants blunt, unsoftened feedback when their writing is reviewed.",
+          "kind": "preference",
+          "span": "be blunt; I don't need softening",
+          "prompt_id": "p19",
+          "attribute": "feedback_style",
+          "entity": null
+        },
+        {
+          "content": "Native language is Telugu.",
+          "kind": "fact",
+          "span": "My native language is Telugu",
+          "prompt_id": "p20",
+          "attribute": "native_language",
+          "entity": "Telugu"
+        },
+        {
+          "content": "Prefers replies in English.",
+          "kind": "preference",
+          "span": "I prefer replies in English",
+          "prompt_id": "p20",
+          "attribute": "reply_language",
+          "entity": null
+        },
+        {
+          "content": "Usually codes on a split keyboard with a Colemak layout.",
+          "kind": "fact",
+          "span": "I usually code on a split keyboard with a Colemak layout",
+          "prompt_id": "p21",
+          "attribute": "device",
+          "entity": null
+        },
+        {
+          "content": "Is the on-call lead for the payments team every other week.",
+          "kind": "fact",
+          "span": "I'm the on-call lead for the payments team every other week",
+          "prompt_id": "p22",
+          "attribute": "role",
+          "entity": "payments team"
+        },
+        {
+          "content": "Has a partner named Sam.",
+          "kind": "fact",
+          "span": "My partner Sam",
+          "prompt_id": "p23",
+          "attribute": "relationship",
+          "entity": "Sam"
+        },
+        {
+          "content": "Sam is a ceramic artist.",
+          "kind": "fact",
+          "span": "Sam is a ceramic artist",
+          "prompt_id": "p23",
+          "attribute": "occupation",
+          "entity": "Sam"
+        },
+        {
+          "content": "Shares a studio with their partner Sam.",
+          "kind": "fact",
+          "span": "we share a studio",
+          "prompt_id": "p23",
+          "attribute": "living_situation",
+          "entity": "Sam"
+        },
+        {
+          "content": "Has committed to running a half marathon in October.",
+          "kind": "event",
+          "span": "I've committed to running a half marathon in October",
+          "prompt_id": "p24",
+          "attribute": "goal",
+          "entity": "half marathon"
+        },
+        {
+          "content": "Prefers the time zone Europe/Lisbon from April onward.",
+          "kind": "preference",
+          "span": "my preferred time zone is Europe/Lisbon from April onward",
+          "prompt_id": "p25",
+          "attribute": "time_zone",
+          "entity": null
+        },
+        {
+          "content": "Is lactose intolerant.",
+          "kind": "fact",
+          "span": "I'm lactose intolerant",
+          "prompt_id": "p26",
+          "attribute": "health",
+          "entity": null
+        },
+        {
+          "content": "Prefers recipes to be dairy-free.",
+          "kind": "preference",
+          "span": "recipes should be dairy-free",
+          "prompt_id": "p26",
+          "attribute": "recipe_format",
+          "entity": null
+        }
+      ]
+    },
+    {
+      "run": 3,
+      "calls": 5,
+      "json_only_calls": 5,
+      "items": 36,
+      "recall": {
+        "k": 25,
+        "n": 26,
+        "p": 0.9615384615384616,
+        "ci95": [
+          0.8110722092608273,
+          0.9931780150820144
+        ]
+      },
+      "precision": {
+        "k": 33,
+        "n": 36,
+        "p": 0.9166666666666666,
+        "ci95": [
+          0.781733086137824,
+          0.9712513888881098
+        ]
+      },
+      "negatives_with_extraction": {
+        "k": 0,
+        "n": 24,
+        "ids": [],
+        "p": 0,
+        "ci95": [
+          0,
+          0.13797620655132792
+        ]
+      },
+      "secret_or_unknown_id_items": 0,
+      "spans_not_verbatim_or_short": 0,
+      "content_over_400": 0,
+      "invalid_kind": 0,
+      "extracted": [
+        {
+          "content": "Prefers short answers of two or three sentences to quick questions.",
+          "kind": "preference",
+          "span": "keep answers to quick questions short, two or three sentences max",
+          "prompt_id": "p01",
+          "attribute": "response_length",
+          "entity": null
+        },
+        {
+          "content": "Works as a backend engineer.",
+          "kind": "fact",
+          "span": "I work as a backend engineer",
+          "prompt_id": "p02",
+          "attribute": "job_title",
+          "entity": null
+        },
+        {
+          "content": "Works at Freightly, a logistics startup.",
+          "kind": "fact",
+          "span": "logistics startup called Freightly",
+          "prompt_id": "p02",
+          "attribute": "employer",
+          "entity": "Freightly"
+        },
+        {
+          "content": "Has a sister named Priya.",
+          "kind": "fact",
+          "span": "my sister Priya",
+          "prompt_id": "p03",
+          "attribute": "sibling",
+          "entity": "Priya"
+        },
+        {
+          "content": "Plans to move to Lisbon, Portugal in March.",
+          "kind": "event",
+          "span": "I'm moving to Lisbon in March",
+          "prompt_id": "p04",
+          "attribute": "residence",
+          "entity": "Lisbon, Portugal"
+        },
+        {
+          "content": "Wants plans scheduled around Portugal time after the move.",
+          "kind": "preference",
+          "span": "plan things around Portugal time after that",
+          "prompt_id": "p04",
+          "attribute": "scheduling_timezone",
+          "entity": "Portugal"
+        },
+        {
+          "content": "Uses a Framework 13 laptop for all development work.",
+          "kind": "fact",
+          "span": "I use a Framework 13 laptop",
+          "prompt_id": "p05",
+          "attribute": "device",
+          "entity": "Framework 13 laptop"
+        },
+        {
+          "content": "Runs Fedora on the development laptop.",
+          "kind": "fact",
+          "span": "running Fedora",
+          "prompt_id": "p05",
+          "attribute": "operating_system",
+          "entity": "Fedora"
+        },
+        {
+          "content": "Prefers code examples in TypeScript rather than Python.",
+          "kind": "preference",
+          "span": "always give code examples in TypeScript, not Python",
+          "prompt_id": "p06",
+          "attribute": "code_language",
+          "entity": "TypeScript"
+        },
+        {
+          "content": "Is building a habit-tracking app as a side project.",
+          "kind": "fact",
+          "span": "My side project is a habit-tracking app",
+          "prompt_id": "p07",
+          "attribute": "side_project",
+          "entity": "habit-tracking app"
+        },
+        {
+          "content": "Builds the habit-tracking app with SvelteKit and Supabase.",
+          "kind": "fact",
+          "span": "built with SvelteKit and Supabase",
+          "prompt_id": "p07",
+          "attribute": "tech_stack",
+          "entity": "habit-tracking app"
+        },
+        {
+          "content": "Aims to launch the habit-tracking app in June.",
+          "kind": "event",
+          "span": "aiming to launch in June",
+          "prompt_id": "p07",
+          "attribute": "launch_target",
+          "entity": "habit-tracking app"
+        },
+        {
+          "content": "Decided to move Freightly's ingest service from MongoDB to Postgres because transactions are needed.",
+          "kind": "event",
+          "span": "We decided to drop MongoDB for Postgres",
+          "prompt_id": "p08",
+          "attribute": "technical_decision",
+          "entity": "Freightly ingest service"
+        },
+        {
+          "content": "Is vegetarian.",
+          "kind": "fact",
+          "span": "I'm vegetarian",
+          "prompt_id": "p09",
+          "attribute": "diet",
+          "entity": null
+        },
+        {
+          "content": "Wants recipe suggestions to never include meat or fish.",
+          "kind": "preference",
+          "span": "recipe suggestions should never include meat or fish",
+          "prompt_id": "p09",
+          "attribute": "recipe_restrictions",
+          "entity": null
+        },
+        {
+          "content": "Has a manager named Dana Kim.",
+          "kind": "fact",
+          "span": "My manager is Dana Kim",
+          "prompt_id": "p10",
+          "attribute": "manager",
+          "entity": "Dana Kim"
+        },
+        {
+          "content": "Reports to Dana Kim in a weekly meeting on Thursdays.",
+          "kind": "event",
+          "span": "I report to her weekly on Thursdays",
+          "prompt_id": "p10",
+          "attribute": "reporting_schedule",
+          "entity": "Dana Kim"
+        },
+        {
+          "content": "Prefers metric units for all measurements.",
+          "kind": "preference",
+          "span": "I prefer metric units for everything",
+          "prompt_id": "p12",
+          "attribute": "units",
+          "entity": null
+        },
+        {
+          "content": "Plays bass in a jazz trio on weekends.",
+          "kind": "fact",
+          "span": "I play bass in a jazz trio on weekends",
+          "prompt_id": "p13",
+          "attribute": "hobby",
+          "entity": "jazz trio"
+        },
+        {
+          "content": "Wants no emojis in the assistant's replies.",
+          "kind": "preference",
+          "span": "Don't use emojis in your replies to me",
+          "prompt_id": "p14",
+          "attribute": "response_format",
+          "entity": null
+        },
+        {
+          "content": "Has a daughter named Maya.",
+          "kind": "fact",
+          "span": "My daughter Maya just started first grade",
+          "prompt_id": "p15",
+          "attribute": "child",
+          "entity": "Maya"
+        },
+        {
+          "content": "Team uses Linear for issue tracking, having switched from Jira, and plans to keep using it.",
+          "kind": "fact",
+          "span": "Our team switched from Jira to Linear",
+          "prompt_id": "p16",
+          "attribute": "issue_tracker",
+          "entity": "Linear"
+        },
+        {
+          "content": "Lives in Denver.",
+          "kind": "fact",
+          "span": "I live in Denver now",
+          "prompt_id": "p17",
+          "attribute": "location",
+          "entity": "Denver"
+        },
+        {
+          "content": "Chose Stripe for payments in their habit app because it supports payouts to Portugal.",
+          "kind": "fact",
+          "span": "I chose Stripe for payments because it supports Portugal payouts",
+          "prompt_id": "p18",
+          "attribute": "payments_provider",
+          "entity": "Stripe"
+        },
+        {
+          "content": "Wants blunt, unsoftened feedback when the assistant reviews their writing.",
+          "kind": "preference",
+          "span": "When you review my writing, be blunt",
+          "prompt_id": "p19",
+          "attribute": "feedback_style",
+          "entity": null
+        },
+        {
+          "content": "Native language is Telugu.",
+          "kind": "fact",
+          "span": "My native language is Telugu",
+          "prompt_id": "p20",
+          "attribute": "native_language",
+          "entity": "Telugu"
+        },
+        {
+          "content": "Prefers replies in English.",
+          "kind": "preference",
+          "span": "I prefer replies in English",
+          "prompt_id": "p20",
+          "attribute": "response_language",
+          "entity": "English"
+        },
+        {
+          "content": "Codes on a split keyboard with a Colemak layout.",
+          "kind": "fact",
+          "span": "I usually code on a split keyboard with a Colemak layout",
+          "prompt_id": "p21",
+          "attribute": "keyboard_layout",
+          "entity": "split keyboard"
+        },
+        {
+          "content": "Is the on-call lead for the payments team every other week.",
+          "kind": "fact",
+          "span": "I'm the on-call lead for the payments team every other week",
+          "prompt_id": "p22",
+          "attribute": "role",
+          "entity": "payments team"
+        },
+        {
+          "content": "Has a partner named Sam.",
+          "kind": "fact",
+          "span": "My partner Sam is a ceramic artist",
+          "prompt_id": "p23",
+          "attribute": "relationship",
+          "entity": "Sam"
+        },
+        {
+          "content": "Sam is a ceramic artist.",
+          "kind": "fact",
+          "span": "Sam is a ceramic artist",
+          "prompt_id": "p23",
+          "attribute": "occupation",
+          "entity": "Sam"
+        },
+        {
+          "content": "Shares a studio with partner Sam.",
+          "kind": "fact",
+          "span": "we share a studio",
+          "prompt_id": "p23",
+          "attribute": "workplace",
+          "entity": "Sam"
+        },
+        {
+          "content": "Has committed to running a half marathon in October.",
+          "kind": "event",
+          "span": "I've committed to running a half marathon in October",
+          "prompt_id": "p24",
+          "attribute": "goal",
+          "entity": "half marathon"
+        },
+        {
+          "content": "Has Europe/Lisbon as their preferred time zone from April onward.",
+          "kind": "fact",
+          "span": "my preferred time zone is Europe/Lisbon from April onward",
+          "prompt_id": "p25",
+          "attribute": "timezone",
+          "entity": null
+        },
+        {
+          "content": "Is lactose intolerant.",
+          "kind": "fact",
+          "span": "I'm lactose intolerant, so recipes should be dairy-free",
+          "prompt_id": "p26",
+          "attribute": "dietary_restriction",
+          "entity": null
+        },
+        {
+          "content": "Prefers dairy-free recipes.",
+          "kind": "preference",
+          "span": "recipes should be dairy-free",
+          "prompt_id": "p26",
+          "attribute": "recipe_preference",
+          "entity": null
+        }
+      ]
+    }
+  ]
+}

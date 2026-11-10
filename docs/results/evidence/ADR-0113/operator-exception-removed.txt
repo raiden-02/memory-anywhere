@@ -1,0 +1,37 @@
+# Removal of the M0-only operator exception (spec-issues #13), run by the owner in management-account CloudShell, 2026-11-10.
+# Verbatim terminal output, scrubbed. The first command block removes memory-anywhere-operator from ma-deploy on the
+# member account; the reviewed bootstrap-identity.sh (safe to re-run) then lists the member account's assignments.
+
+~ $ R=us-east-1; MEMBER=<aws-account-id>
+~ $ INSTANCE=$(aws sso-admin list-instances --region $R --query 'Instances[0].InstanceArn' --output text)
+~ $ STORE=$(aws sso-admin list-instances --region $R --query 'Instances[0].IdentityStoreId' --output text)
+~ $ PS=$(for p in $(aws sso-admin list-permission-sets --region $R --instance-arn "$INSTANCE" --query 'PermissionSets[]' --output text); do [ "$(aws sso-admin describe-permission-set --region $R --instance-arn "$INSTANCE" --permission-set-arn "$p" --query PermissionSet.Name --output text)" = memory-anywhere-operator ] && echo "$p"; done)
+~ $ DEPLOY_UID=$(aws identitystore get-user-id --region $R --identity-store-id "$STORE" --alternate-identifier '{"UniqueAttribute":{"AttributePath":"userName","AttributeValue":"ma-deploy"}}' --query UserId --output text)
+~ $ aws sso-admin delete-account-assignment --region $R --instance-arn "$INSTANCE" --target-id $MEMBER --target-type AWS_ACCOUNT --permission-set-arn "$PS" --principal-type USER --principal-id "$DEPLOY_UID"
+{
+    "AccountAssignmentDeletionStatus": {
+        "Status": "IN_PROGRESS",
+        "RequestId": "9ba82720-fced-4fb7-8084-00690bf1a11b",
+        "TargetId": "<aws-account-id>",
+        "TargetType": "AWS_ACCOUNT",
+        "PermissionSetArn": "arn:aws:sso:::permissionSet/ssoins-72239ca44e5e9d33/ps-72235024301744db",
+        "PrincipalType": "USER",
+        "PrincipalId": "2468a4e8-c061-704b-a0c7-0c735a8b9adc"
+    }
+}
+~ $ cd ~/memory-anywhere && git rev-parse HEAD && bash deploy/aws/bootstrap-identity.sh <aws-account-id> us-east-1
+7deba3b033e5ebfbca9623726b77e310726e0bac
+memory-anywhere Identity Center bootstrap
+  Identity Center region : us-east-1
+  instance ARN           : arn:aws:sso:::instance/ssoins-72239ca44e5e9d33
+  instance owner account : <aws-account-id> (management account: <aws-account-id>)
+  member account         : <aws-account-id> (memory-anywhere)
+  commit                 : 7deba3b033e5ebfbca9623726b77e310726e0bac
+Type yes to continue: yes
+updated permission set memory-anywhere-deploy
+updated permission set memory-anywhere-operator
+
+== assignments on account <aws-account-id> ==
+  memory-anywhere-operator -> USER ma-operator
+  memory-anywhere-deploy -> USER ma-deploy
+OK: exactly the two expected assignments.

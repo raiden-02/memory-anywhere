@@ -1,0 +1,23 @@
+# Q26 operator path, 2026-11-08T19:34:13Z, profile memory-anywhere-operator on the owner's PC (M0 exception, spec-issues.md #13)
+$ aws sts get-caller-identity
+arn:aws:sts::<aws-account-id>:assumed-role/AWSReservedSSO_memory-anywhere-operator_a57866d409c49e9c/ma-deploy
+
+$ ma-operator.sh setup-link --stage spike
+Open this link in a private window (valid until 2026-11-08T20:01:08.587Z):
+https://spike.{host}/setup#<redacted>
+
+$ ma-operator.sh setup-link --stage spike   (second call: reuses the unexpired token)
+Open this link in a private window (valid until 2026-11-08T20:01:08.587Z):
+https://spike.{host}/setup#<redacted>
+
+$ (dummy key piped on stdin) | ma-operator.sh set-llm-key --stage spike
+Stored /memory-anywhere-spike/llm/api_key. Restarting the secrets and server units ...
+active
+
+
+$ aws ssm send-command (AWS-RunShellScript): publish a test alert, report unit states
+{
+    "Status": "Success",
+    "Out": "02290214-2faa-53e9-b613-617efeb88e89\nactive\nactive\nactive\nactive\nsecrets.env present (not shown)\n",
+    "Err": ""
+}

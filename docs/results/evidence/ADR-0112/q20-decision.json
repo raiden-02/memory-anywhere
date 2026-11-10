@@ -1,0 +1,75 @@
+{
+  "question": "Q20",
+  "decided_at": "2026-11-07T22:49:34.192Z",
+  "rule": "lowest median; a region whose 95% bootstrap CI of the median difference to the fastest includes 0 is tied; ties go to us-east-1 (10000 resamples, seed 1234)",
+  "runs": [
+    {
+      "file": "q20-rtt.json",
+      "measured_at": "2026-11-07T22:47:15.598Z"
+    },
+    {
+      "file": "q20-rtt-repeat.json",
+      "measured_at": "2026-11-07T22:47:42.971Z"
+    }
+  ],
+  "summaries": [
+    {
+      "region": "us-east-1",
+      "n": 100,
+      "medianMs": 94.3,
+      "p10Ms": 92.8,
+      "p90Ms": 96.7,
+      "minMs": 91,
+      "maxMs": 147.7
+    },
+    {
+      "region": "us-east-2",
+      "n": 100,
+      "medianMs": 93.8,
+      "p10Ms": 91.7,
+      "p90Ms": 96.6,
+      "minMs": 90.8,
+      "maxMs": 105.8
+    },
+    {
+      "region": "us-west-2",
+      "n": 100,
+      "medianMs": 154.5,
+      "p10Ms": 151.3,
+      "p90Ms": 158.4,
+      "minMs": 148.9,
+      "maxMs": 165
+    }
+  ],
+  "fastest": "us-east-2",
+  "chosen": "us-east-1",
+  "comparisons": [
+    {
+      "region": "us-east-2",
+      "medianDiffMs": 0,
+      "ci95Ms": [
+        0,
+        0
+      ],
+      "tiedWithFastest": true
+    },
+    {
+      "region": "us-east-1",
+      "medianDiffMs": 0.48,
+      "ci95Ms": [
+        -0.01,
+        0.97
+      ],
+      "tiedWithFastest": true
+    },
+    {
+      "region": "us-west-2",
+      "medianDiffMs": 60.72,
+      "ci95Ms": [
+        60.06,
+        61.48
+      ],
+      "tiedWithFastest": false
+    }
+  ]
+}

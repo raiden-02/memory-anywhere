@@ -1,0 +1,94 @@
+{
+  "question": "Q22",
+  "node": "v24.22.2",
+  "platform": "win32-x64",
+  "ranAt": "2026-11-08T20:24:54.449Z",
+  "allPass": true,
+  "checks": [
+    {
+      "name": "sqlite version",
+      "ok": true,
+      "detail": "3.53.4"
+    },
+    {
+      "name": "compile options include FTS5",
+      "ok": true,
+      "detail": "ENABLE_FTS3, ENABLE_FTS3_PARENTHESIS, ENABLE_FTS5, THREADSAFE=1"
+    },
+    {
+      "name": "journal_mode = WAL",
+      "ok": true,
+      "detail": "wal"
+    },
+    {
+      "name": "synchronous = NORMAL",
+      "ok": true,
+      "detail": "reads back 1"
+    },
+    {
+      "name": "busy_timeout = 5000",
+      "ok": true,
+      "detail": "reads back 5000"
+    },
+    {
+      "name": "foreign_keys = ON",
+      "ok": true,
+      "detail": "reads back 1"
+    },
+    {
+      "name": "secure_delete = ON",
+      "ok": true,
+      "detail": "reads back 1"
+    },
+    {
+      "name": "wal_autocheckpoint = 0",
+      "ok": true,
+      "detail": "reads back 0"
+    },
+    {
+      "name": "FTS5 table with porter unicode61 remove_diacritics 2",
+      "ok": true,
+      "detail": "created, 4 rows"
+    },
+    {
+      "name": "porter stemming: 'run' finds 'running'",
+      "ok": true,
+      "detail": "[\"v1\"]"
+    },
+    {
+      "name": "remove_diacritics: 'cafe' finds 'café'",
+      "ok": true,
+      "detail": "[\"v2\"]"
+    },
+    {
+      "name": "column filter and bm25() column weights",
+      "ok": true,
+      "detail": "[[\"v3\",-0.827],[\"v2\",-0.766]]"
+    },
+    {
+      "name": "foreign keys enforced",
+      "ok": true,
+      "detail": "FOREIGN KEY constraint failed"
+    },
+    {
+      "name": "JSON functions",
+      "ok": true,
+      "detail": "json_extract -> 3"
+    },
+    {
+      "name": "purge: secure_delete + optimize + checkpoint(TRUNCATE) leave no plaintext",
+      "ok": true,
+      "detail": "present before purge: true; after: db false, wal false"
+    },
+    {
+      "name": "VACUUM INTO writes a compact copy (ma-maint)",
+      "ok": true,
+      "detail": "3 FTS rows, integrity_check ok"
+    },
+    {
+      "name": "integrity_check",
+      "ok": true,
+      "detail": "ok"
+    }
+  ]
+}

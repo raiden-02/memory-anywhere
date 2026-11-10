@@ -1,0 +1,11 @@
+# Q14 on the spike instance, 2026-11-08: t4g.small (2 vCPU Neoverse-N1, 1.8 GB), Node 24.22.2, ORT 1.31.1, CPU only.
+# spikes/embed-bench/t4g.sh via SSM Run Command: models fetched from the pinned Hugging Face revisions and checked
+# against the owner's PC hashes; per candidate a fresh process embeds the 100 dev queries and scores each against
+# 10,000 stored vectors (brute-force dot product). Verbatim output.
+
+RESULT instance=t4g.small
+RESULT model_hashes_match=yes (12 files)
+RESULT latency {"candidate":"bge-small-en-v1.5-q8","queries":100,"store_vectors":10000,"p50_ms":36.2,"p95_ms":57.8,"max_ms":60.2,"rss_baseline_mb":79,"rss_peak_mb":183,"node":"v24.22.2","platform":"linux-arm64","cpus":2,"cpu_model":"Neoverse-N1","total_mem_mb":1841}
+RESULT latency {"candidate":"e5-small-v2-q8","queries":100,"store_vectors":10000,"p50_ms":35.1,"p95_ms":56.5,"max_ms":64.7,"rss_baseline_mb":79,"rss_peak_mb":186,"node":"v24.22.2","platform":"linux-arm64","cpus":2,"cpu_model":"Neoverse-N1","total_mem_mb":1841}
+RESULT latency {"candidate":"embeddinggemma-300m-q8","queries":100,"store_vectors":10000,"p50_ms":307.8,"p95_ms":384.7,"max_ms":814.6,"rss_baseline_mb":80,"rss_peak_mb":1497,"node":"v24.22.2","platform":"linux-arm64","cpus":2,"cpu_model":"Neoverse-N1","total_mem_mb":1841}
+RESULT latency {"candidate":"embeddinggemma-300m-q4","queries":100,"store_vectors":10000,"p50_ms":110,"p95_ms":157.5,"max_ms":230.2,"rss_baseline_mb":79,"rss_peak_mb":444,"node":"v24.22.2","platform":"linux-arm64","cpus":2,"cpu_model":"Neoverse-N1","total_mem_mb":1841}

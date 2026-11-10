@@ -1,0 +1,42 @@
+# Every route the server answers (auth-and-security.md §4.7, §5.1). Conformance test 15 fails if
+# any other METHOD + path answers with anything but 404. `:name` matches one path segment.
+# M0: the OAuth spike's routes. M2 adds the product's /v1 routes and the admin origin.
+
+# Resource server
+GET     /v1/health
+POST    /mcp
+GET     /mcp
+DELETE  /mcp
+GET     /.well-known/oauth-protected-resource/mcp
+
+# Discovery: both paths routed by the host app to the provider (issuer https://{host})
+GET     /.well-known/oauth-authorization-server
+GET     /.well-known/openid-configuration
+
+# The provider, mounted at /oauth
+GET     /oauth/auth
+POST    /oauth/auth
+GET     /oauth/auth/:uid
+POST    /oauth/token
+POST    /oauth/reg
+POST    /oauth/token/revocation
+GET     /oauth/jwks
+
+# Pairing and consent (§4.1, §4.6)
+GET     /pair/:window
+GET     /consent/:uid
+POST    /consent/:uid/code
+POST    /consent/:uid/options
+POST    /consent/:uid/approve
+POST    /consent/:uid/deny
+
+# Owner pages. Spike only: the product serves these on admin.{host} (§2).
+GET     /setup
+POST    /setup/options
+POST    /setup/verify
+GET     /admin
+POST    /admin/api/login/options
+POST    /admin/api/login/verify
+POST    /admin/api/stepup/options
+POST    /admin/api/stepup/verify
+POST    /admin/api/windows

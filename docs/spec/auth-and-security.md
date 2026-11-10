@@ -167,33 +167,33 @@ No client can register or obtain a grant unless the owner opened a pairing windo
 
 Static credentials are the default wherever the vendor's connector form accepts them, because a static client id and secret exist only for the owner's connector; a shared vendor client id (CIMD) or an open DCR endpoint can be presented by any user of that vendor. DCR is deprecated in MCP 2026-07-28 and is used only as a fallback inside a window.
 
-| Vendor | Method (default) | What the admin UI shows | Fallback order (M0 decides) |
+| Vendor | Method (decided in M0) | What the admin UI shows | Fallback order |
 | --- | --- | --- | --- |
-| Claude (web, desktop, mobile) | Static confidential client created at window open; redirect `https://claude.ai/api/mcp/auth_callback`. Claude's custom-connector dialog accepts an OAuth client ID and optional secret ([Claude connector auth](https://www.claude.com/docs/connectors/building/authentication)) | MCP URL, client id, client secret (shown once) | CIMD (Claude's hosted client id, exact URL recorded in M0 Q04) → DCR |
-| ChatGPT | Static confidential client created at window open, redirect `https://chatgpt.com/connector_platform_oauth_redirect` | MCP URL, client id, client secret (shown once) | CIMD (`https://chatgpt.com/oauth/client.json` or `https://chatgpt.com/oauth/<callback_id>/client.json`) → DCR |
-| Gemini | Static confidential client entered under Advanced features | MCP URL, client id, client secret, and the redirect URI recorded in M0 | DCR inside the window |
-| Grok | M0 Q11 result | per method | static OAuth → CIMD → DCR → static bearer token |
+| Claude (web, desktop, mobile) | Static confidential client created at window open; redirect `https://claude.ai/api/mcp/auth_callback`. Claude's custom-connector dialog accepts an OAuth client ID and optional secret ([Claude connector auth](https://www.claude.com/docs/connectors/building/authentication)) | MCP URL, client id, client secret (shown once) | DCR. Static works (ADR-0103), so Claude's hosted CIMD client id was never needed or recorded; CIMD for Claude stays off |
+| ChatGPT | Static confidential client created at window open, redirect `https://chatgpt.com/connector_platform_oauth_redirect`, `client_secret_basic` (works, ADR-0102) | MCP URL, client id, client secret (shown once) | CIMD (`https://chatgpt.com/oauth/client.json` or `https://chatgpt.com/oauth/<callback_id>/client.json`) → DCR |
+| Gemini | Static confidential client entered under Developer Mode → Connect to an MCP server → Additional settings (works, ADR-0107). The redirect is per user and server: `https://oauth-redirect.googleusercontent.com/r/user_bound_custom-mcp-<Google user id>-<host with dots as underscores>`, accepted by that rule (`config/vendors.json`) | MCP URL, client id, client secret (shown once) | DCR inside the window |
+| Grok | DCR inside the window: Grok's dialog takes only a name and URL (ADR-0108). Public client (`none`, PKCE), redirect `https://grok.com/connectors-oauth-exchange-code/`, `application_type` omitted (`web`, spec-issues #19) | MCP URL | none |
 | Claude Code (direct) | CIMD with Claude Code's public client id `https://claude.ai/oauth/claude-code-client-metadata` and a loopback redirect. Only for a Claude Code that connects to `/mcp` over HTTP without the plugin; the plugin path (stdio proxy + PC grant) is recommended | MCP URL, plus a warning that any program on that computer could claim this client during the window | none |
 | PC (`mema login`) | Built-in public client `memory-anywhere-cli` with loopback redirect | a pairing code | none |
 | Other | Static credentials, or DCR inside the window; for a desktop app with a loopback redirect the owner ticks "desktop app on my computer" | per method | |
 
 ChatGPT's redirect is `https://chatgpt.com/connector_platform_oauth_redirect` for servers that are issuer-identification compliant, or `https://chatgpt.com/connector/oauth/{callback_id}`; CIMD documents are at `https://chatgpt.com/oauth/client.json` or `.../oauth/{callback_id}/client.json`; ChatGPT needs S256 and supports `none` or `private_key_jwt` for CIMD ([OpenAI auth](https://developers.openai.com/apps-sdk/build/auth)). The server emits `iss` and advertises it, so the stable redirect is used.
 
-The **static bearer** method (only if a vendor supports no OAuth, M0 Q11) creates a random 32-byte token with scopes `memory.read memory.write`, stored hashed, valid 90 days, revocable, entered by the owner in the vendor's header field. It is listed as a weaker method in the admin UI.
+The **static bearer** method (only if a vendor supports no OAuth; no vendor tested in M0 needs it, so it is not built in v1) creates a random 32-byte token with scopes `memory.read memory.write`, stored hashed, valid 90 days, revocable, entered by the owner in the vendor's header field. It is listed as a weaker method in the admin UI.
 
 Client policy defaults: Claude Code (direct) and Other desktop apps get class `chat` (they send no repo key), the narrowed section list and `save_floor = observation`, like generic clients (§4.4).
 
 ### 4.3 CIMD and DCR rules
 
 CIMD:
-- The `client_id` URL must parse as https, with no userinfo, no explicit port, no query and no fragment; host in an exact set; path matching that host's exact pattern. Initial set: `claude.ai` paths `^/oauth/claude-code-client-metadata$` (Claude Code direct) and the hosted-Claude path recorded in M0 Q04, `chatgpt.com` paths `^/oauth/client\.json$` and `^/oauth/[A-Za-z0-9_-]{1,64}/client\.json$`. Codex is not listed: Codex connects through the stdio proxy and the PC grant.
+- The `client_id` URL must parse as https, with no userinfo, no explicit port, no query and no fragment; host in an exact set; path matching that host's exact pattern. Initial set: `claude.ai` path `^/oauth/claude-code-client-metadata$` (Claude Code direct), `chatgpt.com` paths `^/oauth/client\.json$` and `^/oauth/[A-Za-z0-9_-]{1,64}/client\.json$`. Codex is not listed: Codex connects through the stdio proxy and the PC grant.
 - Fetched by the library transport: one DNS resolution, special-use and private addresses rejected, no redirects, 5 KB limit, 5 s timeout. The metadata's `redirect_uris` must contain the redirect used in the request, exactly.
 - CIMD is accepted only inside a pairing window for that vendor, and only for the exact `client_id` URL recorded for that vendor in `config/vendors.json` (M0 Q03, Q04).
 - Redirect URIs must be https on the vendor's redirect host set, except loopback redirects (`http://127.0.0.1:<port>/…`, `http://localhost:<port>/…`), which are accepted only for `memory-anywhere-cli`, the Claude Code (direct) CIMD client, and an Other window opened as "desktop app on my computer".
 
 DCR:
 - Only inside a pairing window. Accepted fields: `redirect_uris` (1–2 entries), `client_name` (≤ 64 chars), `grant_types` (`authorization_code`, `refresh_token`), `response_types` (`code`), `token_endpoint_auth_method` (`none`, `client_secret_post`, `client_secret_basic`), `application_type` (`web` for https redirects; `native` only for a loopback redirect in a "desktop app" window; any mismatch or missing value is rejected). Any other field (`jwks_uri`, `logo_uri`, `sector_identifier_uri`, `request_uris`, `policy_uri`, `tos_uri`, …) rejects the request.
-- Every https redirect URI must be on a host in the vendor's redirect host set (`claude.ai`, `chatgpt.com`, the Gemini and Grok hosts recorded in M0; for vendor Other, the single https host the owner types when opening the window).
+- Every https redirect URI must be on a host in the vendor's redirect host set (`claude.ai`, `chatgpt.com`, `oauth-redirect.googleusercontent.com` for Gemini under the rule above, `grok.com` for Grok; for vendor Other, the single https host the owner types when opening the window).
 - RFC 7592 client configuration endpoint disabled.
 - At most 20 registered clients. A client with no grant 24 hours after registration is deleted.
 
@@ -251,7 +251,7 @@ Enabled features: authorization code with PKCE, refresh token, resource indicato
 | Token | Format | Lifetime | Storage |
 | --- | --- | --- | --- |
 | Access token | Opaque, 32 random bytes base64url (library `accessTokenFormat: 'opaque'`) | 1 hour | `oidc_store` keyed by sha256 of the value (the adapter hashes ids for `AccessToken`, `RefreshToken`, `AuthorizationCode`, `ClientCredentials`) |
-| Refresh token | Opaque | PC (public): 30 days absolute, 7 days idle. Public CIMD/DCR clients (fallbacks, Claude Code direct): 90 days absolute, 30 days idle. Static confidential vendor clients (Claude, ChatGPT, Gemini, Grok): 180 days absolute, 30 days idle, since they authenticate at `/token` and each re-pair needs a window and a passkey | same |
+| Refresh token | Opaque | PC (public): 30 days absolute, 7 days idle. Public CIMD/DCR clients (fallbacks, Claude Code direct): 90 days absolute, 30 days idle. Static confidential vendor clients (Claude, ChatGPT, Gemini): 180 days absolute, 30 days idle, since they authenticate at `/token` and each re-pair needs a window and a passkey | same |
 | Authorization code | Opaque | 60 s, single use | same |
 | Step-up admin token | Opaque, `mst_` + 32 bytes | 10 minutes, single use, bound to one command and `args_sha256`; `import`: 60 minutes, multi-use, bound to one `import_batch` | `stepup_request.token_hash` |
 | Static bearer (fallback) | Opaque, `msb_` + 32 bytes | 90 days | `client_policy`-linked row in `oidc_store` (model `StaticBearer`) |
@@ -264,7 +264,7 @@ If the fallback library (Better Auth) is chosen, its JWT access tokens are accep
 | Client type | Policy |
 | --- | --- |
 | Public (PC, Claude Code direct, any CIMD/DCR fallback) | Rotate on every use. Within 30 s of a rotation, presenting the previous refresh token returns the same new pair (handles Claude's concurrent refresh). After 30 s, reuse revokes the whole grant and raises alert `refresh_reuse` |
-| Confidential (Claude static, ChatGPT static, Gemini static, Grok static) | `client_policy.refresh_rotation` per vendor. Claude: `rotate` with the same 30 s grace window (Claude refreshes concurrently, up to five minutes before expiry). Gemini: `fixed` (Google's connected-apps guidance says not to rotate refresh tokens; [Google OAuth for connected apps](https://developers.google.com/connected-apps/mcp/oauth)), which RFC 9700 permits for confidential clients that authenticate at `/token`. ChatGPT and Grok: `rotate` unless M0 shows they fail |
+| Confidential (Claude static, ChatGPT static, Gemini static) | `client_policy.refresh_rotation` per vendor. Claude: `rotate` with the same 30 s grace window (Claude refreshes concurrently, up to five minutes before expiry). Gemini: `fixed` (Google's connected-apps guidance says not to rotate refresh tokens; [Google OAuth for connected apps](https://developers.google.com/connected-apps/mcp/oauth)), which RFC 9700 permits for confidential clients that authenticate at `/token`. ChatGPT: `rotate` (M0: its refreshes succeed with rotation, ADR-0102). Gemini rotation was also tested and works (ADR-0107). Grok is a public DCR client and rotates as in the row above |
 
 A dead or revoked refresh token returns `invalid_grant`.
 
@@ -319,7 +319,6 @@ An injected coding agent can start a step-up request but cannot approve it, and 
 
 ### 6.3 Defence in depth (not the boundary)
 
-- The Claude Code plugin ships a `permissions.deny` list for the admin CLI commands (clients.md §3.2), if M0 Q13 confirms plugin settings apply.
 - `mema doctor` lists hooks that call the CLI and were not installed by it.
 - The PC never holds operator AWS credentials; the deploy profile has its own SSO session that `mema deploy` signs out on exit (deployment-aws.md §3).
 

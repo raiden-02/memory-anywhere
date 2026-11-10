@@ -1,0 +1,28 @@
+[Unit]
+Description=Litestream replication of the memory-anywhere store (deployment-aws.md §5.1)
+After=network-online.target
+Wants=network-online.target
+# Nothing to replicate until a store exists (the spike's store comes from spikes/litestream-probe).
+ConditionPathExists=/var/lib/memory-anywhere/store.db
+
+[Service]
+Type=simple
+User=litestream
+Group=litestream
+SupplementaryGroups=ma-data
+ExecStart=/usr/local/bin/litestream replicate -config /etc/litestream.yml
+# Metadata and LTX staging stay on tmpfs (/run/litestream), removed when the unit stops (§5.1).
+RuntimeDirectory=litestream
+RuntimeDirectoryMode=0700
+MemorySwapMax=0
+UMask=0007
+Restart=always
+RestartSec=5
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/var/lib/memory-anywhere
+
+[Install]
+WantedBy=multi-user.target

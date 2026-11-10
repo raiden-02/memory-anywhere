@@ -1,0 +1,72 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test (${{ matrix.os }}, node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-24.04, ubuntu-24.04-arm, macos-latest]
+        node: ["24.22.2"]
+        include:
+          - os: ubuntu-24.04
+            node: "26"
+    defaults:
+      run:
+        # A path with a space on every runner (operations.md §9).
+        working-directory: work space
+    env:
+      MA_HOME: ${{ github.workspace }}/ma home
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: work space
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          package_json_file: work space/package.json
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+          cache-dependency-path: work space/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+
+  shellcheck:
+    # Scripts that run in CloudShell and on the instance (deployment-aws.md §3.3, §4).
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: shellcheck --version && git ls-files -z '*.sh' | xargs -0 shellcheck --severity=style
+
+  owner-host:
+    # deployment-aws.md §6.1: no committed file may contain the owner's hostname.
+    # Prints only "found" or "not found", never the value or the file names.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: owner hostname check
+        env:
+          OWNER_HOST: ${{ secrets.OWNER_HOST }}
+        run: |
+          if [ -z "$OWNER_HOST" ]; then
+            echo "OWNER_HOST secret is not set"; exit 1
+          fi
+          # A stray newline or space would make the grep match nothing and pass silently.
+          case "$OWNER_HOST" in
+            *[[:space:]]*) echo "OWNER_HOST secret contains whitespace"; exit 1 ;;
+          esac
+          if git grep -i -F -q -e "$OWNER_HOST"; then
+            echo "found"; exit 1
+          fi
+          echo "not found"

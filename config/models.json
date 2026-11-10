@@ -1,0 +1,37 @@
+{
+  "$comment": "Pinned embedding model (ADR-0005, decided by M0 Q14). The server downloads these exact files on demand and refuses any whose SHA-256 differs.",
+  "active": "embeddinggemma-300m-q4",
+  "models": {
+    "embeddinggemma-300m-q4": {
+      "repo": "onnx-community/embeddinggemma-300m-ONNX",
+      "revision": "5090578d9565bb06545b4552f76e6bc2c93e4a66",
+      "files": {
+        "onnx/model_q4.onnx": {
+          "sha256": "ad1dfee81a70f7944b9b9d1cc6e48075b832881cf33fab2f2b248be78f3f0043",
+          "url": "https://huggingface.co/onnx-community/embeddinggemma-300m-ONNX/resolve/5090578d9565bb06545b4552f76e6bc2c93e4a66/onnx/model_q4.onnx"
+        },
+        "onnx/model_q4.onnx_data": {
+          "sha256": "599962c3143b040de2dd05e5975be3e9091dd067cacc6a8f7186e3203bab9e02",
+          "url": "https://huggingface.co/onnx-community/embeddinggemma-300m-ONNX/resolve/5090578d9565bb06545b4552f76e6bc2c93e4a66/onnx/model_q4.onnx_data"
+        },
+        "tokenizer.json": {
+          "sha256": "4dda02faaf32bc91031dc8c88457ac272b00c1016cc679757d1c441b248b9c47",
+          "url": "https://huggingface.co/onnx-community/embeddinggemma-300m-ONNX/resolve/5090578d9565bb06545b4552f76e6bc2c93e4a66/tokenizer.json"
+        },
+        "tokenizer_config.json": {
+          "sha256": "3ca953eea6c3c9fcda9cf3df22949ff18b216f7c74bd6459230f3f1013953f3a",
+          "url": "https://huggingface.co/onnx-community/embeddinggemma-300m-ONNX/resolve/5090578d9565bb06545b4552f76e6bc2c93e4a66/tokenizer_config.json"
+        }
+      },
+      "runtime": "onnxruntime-node 1.31.1 + @huggingface/tokenizers 0.2.0",
+      "dtype": "q4",
+      "dims": 768,
+      "pooling": "sentence_embedding output of the ONNX export (mean pooling, dense layers and L2 normalisation inside the graph)",
+      "max_tokens": 512,
+      "query_prefix": "task: search result | query: ",
+      "document_prefix": "title: none | text: ",
+      "licence": "Gemma Terms of Use; the client shows the terms and a notice before the on-demand download",
+      "decided": "2026-11-08, M0 Q14 (ADR-0005)"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "session_id": "1dba4409-8e78-40a7-8634-e6e500f05fce",
+  "transcript_path": "<home>\\.claude\\projects\\<home-slug>-AppData-Local-Temp-ma-cc-spike-oNb4g3-work-dir\\1dba4409-8e78-40a7-8634-e6e500f05fce.jsonl",
+  "cwd": "<home>\\AppData\\Local\\Temp\\ma cc spike oNb4g3\\work dir",
+  "scratchpad_dir": "<home>\\AppData\\Local\\Temp\\claude\\8fa272c0b6d10164\\1dba4409-8e78-40a7-8634-e6e500f05fce\\scratchpad",
+  "hook_event_name": "SessionStart",
+  "source": "startup"
+}

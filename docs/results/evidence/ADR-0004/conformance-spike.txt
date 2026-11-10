@@ -1,0 +1,23 @@
+﻿# conformance tests 1-3, 5, 6, 15-18 against the deployed spike (release 0.0.1-m0.5), 2026-11-09T00:41:39Z
+# MA_CONFORMANCE_ORIGIN=https://spike.{host} npx vitest run packages/server/test/oauth-conformance/remote.test.ts --reporter=verbose --silent=false
+
+
+ RUN  v5.1.0 C:/Users/mayur/Desktop/Desktop/Repos/memory-anywhere
+
+ ✓ packages/server/test/oauth-conformance/remote.test.ts > deployed stage > 1. unauthenticated /mcp: 401 with the resource metadata challenge 226ms
+ ✓ packages/server/test/oauth-conformance/remote.test.ts > deployed stage > 2. PRM resource is the MCP URL exactly; one authorization server 142ms
+ ✓ packages/server/test/oauth-conformance/remote.test.ts > deployed stage > 3 and 17. both discovery paths: the same metadata, issuer = origin 90ms
+ ✓ packages/server/test/oauth-conformance/remote.test.ts > deployed stage > 5. /token takes form encoding; a dead refresh token is invalid_grant 45ms
+stdout | packages/server/test/oauth-conformance/remote.test.ts > deployed stage > 6. discovery and token answer within 10 s
+{"test":6,"discoveryMs":44,"tokenMs":44,"registrationMs":44}
+
+ ✓ packages/server/test/oauth-conformance/remote.test.ts > deployed stage > 6. discovery and token answer within 10 s 132ms
+ ✓ packages/server/test/oauth-conformance/remote.test.ts > deployed stage > 15. route inventory: nothing outside routes.allow.txt answers 18843ms
+ ✓ packages/server/test/oauth-conformance/remote.test.ts > deployed stage > 16. /mcp ignores cookies and rejects a browser Origin 167ms
+ ✓ packages/server/test/oauth-conformance/remote.test.ts > deployed stage > 18. reg and auth failures are the one normalised response 84ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  18:41:40
+   Duration  19.91s (tests 100%)
+

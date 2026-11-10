@@ -1,0 +1,26 @@
+{
+  // One typecheck for the whole workspace. Sources run directly on Node 24
+  // (type stripping), so only erasable TypeScript syntax is allowed and
+  // relative imports carry their .ts extension.
+  "compilerOptions": {
+    "target": "ES2024",
+    "lib": ["ES2024"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "types": ["node"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": ["packages", "deploy", "spikes", "evals", "scripts"],
+  "exclude": ["deploy/aws", "**/node_modules", "**/cdk.out", "**/dist", "evals/datasets/public/data"]
+}
