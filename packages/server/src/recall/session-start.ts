@@ -141,7 +141,9 @@ function build(env: SessionStartEnv, reader: Reader, tool: CodingTool, maxChars:
   };
 
   // 1–2. Preamble and profile (cut at whole lines; profile lines keep their ids).
-  const preamble = fit([plain(TEXTS["session-preamble"])], scale(BLOCK.preamble), ids);
+  // The preamble is fixed policy text that frames everything after it as data; it never shrinks
+  // with the target (spec-issues #43). Only the memory blocks scale.
+  const preamble = fit([plain(TEXTS["session-preamble"])], BLOCK.preamble, ids);
   const profileIds = new Set(profile.memoryIds);
   const profileLines = fit(profile.output.text.split("\n").map((text) => ({ text, ids: [...text.matchAll(/\[(mem_[0-9A-Z]{26})\]/gu)].map((m) => m[1] as string).filter((id) => profileIds.has(id)) })),
     scale(BLOCK.profile), ids);

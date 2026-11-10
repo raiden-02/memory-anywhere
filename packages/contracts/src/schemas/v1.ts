@@ -167,6 +167,7 @@ export const ApiError = ErrorObject;
 export type HealthResponseT = z.infer<typeof HealthResponse>;
 export type SessionStartRequestT = z.infer<typeof SessionStartRequest>;
 export type SessionStartResponseT = z.infer<typeof SessionStartResponse>;
+export type ProjectionResponseT = z.infer<typeof ProjectionResponse>;
 export type EntryT = z.infer<typeof Entry>;
 export type WritesRequestT = z.infer<typeof WritesRequest>;
 export type WriteResultT = z.infer<typeof WriteResult>;

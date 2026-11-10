@@ -14,7 +14,8 @@
     "check": "pnpm typecheck && pnpm lint && pnpm test",
     "scrub": "node scripts/scrub-evidence.mjs",
     "eval": "node evals/harness/cli.ts",
-    "gen": "node scripts/gen.ts"
+    "gen": "node scripts/gen.ts",
+    "build": "node scripts/build.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

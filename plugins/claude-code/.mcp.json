@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "memory-anywhere": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/dist/memory-anywhere.mjs", "mcp", "--tool", "claude-code"],
+      "alwaysLoad": true
+    }
+  }
+}

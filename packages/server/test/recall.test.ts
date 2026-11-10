@@ -215,6 +215,8 @@ describe("session-start", () => {
     const cursor = cache.sessionStart(r, CODING, "cursor", 10000);
     expect(claude.response.context.length).toBeLessThanOrEqual(9000);
     expect(cursor.response.context.length).toBeLessThanOrEqual(6000);
+    // The framing preamble survives the smaller target (spec-issues #43).
+    expect(cursor.response.context.startsWith("memory-anywhere is active for this repository")).toBe(true);
     const ids = new Set(claude.response.context.match(/mem_[0-9A-Z]{26}/gu));
     expect(ids.size).toBeGreaterThan(0);
     expect(ids.size).toBeLessThanOrEqual(40);
