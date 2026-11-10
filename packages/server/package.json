@@ -1,0 +1,20 @@
+{
+  "name": "@memory-anywhere/server",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "memory-anywhere-server": "./src/cli.ts"
+  },
+  "dependencies": {
+    "@huggingface/tokenizers": "0.2.0",
+    "@memory-anywhere/contracts": "workspace:*",
+    "@modelcontextprotocol/node": "2.1.2",
+    "@modelcontextprotocol/server": "2.4.0",
+    "chrono-node": "2.10.3",
+    "onnxruntime-node": "1.31.1",
+    "smol-toml": "1.9.1",
+    "ulid": "3.0.2",
+    "yaml": "2.9.1",
+    "zod": "4.6.7"
+  }
+}

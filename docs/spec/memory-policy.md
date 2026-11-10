@@ -130,7 +130,7 @@ Every channel is generated from `policy.md` by `pnpm gen:policy`. CI fails if ge
 
 | Channel | Reaches | Budget | Constraint source |
 | --- | --- | --- | --- |
-| Server `instructions` (2026-07-28 `server/discover`; 2025-era `initialize`) | Claude Code, Codex, ChatGPT (documented); claude.ai, Cursor, Gemini, Grok (M0 Q05) | ≤ 2,000; first 512 self-contained | Claude Code cuts at 4,096 ([changelog 2.1.296](https://code.claude.com/docs/en/changelog)); OpenAI: "first 512 characters should be self-contained" ([Developer Mode](https://developers.openai.com/api/docs/guides/developer-mode)) |
+| Server `instructions` (2026-07-28 `server/discover`; 2025-era `initialize`) | Stdio clients only: Claude Code, Codex, Cursor. Claude apps, ChatGPT, Gemini and Grok drop them (M0 Q05, ADR-0104) | ≤ 2,000; first 512 self-contained | Claude Code cuts at 4,096 ([changelog 2.1.296](https://code.claude.com/docs/en/changelog)); OpenAI: "first 512 characters should be self-contained" ([Developer Mode](https://developers.openai.com/api/docs/guides/developer-mode)) |
 | `memory_save` description | Every MCP client | ≤ 2,000; trigger sentence in first 200 | Same; tool search matches on name and description |
 | `memory_recall` description | Every MCP client | ≤ 1,000; trigger in first 200 | Same |
 | `memory_profile` description | Every MCP client | ≤ 600 | |
@@ -140,7 +140,7 @@ Every channel is generated from `policy.md` by `pnpm gen:policy`. CI fails if ge
 | Claude Code SessionStart `additionalContext` | Claude Code | ≤ 9,000 total | Hard cap 10,000 chars ([hooks](https://code.claude.com/docs/en/hooks)) |
 | Codex SessionStart `additionalContext` | Codex | ≤ 6,000 total | Default `additionalContextLimit` 2,500 tokens ([Codex hooks](https://learn.chatgpt.com/docs/hooks)); 6,000 chars ≈ 1,500 tokens |
 | Cursor `sessionStart` `additional_context` | Cursor (best effort) | ≤ 6,000 | |
-| Cursor repo rule `.cursor/rules/memory-anywhere.mdc` (policy only, no memory content) | Cursor | ≤ 1,500 and ≤ 40 lines | Rules < 500 lines ([Cursor rules](https://cursor.com/docs/context/rules)) |
+| Cursor plugin rule `rules/memory-anywhere.mdc` (`alwaysApply`; policy only, no memory content; reaches every workspace, ADR-0110) | Cursor | ≤ 1,500 and ≤ 40 lines | Rules < 500 lines ([Cursor rules](https://cursor.com/docs/context/rules)) |
 | Skill `SKILL.md` description (`~/.agents/skills/memory-anywhere/`, plugin skills) | Codex, Cursor, Claude Code plugin | description ≤ 1,000; body ≤ 3,000 | Claude Code cuts description + when_to_use at 1,536 ([skills](https://code.claude.com/docs/en/skills)); Codex skills list 8,000 chars total ([Codex skills](https://learn.chatgpt.com/docs/build-skills)) |
 | Chat-app custom instruction (printed by `mema init`, pasted by the owner) | Claude, ChatGPT, Gemini, Grok | ≤ 700 | |
 | Extractor prompt (server) | Capture and history import | ≤ 3,000 | |

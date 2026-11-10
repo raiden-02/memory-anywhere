@@ -7,7 +7,7 @@ Status: normative.
 | Artifact | Contents | Native modules | Distribution |
 | --- | --- | --- | --- |
 | npm `memory-anywhere` | Client: stdio proxy, hooks, CLI, spool, token cache, deploy commands (CDK app bundled). The deploy subcommands are built first, in M0; the rest in M1 | none | npm (trusted publishing, provenance); bins `memory-anywhere` and `mema` |
-| `memory-anywhere-server` | Server: MCP, `/v1`, OAuth, admin UI, write path, retrieval, embeddings, jobs | `better-sqlite3`, `onnxruntime-node` | GitHub release tarballs per platform (`linux-arm64`, `linux-x64`, `win32-x64`, `darwin-arm64`) with `node_modules` included; npm package of the same name in M5 if the name is free then, else tarballs only |
+| `memory-anywhere-server` | Server: MCP, `/v1`, OAuth, admin UI, write path, retrieval, embeddings, jobs | `onnxruntime-node` (SQLite is the built-in `node:sqlite`, ADR-0006) | GitHub release tarballs per platform (`linux-arm64`, `linux-x64`, `win32-x64`, `darwin-arm64`) with `node_modules` included; npm package of the same name in M5 if the name is free then, else tarballs only |
 | Plugins | `plugins/claude-code`, `plugins/codex`, `plugins/cursor`, each bundling `dist/memory-anywhere.mjs` (esbuild bundle of the client) | none | GitHub repo marketplace manifests pinned to tag + SHA |
 
 Workspace packages (private, never published): `@memory-anywhere/contracts` (schemas, normalization, redaction, reasons; shared), `@memory-anywhere/client`, `@memory-anywhere/server`, `@memory-anywhere/importers`, `@memory-anywhere/evals`, `@memory-anywhere/deploy-aws`.
@@ -21,11 +21,11 @@ onnxruntime-node ships no darwin-x64 binary, so local mode on Intel Macs is unsu
 | Node | 24.x LTS; `engines: ">=22.12"`; CI also runs 26.x |
 | pnpm | 10 or later, pinned in root `packageManager` |
 | TypeScript | strict, `module: NodeNext`, `types: ["node"]` |
-| Pinned runtime deps (exact, verified at M0 start) | `@modelcontextprotocol/server` 2.x, `@modelcontextprotocol/node` 2.x, `zod` 4.x, `better-sqlite3` 13.x, `onnxruntime-node` 1.31.x, `@huggingface/tokenizers` 0.2.x, `ulid`, `chrono-node` 2.x, `smol-toml`, `age-encryption` 0.3.x, `oidc-provider` ~9.13, `@simplewebauthn/server`, `argon2` (server only), `eta` |
+| Pinned runtime deps (exact; M1 pins in each `package.json`) | `@modelcontextprotocol/server` 2.4.0, `@modelcontextprotocol/node` 2.1.2, `@modelcontextprotocol/client` 2.4.0 (the stdio proxy's link to `/mcp`), `zod` 4.6.7, `onnxruntime-node` 1.31.1, `@huggingface/tokenizers` 0.2.0, `ulid` 3.x, `chrono-node` 2.x, `smol-toml` 1.x, `yaml` 2.x (policy lexicon files), `age-encryption` 0.3.x, `oidc-provider` 9.13.3, `@simplewebauthn/server`, `argon2` (server only), `eta`. SQLite is Node's built-in `node:sqlite` (M0 Q22, ADR-0006); `better-sqlite3` is not used |
 | Dev | `vitest`, `fast-check`, `tsx`, `esbuild`, `aws-cdk-lib` |
-| pnpm `onlyBuiltDependencies` | `["better-sqlite3", "onnxruntime-node", "argon2"]` |
+| pnpm `allowBuilds` (pnpm 12, spec-issues #15) | `argon2: true`, `onnxruntime-node: false` (its binaries ship in the package, ADR-0005) |
 
-M0 Q22 checks whether `node:sqlite` on Node 24 provides FTS5 and WAL; if it does, ADR-0006 may replace `better-sqlite3`. M0 Q14 checks that `onnxruntime-node` loads with lifecycle scripts disabled (its binaries are in the tarball).
+M0 Q22 confirmed that `node:sqlite` on Node 24 provides FTS5, WAL and every PRAGMA of data-model.md §1, so the server uses it (ADR-0006). M0 Q14 confirmed that `onnxruntime-node` loads with lifecycle scripts disabled (ADR-0005).
 
 ## 3. Paths
 
@@ -123,7 +123,7 @@ timezone = "America/Chicago"     # IANA; used by the time parser and job schedul
 
 [embedding]
 model = ""                       # "<hf repo>@<revision sha>", set from ADR-0005
-dtype = "q8"                     # q8 | q4 | fp32
+dtype = "q4"                     # q4 (ADR-0005) | q8 | fp32
 
 [llm]
 provider = "anthropic"           # anthropic | openai | none   (local default: none)

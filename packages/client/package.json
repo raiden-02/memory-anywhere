@@ -8,6 +8,11 @@
   },
   "dependencies": {
     "@memory-anywhere/contracts": "workspace:*",
-    "@memory-anywhere/deploy-aws": "workspace:*"
+    "@memory-anywhere/deploy-aws": "workspace:*",
+    "@modelcontextprotocol/client": "2.4.0",
+    "@modelcontextprotocol/server": "2.4.0",
+    "smol-toml": "1.9.1",
+    "ulid": "3.0.2",
+    "zod": "4.6.7"
   }
 }
