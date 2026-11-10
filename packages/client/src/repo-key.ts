@@ -24,6 +24,15 @@ export interface RepoIdentity {
 
 export const NONE = "none";
 
+/** The canonical path (symlinks, macOS /private, Windows 8.3 short names resolved), or the path itself. */
+function realPath(p: string): string {
+  try {
+    return realpathSync.native(p);
+  } catch {
+    return p;
+  }
+}
+
 function git(cwd: string, args: readonly string[]): string | undefined {
   const r = spawnSync("git", args, { cwd, encoding: "utf8", windowsHide: true, timeout: 2000 });
   return r.status === 0 ? r.stdout.trim() : undefined;
@@ -61,18 +70,12 @@ export function repoIdentity(dir: string, denyRemotes: readonly string[] = [], h
   } catch {
     remote = undefined;
   }
-  const real = (() => {
-    try {
-      return realpathSync.native(root);
-    } catch {
-      return root;
-    }
-  })();
+  const real = realPath(root);
   const normalized = remote ?? (process.platform === "win32" ? real.toLowerCase().replaceAll("\\", "/") : real);
   const displayName = normalized.split("/").filter(Boolean).at(-1) ?? normalized;
   const resolved = path.resolve(real);
   const same = (a: string, b: string): boolean => (process.platform === "win32" ? a.toLowerCase() === b.toLowerCase() : a === b);
-  const isRootOrHome = path.dirname(resolved) === resolved || same(resolved, path.resolve(home));
+  const isRootOrHome = path.dirname(resolved) === resolved || same(resolved, path.resolve(realPath(home)));
   const repoKey = denied(remote, denyRemotes) || isRootOrHome ? NONE : keyOf(normalized);
   return { repoKey, displayName, remote, root: real };
 }
