@@ -18,9 +18,9 @@ import { hasSecret } from "@memory-anywhere/contracts/redact";
 import type { Paths } from "@memory-anywhere/contracts/paths";
 import { toJsonSchema } from "@memory-anywhere/contracts/json-schema";
 import { CLIENT_TEXTS, POLICY_VERSION } from "@memory-anywhere/contracts/policy-data";
-import { IDEMPOTENCY_META_KEY, TOOLS, TOOL_ORDER, type ToolName } from "@memory-anywhere/contracts/schemas/tools";
+import { ERROR_META_KEY, IDEMPOTENCY_META_KEY, TOOLS, TOOL_ORDER, type ToolName } from "@memory-anywhere/contracts/schemas/tools";
 import { CLIENT_VERSION, type ClientConfigT } from "./config.ts";
-import { offlineHeader, readProfile, readRepoContext, readTools, writeTools } from "./cache.ts";
+import { offlineHeader, readCursorActive, readProfile, readRepoContext, readTools, writeTools } from "./cache.ts";
 import { NONE, proxyRepoDir, repoIdentity } from "./repo-key.ts";
 import { drain, spoolStats, spoolWrite } from "./spool.ts";
 import type { StoreClient } from "./store-client.ts";
@@ -30,6 +30,7 @@ export type ProxyTool = "claude-code" | "codex" | "cursor" | "generic";
 const LIST_TTL_MS = 3_600_000;
 const SAVE_DRAIN_MS = 500;
 const DRAIN_EVERY_MS = 60_000;
+const CURSOR_ACTIVE_MAX_AGE_MS = 12 * 3_600_000;
 
 /** The five tools as compiled into the client, for when the store and the cache are both missing. */
 export function builtInTools(): Tool[] {
@@ -44,9 +45,10 @@ export function builtInTools(): Tool[] {
   }));
 }
 
+/** An error result: text plus the Error object in _meta, never structuredContent (spec-issues #50). */
 const errorResult = (code: string, message: string): CallToolResult => ({
   content: [{ type: "text", text: `${code}: ${message}` }],
-  structuredContent: { code, message },
+  _meta: { [ERROR_META_KEY]: { code, message } },
   isError: true,
 });
 
@@ -72,22 +74,41 @@ function classify(e: unknown): Failure {
 
 export class Proxy {
   readonly #deps: ProxyDeps;
-  readonly #repoKey: string;
+  /** The repo the current connection was opened for (its MA-Repo-Key header). */
+  #repoKey: string;
+  readonly #fixedRepoKey: string;
   readonly #session: string;
   #remote: Client | undefined;
   lastContact: number | undefined;
 
   constructor(deps: ProxyDeps) {
     this.#deps = deps;
-    this.#repoKey = repoIdentity(proxyRepoDir(deps.env, deps.cwd), deps.config.repos.deny_remotes).repoKey;
+    this.#fixedRepoKey = repoIdentity(proxyRepoDir(deps.env, deps.cwd), deps.config.repos.deny_remotes).repoKey;
+    this.#repoKey = this.#fixedRepoKey;
     this.#session = idSource().newId("pxy", deps.now());
   }
 
   get repoKey(): string {
-    return this.#repoKey;
+    return this.#currentRepo();
+  }
+
+  /**
+   * The repo of this call. Cursor shares one MCP process across windows, so its repo comes from
+   * the latest Cursor hook (within 12 hours), else the folder the proxy started in. A change of
+   * repo opens a new connection, because the repo key travels in a header.
+   */
+  #currentRepo(): string {
+    const { tool, paths, now } = this.#deps;
+    const repo = tool === "cursor" ? (readCursorActive(paths, now(), CURSOR_ACTIVE_MAX_AGE_MS) ?? this.#fixedRepoKey) : this.#fixedRepoKey;
+    if (repo !== this.#repoKey) {
+      this.#dropClient();
+      this.#repoKey = repo;
+    }
+    return repo;
   }
 
   async #client(): Promise<Client> {
+    this.#currentRepo();
     if (this.#remote) return this.#remote;
     const { store, tool } = this.#deps;
     if (!store.url) throw Object.assign(new Error("no store configured"), { status: 0 });

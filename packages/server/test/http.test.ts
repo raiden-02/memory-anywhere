@@ -128,7 +128,9 @@ describe("MCP", () => {
     expect((recalled.content as { text: string }[])[0]?.text).toContain("Deploys every service with pnpm workspaces");
     const bad = await client.callTool({ name: "memory_recall", arguments: { query: "" } });
     expect(bad.isError).toBe(true);
-    expect(bad.structuredContent).toMatchObject({ code: "INVALID_INPUT", field: "query" });
+    // No structuredContent on errors: clients check it against the output schema (spec-issues #50).
+    expect(bad.structuredContent).toBeUndefined();
+    expect(bad._meta).toMatchObject({ "memory-anywhere/error": { code: "INVALID_INPUT", field: "query" } });
     const status = await client.callTool({ name: "memory_status", arguments: {} });
     expect(status.structuredContent).toMatchObject({ store: "local", health: "ok", client: { class: "coding", repo_enabled: true } });
     await client.close();

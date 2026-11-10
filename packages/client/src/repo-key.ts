@@ -80,7 +80,10 @@ export function repoIdentity(dir: string, denyRemotes: readonly string[] = [], h
   return { repoKey, displayName, remote, root: real };
 }
 
-/** The proxy's repo folder (spec-issues #28): CLAUDE_PROJECT_DIR, then CURSOR_PROJECT_DIR, then the working directory. */
+/**
+ * The proxy's repo folder (spec-issues #28): CLAUDE_PROJECT_DIR, then CURSOR_PROJECT_DIR, then the
+ * working directory. Cursor's proxy also follows the active repo its hooks record (#49).
+ */
 export function proxyRepoDir(env: NodeJS.ProcessEnv = process.env, cwd = process.cwd()): string {
   return env["CLAUDE_PROJECT_DIR"] || env["CURSOR_PROJECT_DIR"] || cwd;
 }

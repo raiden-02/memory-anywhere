@@ -19,7 +19,7 @@ import { App, SCHEMA_VERSION, SERVER_VERSION } from "./app.ts";
 import { defaultConfig, parseConfig, type ServerConfigT } from "./config/schema.ts";
 import { activeModel, downloadModel, modelDir, type PinnedModel } from "./embed/manifest.ts";
 import { OnnxEmbedder } from "./embed/onnx.ts";
-import { Logger } from "./http/log.ts";
+import { fileSink, Logger, stdoutSink, teeSink } from "./http/log.ts";
 import { createHttpServer } from "./http/server.ts";
 import { JobWorker } from "./jobs/worker.ts";
 import { POLICY_VERSION } from "./policy/generated.ts";
@@ -108,7 +108,8 @@ async function start(l: Layout, port: number, ephemeral: boolean, rateLimits: bo
   }
   const app = new App({ db, config: l.config, embedder, rateLimits });
   const token = localToken(l.tokenFile);
-  const logger = new Logger();
+  // Hidden in local mode: the log also goes to {data}\server\server.log.
+  const logger = new Logger(ephemeral ? stdoutSink : teeSink(stdoutSink, fileSink(path.join(l.dataDir, "server.log"))));
   const server = createHttpServer({ app, port, localToken: token, logger });
   const worker = new JobWorker(app, ephemeral ? undefined : l.storeFile);
   await new Promise<void>((resolve, reject) => {

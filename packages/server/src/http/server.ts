@@ -126,6 +126,7 @@ export function createHttpServer(o: HttpOptions): Server {
     }
     const grant: Grant = localGrant(new Headers(req.headers as Record<string, string>), reqId, isAdmin);
     line.client_id = grant.clientId;
+    if (grant.repoKey) line.repo_key = grant.repoKey;
     const wait = perGrant.take(grant.clientId);
     if (wait > 0) return reply(apiError("RATE_LIMITED", "too many requests", { retry_after_s: wait }), { "retry-after": String(wait) });
     const version = req.headers["ma-client-version"];

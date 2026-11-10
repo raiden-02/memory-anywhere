@@ -9,7 +9,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { unifiedDiff } from "../src/diff.ts";
 import { codexPluginManifest, planClaudeCode, planCodex, planCursor, planSkill } from "../src/install.ts";
 import { launchAgentPlist, registerAndStart, RUN_KEY, runValue, serverToml, systemdUnit, TASK_NAME, windowsLauncher } from "../src/local-server.ts";
-import { denied, fromCursorRoot, NONE, normalizeRemote, repoIdentity } from "../src/repo-key.ts";
+import { denied, fromCursorRoot, NONE, normalizeRemote, proxyRepoDir, repoIdentity } from "../src/repo-key.ts";
 import { drain, enforceLimits, spoolStats, spoolWrite } from "../src/spool.ts";
 import { StoreClient } from "../src/store-client.ts";
 import { tempHome } from "./helpers.ts";
@@ -51,6 +51,12 @@ describe("repo key", () => {
     expect(byRemote.repoKey).not.toBe(byPath.repoKey);
     expect(repoIdentity(repo, ["github.com/owner"], h.dir).repoKey).toBe(NONE);
     expect(repoIdentity(h.dir, [], h.dir).repoKey).toBe(NONE);
+  });
+
+  it("takes the proxy's repo folder from the tool's project variable, else its working directory", () => {
+    expect(proxyRepoDir({ CLAUDE_PROJECT_DIR: "/claude ws" }, "/cwd")).toBe("/claude ws");
+    expect(proxyRepoDir({ CURSOR_PROJECT_DIR: "/cursor ws" }, "/cwd")).toBe("/cursor ws");
+    expect(proxyRepoDir({}, "/cwd")).toBe("/cwd");
   });
 
   it("reads Cursor's URL-style workspace roots", () => {

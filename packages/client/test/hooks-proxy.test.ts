@@ -143,12 +143,24 @@ describe("proxy", () => {
     expect(queued.structuredContent).toMatchObject({ outcome: "queued", reason: "offline" });
     expect(spoolStats(w.h.paths).count).toBe(1);
     const correction = await proxy.callTool("memory_save", { content: "x", kind: "fact", why_durable: "y", supersedes: "mem_01JC9Z3N4V8Q2W5X7Y9Z0A1B2C" }, undefined);
-    expect(correction).toMatchObject({ isError: true, structuredContent: { code: "STORE_UNAVAILABLE" } });
+    expect(correction).toMatchObject({ isError: true, _meta: { "memory-anywhere/error": { code: "STORE_UNAVAILABLE" } } });
+    expect(correction.structuredContent).toBeUndefined();
     const recall = await proxy.callTool("memory_recall", { query: "anything" }, undefined);
     expect((recall.content as { text: string }[])[0]?.text).toMatch(/^Offline copy from /u);
     expect(recall.structuredContent).toMatchObject({ offline: true, items: [] });
     expect((await proxy.callTool("memory_status", {}, undefined)).structuredContent).toMatchObject({ health: "offline", spool_count: 1 });
     expect((await proxy.listTools()).map((t) => t.name)).toHaveLength(5); // from the tools cache
+  });
+
+  it("in Cursor, follows the repo of the latest Cursor hook, since one proxy serves every window", async () => {
+    const w = await world();
+    const proxy = new Proxy({ paths: w.h.paths, config: localConfig(), store: w.server.client, tool: "cursor", env: {}, cwd: w.h.dir, now: Date.now });
+    expect(proxy.repoKey).not.toBe(w.repoKey);
+    const root = `/${w.repoDir.replaceAll("\\", "/")}`.replace(/^\/\//u, "/");
+    await hook(w, "cursor", "prompt", { workspace_roots: [root], session_id: "s", prompt: "remember that I write commit messages in the imperative mood" });
+    expect(proxy.repoKey).toBe(w.repoKey);
+    const r = await proxy.callTool("memory_save", { content: "Writes commit messages in the imperative mood", kind: "preference", why_durable: "habit", user_words: "I write commit messages in the imperative mood" }, undefined);
+    expect(r.structuredContent).toMatchObject({ outcome: "active" });
   });
 
   it("lists the built-in tools when it has neither the store nor a cache", () => {

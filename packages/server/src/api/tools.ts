@@ -5,7 +5,7 @@
 import { createHash } from "node:crypto";
 import { contentNormHash } from "@memory-anywhere/contracts/normalize";
 import type { ErrorCodeT, ErrorObjectT } from "@memory-anywhere/contracts/schemas/common";
-import { IDEMPOTENCY_META_KEY, TOOLS, TOOL_ORDER, WRITE_TOOLS, type ToolName } from "@memory-anywhere/contracts/schemas/tools";
+import { ERROR_META_KEY, IDEMPOTENCY_META_KEY, TOOLS, TOOL_ORDER, WRITE_TOOLS, type ToolName } from "@memory-anywhere/contracts/schemas/tools";
 import { toJsonSchema } from "@memory-anywhere/contracts/json-schema";
 import { POLICY_VERSION, TEXTS } from "../policy/generated.ts";
 import type { App } from "../app.ts";
@@ -23,7 +23,9 @@ const CALL_TIMEOUT_MS = 10_000;
 
 export interface ToolResult {
   readonly content: { type: "text"; text: string }[];
-  readonly structuredContent: Record<string, unknown>;
+  /** Present on success only (spec-issues #50). */
+  readonly structuredContent?: Record<string, unknown>;
+  readonly _meta?: Record<string, unknown>;
   readonly isError: boolean;
 }
 
@@ -65,7 +67,7 @@ export function toolDefinitions(canWrite: boolean): readonly ToolDefinition[] {
 
 export function errorResult(code: ErrorCodeT, message: string, extra: Partial<ErrorObjectT> = {}): ToolResult {
   const error: ErrorObjectT = { code, message: message.slice(0, 300), ...extra };
-  return { content: [{ type: "text", text: `${code}: ${error.message}` }], structuredContent: error, isError: true };
+  return { content: [{ type: "text", text: `${code}: ${error.message}` }], _meta: { [ERROR_META_KEY]: error }, isError: true };
 }
 
 const ok = (text: string, structured: object): ToolResult => ({ content: [{ type: "text", text }], structuredContent: structured as Record<string, unknown>, isError: false });

@@ -2,6 +2,8 @@
 // Logs never carry memory content, queries, prompts, user_words, tokens or request bodies, so the
 // line is built from a closed set of fields and every value is a code, an id or a number.
 
+import { appendFileSync, existsSync, renameSync, rmSync, statSync } from "node:fs";
+
 export interface LogLine {
   readonly level: "info" | "warn" | "error";
   readonly req_id?: string;
@@ -14,11 +16,37 @@ export interface LogLine {
   readonly latency_ms?: number;
   readonly ip_prefix?: string;
   readonly error_code?: string;
+  /** The MA-Repo-Key a request acted for (a hash, never a path). */
+  readonly repo_key?: string;
 }
 
 export type LogSink = (line: string) => void;
 
 export const stdoutSink: LogSink = (line) => process.stdout.write(`${line}\n`);
+
+const MAX_LOG_BYTES = 1_048_576;
+const KEEP_LOGS = 5;
+
+/**
+ * Local mode runs hidden, so its stdout goes nowhere: lines are also appended to a file, rotated
+ * at 1 MB with five kept (operations.md §1). The lines hold codes and ids only.
+ */
+export function fileSink(file: string): LogSink {
+  return (line) => {
+    try {
+      if (existsSync(file) && statSync(file).size >= MAX_LOG_BYTES) {
+        rmSync(`${file}.${KEEP_LOGS - 1}`, { force: true });
+        for (let i = KEEP_LOGS - 2; i >= 1; i--) if (existsSync(`${file}.${i}`)) renameSync(`${file}.${i}`, `${file}.${i + 1}`);
+        renameSync(file, `${file}.1`);
+      }
+      appendFileSync(file, `${line}\n`);
+    } catch {
+      /* logging never stops the server */
+    }
+  };
+}
+
+export const teeSink = (...sinks: LogSink[]): LogSink => (line) => sinks.forEach((s) => s(line));
 
 export class Logger {
   readonly #sink: LogSink;

@@ -161,6 +161,13 @@ export const TOOLS = {
   },
 } as const satisfies Record<ToolName, { input: z.ZodType; output: z.ZodType; annotations: ToolAnnotations }>;
 
+/**
+ * Result `_meta` key of an error result's Error object. An error result has no
+ * `structuredContent`: clients such as Cursor check it against the tool's output schema, which
+ * an Error object does not match (spec-issues #50). The text block carries "<code>: <message>".
+ */
+export const ERROR_META_KEY = "memory-anywhere/error";
+
 /** Request `_meta` key for the proxy's idempotency key (honoured for class `coding` only). */
 export const IDEMPOTENCY_META_KEY = "memory-anywhere/idempotency_key";
 

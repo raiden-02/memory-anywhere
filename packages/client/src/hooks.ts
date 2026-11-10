@@ -15,7 +15,7 @@ import { idSource } from "@memory-anywhere/contracts/ids";
 import type { SessionStartResponseT, ReposCheckResponseT, WriteResultT } from "@memory-anywhere/contracts/schemas/v1";
 import { spoolRecordToEntry, type SpoolRecordT } from "@memory-anywhere/contracts/spool";
 import type { ClientConfigT } from "./config.ts";
-import { readRepoContext, readRepos, writeProfile, writeRepoContext, writeRepoState } from "./cache.ts";
+import { readRepoContext, readRepos, writeCursorActive, writeProfile, writeRepoContext, writeRepoState } from "./cache.ts";
 import { logLine } from "./log.ts";
 import { fromCursorRoot, NONE, repoIdentity } from "./repo-key.ts";
 import { drain, spoolWrite } from "./spool.ts";
@@ -113,6 +113,7 @@ export async function runHook(tool: HookTool, event: HookEvent, raw: unknown, de
     const dir = workingDir(tool, input, deps.env);
     if (!dir) return output(tool, event, undefined);
     const repo = repoIdentity(dir, deps.config.repos.deny_remotes);
+    if (tool === "cursor") writeCursorActive(deps.paths, repo.repoKey, deps.now());
     const session = (input.session_id ?? input.conversation_id ?? "unknown").slice(0, 128);
     const result = event === "session-start" ? await sessionStart(tool, repo, session, deps) : await prompt(tool, repo, session, input.prompt ?? "", deps);
     // Session-start has time to spare for older spooled writes; a prompt hook must return quickly.
