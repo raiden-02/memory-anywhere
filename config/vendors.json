@@ -1,0 +1,120 @@
+{
+  "$comment": "Vendor values recorded in M0 (2026-11-09). auth-and-security.md §4 reads `oauth`; clients.md and `mema init` read `setup` and `tools`. Each entry names the ADR holding its evidence. Regexes are JavaScript source strings, anchored.",
+  "chat": {
+    "claude": {
+      "adr": "ADR-0103",
+      "oauth": {
+        "method": "static",
+        "fallbacks": [],
+        "token_endpoint_auth_method": "client_secret_basic",
+        "redirect_uris": ["https://claude.ai/api/mcp/auth_callback"],
+        "cimd_client_id_patterns": [],
+        "scopes_requested": "memory.read memory.write offline_access",
+        "discovery": "not recorded (static client)"
+      },
+      "mcp": { "protocol": "2026-07-28 (server/discover)", "server_instructions_reach_model": false, "elicitation": "verified-possible", "tool_loading": "account-wide: Settings > Capabilities > Advanced > Connectors in new chats" },
+      "setup": {
+        "add_server": "claude.ai > Customize > Connectors > Add custom connector; Advanced settings: OAuth Client ID and Client Secret",
+        "tool_permissions": "connector > Tool permissions: Needs approval | Always allow | Blocked",
+        "custom_instruction": { "path": "Settings > Your Claude > Instructions", "max_chars": null }
+      },
+      "surfaces": { "web": "works", "desktop_windows": "works", "claude_code": "connector appears automatically (deny it: ADR-0105)", "mobile": "pending owner check" }
+    },
+    "chatgpt": {
+      "adr": "ADR-0101, ADR-0102",
+      "oauth": {
+        "method": "static",
+        "fallbacks": ["cimd", "dcr"],
+        "token_endpoint_auth_method": "client_secret_basic",
+        "token_endpoint_auth_methods_offered": ["none", "client_secret_basic", "client_secret_post"],
+        "redirect_uris": ["https://chatgpt.com/connector_platform_oauth_redirect"],
+        "cimd_client_id_patterns": ["^https://chatgpt\\.com/oauth/client\\.json$"],
+        "scopes_requested": "memory.read memory.write",
+        "omits_offline_access": true,
+        "discovery": "oauth-protected-resource, then /.well-known/openid-configuration"
+      },
+      "mcp": { "protocol": "2026-07-28 (server/discover)", "server_instructions_reach_model": false, "elicitation": "none", "write_approval": "ChatGPT approval card on every save (Always allow available)" },
+      "setup": {
+        "add_server": "chatgpt.com/plugins > Add > Add custom MCP server; Authentication OAuth; Advanced OAuth settings > User-Defined OAuth Client",
+        "refresh_tools": "plugin settings > Refresh tools (after a server tool change)",
+        "custom_instruction": { "path": "Settings > Personalization > Custom instructions > ChatGPT instructions", "max_chars": null },
+        "tunnel": "Connection > Tunnel (tunnel id) is offered on Plus (Q24)"
+      },
+      "surfaces": { "web_pc": "works (read and write)", "desktop": "pending owner check", "phone_app": "pending owner check", "phone_browser": "pending owner check", "codex": "appears as codex_apps tools (ADR-0110)" }
+    },
+    "gemini": {
+      "adr": "ADR-0107",
+      "oauth": {
+        "method": "static",
+        "fallbacks": ["dcr"],
+        "token_endpoint_auth_method": "client_secret_basic",
+        "redirect_uri_rule": {
+          "prefix": "https://oauth-redirect.googleusercontent.com/r/user_bound_custom-mcp-",
+          "rest": "<Google user id>-<this server's host with dots as underscores>",
+          "regex_template": "^https://oauth-redirect\\.googleusercontent\\.com/r/user_bound_custom-mcp-[0-9]{1,32}-{host_underscored}$"
+        },
+        "refresh_rotation": "fixed (rotate also tested and works)",
+        "scopes_requested": "memory.read memory.write",
+        "discovery": "oauth-protected-resource, then /.well-known/openid-configuration"
+      },
+      "mcp": { "protocol": "2025-11-25 (initialize)", "server_instructions_reach_model": false, "elicitation": "none", "models_that_call_tools": ["3.1 Pro"], "write_approval": "Gemini approval card on every tool call" },
+      "setup": {
+        "add_server": "gemini.google.com > Settings > Developer Mode > Choose an app > Create new > Connect to an MCP server; Additional settings: Client ID, Client secret; finish with Save your custom app > Connect",
+        "custom_instruction": { "path": "Settings > Personal Intelligence > Instructions for Gemini (gemini.google.com/saved-info)", "max_chars": 3000, "rejects_tool_names": true }
+      },
+      "surfaces": { "web": "works (Pro, Developer Mode)" }
+    },
+    "grok": {
+      "adr": "ADR-0108",
+      "oauth": {
+        "method": "dcr",
+        "fallbacks": [],
+        "token_endpoint_auth_method": "none",
+        "redirect_uris": ["https://grok.com/connectors-oauth-exchange-code/"],
+        "dcr_request": { "client_name": "Grok", "grant_types": ["authorization_code", "refresh_token"], "application_type": "absent (defaults to web)" },
+        "scopes_requested": "memory.read memory.write memory.capture",
+        "discovery": "oauth-protected-resource, then /.well-known/openid-configuration"
+      },
+      "mcp": { "protocol": "2025-11-25 (initialize)", "server_instructions_reach_model": false, "elicitation": "none", "write_approval": "none", "tool_discovery": "search_connected_tools (on demand)" },
+      "setup": {
+        "add_server": "grok.com/connectors > New Connector > Custom: Name and Server URL only; authorize in the popup",
+        "custom_instruction": { "path": "Settings > Customize > Custom > How should Grok behave?", "max_chars": null, "needed": false }
+      },
+      "surfaces": { "web": "works", "mobile": "pending owner check" }
+    }
+  },
+  "coding": {
+    "claude-code": {
+      "adr": "ADR-0105, ADR-0109, ADR-0110",
+      "version_tested": "2.1.319",
+      "install": "plugin",
+      "plugin_loads": { "mcp": true, "hooks": true, "settings_permissions_deny": false },
+      "always_load": { "mcp_json_alwaysLoad": true, "tool_meta_anthropic_alwaysLoad": true },
+      "server_instructions_reach_model": true,
+      "disable_claude_ai_copy": { "settings_key": "deniedMcpServers", "entry": { "serverName": "claude.ai <connector name>" } },
+      "hooks": { "session_start": "SessionStart", "prompt": "UserPromptSubmit" }
+    },
+    "codex": {
+      "adr": "ADR-0109, ADR-0110",
+      "version_tested": "0.167.0",
+      "install": "plugin from a local marketplace (~/.agents/plugins/marketplace.json)",
+      "plugin_manifest": ".codex-plugin/plugin.json with \"mcpServers\": \"./.mcp.json\" and inline \"hooks\"",
+      "plugin_loads": { "mcp": true, "hooks": "after owner trust" },
+      "hook_trust": "config.toml [hooks.state.\"<plugin>@<marketplace>:plugin.json#hooks[0]:<event>:0:0\"] trusted_hash; untrusted hooks are skipped silently",
+      "server_instructions_reach_model": true,
+      "session_start_stdout": ["hookSpecificOutput.additionalContext JSON", "plain text"],
+      "hooks": { "session_start": "SessionStart", "prompt": "UserPromptSubmit" }
+    },
+    "cursor": {
+      "adr": "ADR-0109, ADR-0110",
+      "version_tested": "3.29.9",
+      "install": "plugin (MCP server and alwaysApply rule) + ~/.cursor/hooks.json written by mema init",
+      "plugin_loads": { "mcp": true, "hooks": false, "rules_every_workspace": true },
+      "hook_command": "node \"<abs>\\memory-anywhere.mjs\" hook cursor <event>; <abs> must not be under %LOCALAPPDATA%",
+      "payload_cwd": "workspace_roots[0] (URL-style /C:/...), else CURSOR_PROJECT_DIR",
+      "event_order_fixed": false,
+      "server_instructions_reach_model": "pending owner check",
+      "hooks": { "session_start": "sessionStart", "prompt": "beforeSubmitPrompt" }
+    }
+  }
+}
