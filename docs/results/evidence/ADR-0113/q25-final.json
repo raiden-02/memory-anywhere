@@ -1,0 +1,212 @@
+{
+  "question": "Q25",
+  "label": "final",
+  "stage": "spike",
+  "ranAt": "2026-11-10T00:44:01.526Z",
+  "summary": {
+    "pass": 19,
+    "fail": 0,
+    "pending": 0,
+    "deferred": 3
+  },
+  "checks": [
+    {
+      "name": "caller is the deploy permission set in the member account",
+      "as": "ma-deploy",
+      "command": "aws sts get-caller-identity --profile memory-anywhere-deploy --region us-east-1",
+      "expect": "custom",
+      "outcome": "allowed",
+      "verdict": "pass",
+      "detail": "arn:aws:sts::<aws-account-id>:assumed-role/AWSReservedSSO_memory-anywhere-deploy_6d0986b2a5ed3216/ma-deploy"
+    },
+    {
+      "name": "only the memory-anywhere account is listed",
+      "as": "ma-deploy",
+      "command": "aws sso list-accounts --access-token <token> --region us-east-1",
+      "expect": "custom",
+      "outcome": "allowed",
+      "verdict": "pass",
+      "detail": "[{\"accountId\":\"<aws-account-id>\",\"accountName\":\"memory-anywhere\"}]"
+    },
+    {
+      "name": "only the deploy role is listed on memory-anywhere",
+      "as": "ma-deploy",
+      "command": "aws sso list-account-roles --access-token <token> --account-id <aws-account-id> --region us-east-1",
+      "expect": "custom",
+      "outcome": "allowed",
+      "verdict": "pass",
+      "detail": "[\"memory-anywhere-deploy\"]"
+    },
+    {
+      "name": "ssm start-session is denied",
+      "as": "ma-deploy",
+      "command": "aws ssm start-session --target i-0123456789abcdef0 --profile memory-anywhere-deploy --region us-east-1",
+      "expect": "denied",
+      "outcome": "denied",
+      "verdict": "pass",
+      "detail": "aws: [ERROR]: An error occurred (AccessDeniedException) when calling the StartSession operation: User: arn:aws:sts::<aws-account-id>:assumed-role/AWSReservedSSO_memory-anywhere-deploy_6d0986b2a5ed3216/ma-deploy is not authorized to perform: ssm:StartSession on resource: arn:aws:ssm:us-east-1:<aws-account-id>:document/SSM-SessionManagerRunShell with an explicit deny in an identity-based policy"
+    },
+    {
+      "name": "ssm send-command is denied",
+      "as": "ma-deploy",
+      "command": "aws ssm send-command --instance-ids i-0123456789abcdef0 --document-name AWS-RunShellScript --parameters commands=id --profile memory-anywhere-deploy --region us-east-1",
+      "expect": "denied",
+      "outcome": "denied",
+      "verdict": "pass",
+      "detail": "aws: [ERROR]: An error occurred (AccessDeniedException) when calling the SendCommand operation: User: arn:aws:sts::<aws-account-id>:assumed-role/AWSReservedSSO_memory-anywhere-deploy_6d0986b2a5ed3216/ma-deploy is not authorized to perform: ssm:SendCommand on resource: arn:aws:ec2:us-east-1:<aws-account-id>:instance/i-0123456789abcdef0 with an explicit deny in an identity-based policy"
+    },
+    {
+      "name": "prod setup token is denied",
+      "as": "ma-deploy",
+      "command": "aws ssm get-parameter --name /memory-anywhere/setup-token --with-decryption --profile memory-anywhere-deploy --region us-east-1",
+      "expect": "denied",
+      "outcome": "denied",
+      "verdict": "pass",
+      "detail": "aws: [ERROR]: An error occurred (AccessDeniedException) when calling the GetParameter operation: User: arn:aws:sts::<aws-account-id>:assumed-role/AWSReservedSSO_memory-anywhere-deploy_6d0986b2a5ed3216/ma-deploy is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:us-east-1:<aws-account-id>:parameter/memory-anywhere/setup-token with an explicit deny in an identity-based policy"
+    },
+    {
+      "name": "prod LLM key is denied",
+      "as": "ma-deploy",
+      "command": "aws ssm get-parameter --name /memory-anywhere/llm/api_key --with-decryption --profile memory-anywhere-deploy --region us-east-1",
+      "expect": "denied",
+      "outcome": "denied",
+      "verdict": "pass",
+      "detail": "aws: [ERROR]: An error occurred (AccessDeniedException) when calling the GetParameter operation: User: arn:aws:sts::<aws-account-id>:assumed-role/AWSReservedSSO_memory-anywhere-deploy_6d0986b2a5ed3216/ma-deploy is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:us-east-1:<aws-account-id>:parameter/memory-anywhere/llm/api_key with an explicit deny in an identity-based policy"
+    },
+    {
+      "name": "spike setup token cannot be decrypted",
+      "as": "ma-deploy",
+      "command": "aws ssm get-parameter --name /memory-anywhere-spike/setup-token --with-decryption --profile memory-anywhere-deploy --region us-east-1",
+      "expect": "deniedOrMissing",
+      "outcome": "denied",
+      "verdict": "pass",
+      "detail": "aws: [ERROR]: An error occurred (AccessDeniedException) when calling the GetParameter operation: User: arn:aws:sts::<aws-account-id>:assumed-role/AWSReservedSSO_memory-anywhere-deploy_6d0986b2a5ed3216/ma-deploy is not authorized to perform: kms:Decrypt on resource: arn:aws:kms:us-east-1:<aws-account-id>:key/3ee16f57-feec-405e-aecf-416e5631ac7a with an explicit deny in an identity-based policy. Go to https://us-east-1.console.aws.amazon.com/iam/home?region=us-east-1#/authorization-details/1umt4u48uexg70lpquxv1r0i6 for complete details, or call the GetRequestAuthorizationDetails API with the following authorization id: 1umt4u48uexg70lpquxv1r0i6 (Service: AWSKMS; Status Code: 400; Error Code: AccessDeniedException; Request ID: 1c8a0356-e372-4583-b833-ace3358a0954; Proxy: null)"
+    },
+    {
+      "name": "prod backup bucket cannot be read",
+      "as": "ma-deploy",
+      "command": "aws s3 cp s3://memory-anywhere-backup-<aws-account-id>-us-east-1-prod/litestream/q25-probe - --profile memory-anywhere-deploy --region us-east-1",
+      "expect": "deniedOrMissingUntilM2",
+      "outcome": "missing",
+      "verdict": "deferred",
+      "detail": "download failed: s3://memory-anywhere-backup-<aws-account-id>-us-east-1-prod/litestream/q25-probe to - An error occurred (404) when calling the HeadObject operation: Not Found"
+    },
+    {
+      "name": "spike backup bucket cannot be read",
+      "as": "ma-deploy",
+      "command": "aws s3 cp s3://memory-anywhere-backup-<aws-account-id>-us-east-1-spike/litestream/q25-probe - --profile memory-anywhere-deploy --region us-east-1",
+      "expect": "deniedOrMissing",
+      "outcome": "denied",
+      "verdict": "pass",
+      "detail": "download failed: s3://memory-anywhere-backup-<aws-account-id>-us-east-1-spike/litestream/q25-probe to - An error occurred (403) when calling the HeadObject operation: Forbidden"
+    },
+    {
+      "name": "OrganizationAccountAccessRole cannot be assumed",
+      "as": "ma-deploy",
+      "command": "aws sts assume-role --role-arn arn:aws:iam::<aws-account-id>:role/OrganizationAccountAccessRole --role-session-name q25 --profile memory-anywhere-deploy --region us-east-1",
+      "expect": "denied",
+      "outcome": "denied",
+      "verdict": "pass",
+      "detail": "aws: [ERROR]: An error occurred (AccessDenied) when calling the AssumeRole operation: User: arn:aws:sts::<aws-account-id>:assumed-role/AWSReservedSSO_memory-anywhere-deploy_6d0986b2a5ed3216/ma-deploy is not authorized to perform: sts:AssumeRole on resource: arn:aws:iam::<aws-account-id>:role/OrganizationAccountAccessRole. Go to https://us-east-1.console.aws.amazon.com/iam/home?region=us-east-1#/authorization-details/c3599rvpz9v3dtvs65zhg71ur for complete details, or call the GetRequestAuthorizationDetails API with the following authorization id: c3599rvpz9v3dtvs65zhg71ur"
+    },
+    {
+      "name": "IAM is denied",
+      "as": "ma-deploy",
+      "command": "aws iam list-users --profile memory-anywhere-deploy --region us-east-1",
+      "expect": "denied",
+      "outcome": "denied",
+      "verdict": "pass",
+      "detail": "aws: [ERROR]: An error occurred (AccessDenied) when calling the ListUsers operation: User: arn:aws:sts::<aws-account-id>:assumed-role/AWSReservedSSO_memory-anywhere-deploy_6d0986b2a5ed3216/ma-deploy is not authorized to perform: iam:ListUsers on resource: arn:aws:iam::<aws-account-id>:user/ with an explicit deny in an identity-based policy. Go to https://us-east-1.console.aws.amazon.com/iam/home?region=us-east-1#/authorization-details/9q8f892pa0f7afu2e0d6wi5x8 for complete details, or call the GetRequestAuthorizationDetails API with the following authorization id: 9q8f892pa0f7afu2e0d6wi5x8"
+    },
+    {
+      "name": "Organizations is denied",
+      "as": "ma-deploy",
+      "command": "aws organizations describe-organization --profile memory-anywhere-deploy --region us-east-1",
+      "expect": "denied",
+      "outcome": "denied",
+      "verdict": "pass",
+      "detail": "aws: [ERROR]: An error occurred (AccessDeniedException) when calling the DescribeOrganization operation: You don't have permissions to access this resource."
+    },
+    {
+      "name": "Identity Center admin is denied",
+      "as": "ma-deploy",
+      "command": "aws sso-admin list-instances --profile memory-anywhere-deploy --region us-east-1",
+      "expect": "denied",
+      "outcome": "denied",
+      "verdict": "pass",
+      "detail": "aws: [ERROR]: An error occurred (AccessDeniedException) when calling the ListInstances operation: User: arn:aws:sts::<aws-account-id>:assumed-role/AWSReservedSSO_memory-anywhere-deploy_6d0986b2a5ed3216/ma-deploy is not authorized to perform: sso:ListInstances on resource: arn:aws:sso:::instance/* with an explicit deny in an identity-based policy"
+    },
+    {
+      "name": "KMS key listing is denied",
+      "as": "ma-deploy",
+      "command": "aws kms list-keys --profile memory-anywhere-deploy --region us-east-1",
+      "expect": "denied",
+      "outcome": "denied",
+      "verdict": "pass",
+      "detail": "aws: [ERROR]: An error occurred (AccessDeniedException) when calling the ListKeys operation: User: arn:aws:sts::<aws-account-id>:assumed-role/AWSReservedSSO_memory-anywhere-deploy_6d0986b2a5ed3216/ma-deploy is not authorized to perform: kms:ListKeys on resource: * because no identity-based policy allows the kms:ListKeys action. Go to https://us-east-1.console.aws.amazon.com/iam/home?region=us-east-1#/authorization-details/3zbpk3khglqv0br53xcw1ttsr for complete details, or call the GetRequestAuthorizationDetails API with the following authorization id: 3zbpk3khglqv0br53xcw1ttsr"
+    },
+    {
+      "name": "deploy can assume the CDK lookup role (expected: CDK needs it)",
+      "as": "ma-deploy",
+      "command": "aws sts assume-role --role-arn arn:aws:iam::<aws-account-id>:role/cdk-hnb659fds-lookup-role-<aws-account-id>-us-east-1 --role-session-name q25-lookup --profile memory-anywhere-deploy --region us-east-1",
+      "expect": "allowed",
+      "outcome": "allowed",
+      "verdict": "pass",
+      "detail": "assumed (credentials not recorded)"
+    },
+    {
+      "name": "lookup role: prod setup token",
+      "as": "cdk-lookup-role",
+      "command": "aws ssm get-parameter --name /memory-anywhere/setup-token --with-decryption --region us-east-1",
+      "expect": "deniedOrMissingUntilM2",
+      "outcome": "missing",
+      "verdict": "deferred",
+      "detail": "aws: [ERROR]: An error occurred (ParameterNotFound) when calling the GetParameter operation:"
+    },
+    {
+      "name": "lookup role: spike setup token",
+      "as": "cdk-lookup-role",
+      "command": "aws ssm get-parameter --name /memory-anywhere-spike/setup-token --with-decryption --region us-east-1",
+      "expect": "deniedOrMissing",
+      "outcome": "denied",
+      "verdict": "pass",
+      "detail": "aws: [ERROR]: An error occurred (AccessDeniedException) when calling the GetParameter operation: User: arn:aws:sts::<aws-account-id>:assumed-role/cdk-hnb659fds-lookup-role-<aws-account-id>-us-east-1/q25-lookup is not authorized to perform: kms:Decrypt on resource: arn:aws:kms:us-east-1:<aws-account-id>:key/3ee16f57-feec-405e-aecf-416e5631ac7a with an explicit deny in an identity-based policy. Go to https://us-east-1.console.aws.amazon.com/iam/home?region=us-east-1#/authorization-details/6jc0eku0783j0gqudoyg9tfvy for complete details, or call the GetRequestAuthorizationDetails API with the following authorization id: 6jc0eku0783j0gqudoyg9tfvy (Service: AWSKMS; Status Code: 400; Error Code: AccessDeniedException; Request ID: f86375d6-3f3f-4039-a284-99a6e6fd657b; Proxy: null)"
+    },
+    {
+      "name": "lookup role: prod backup bucket",
+      "as": "cdk-lookup-role",
+      "command": "aws s3 cp s3://memory-anywhere-backup-<aws-account-id>-us-east-1-prod/litestream/q25-probe - --region us-east-1",
+      "expect": "deniedOrMissingUntilM2",
+      "outcome": "missing",
+      "verdict": "deferred",
+      "detail": "download failed: s3://memory-anywhere-backup-<aws-account-id>-us-east-1-prod/litestream/q25-probe to - An error occurred (404) when calling the HeadObject operation: Not Found"
+    },
+    {
+      "name": "lookup role: spike backup bucket",
+      "as": "cdk-lookup-role",
+      "command": "aws s3 cp s3://memory-anywhere-backup-<aws-account-id>-us-east-1-spike/litestream/q25-probe - --region us-east-1",
+      "expect": "deniedOrMissing",
+      "outcome": "denied",
+      "verdict": "pass",
+      "detail": "download failed: s3://memory-anywhere-backup-<aws-account-id>-us-east-1-spike/litestream/q25-probe to - An error occurred (403) when calling the HeadObject operation: Forbidden"
+    },
+    {
+      "name": "lookup role: ssm start-session",
+      "as": "cdk-lookup-role",
+      "command": "aws ssm start-session --target i-0123456789abcdef0 --region us-east-1",
+      "expect": "denied",
+      "outcome": "denied",
+      "verdict": "pass",
+      "detail": "aws: [ERROR]: An error occurred (AccessDeniedException) when calling the StartSession operation: User: arn:aws:sts::<aws-account-id>:assumed-role/cdk-hnb659fds-lookup-role-<aws-account-id>-us-east-1/q25-lookup is not authorized to perform: ssm:StartSession on resource: arn:aws:ssm:us-east-1:<aws-account-id>:document/SSM-SessionManagerRunShell because no identity-based policy allows the ssm:StartSession action"
+    },
+    {
+      "name": "aws sso logout leaves no token or role credentials cached",
+      "as": "ma-deploy",
+      "command": "aws sso logout --profile memory-anywhere-deploy; scan ~/.aws/sso/cache and ~/.aws/cli/cache",
+      "expect": "custom",
+      "outcome": "allowed",
+      "verdict": "pass",
+      "detail": "no cached token or credentials"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # 0113 Identity Center separation (Q25), operator path (Q26), budgets in the member account (Q27)
 
-Status: proposed (bootstrap done; Q26 and Q27 pass; Q25 pre-stack pass, final run at M0 close-out after the temporary operator assignment is removed)
+Status: accepted (Q25, Q26, Q27: design as written; the M0-only operator exception was removed before the final Q25 run)
 Date: 2026-11-08
 Milestone: M0
 Question: Q25, Q26, Q27
@@ -47,10 +47,19 @@ Run `pre-stack`, 2026-11-08, before any stack existed: **15 pass, 0 fail, 7 pend
 | spike setup token (deploy and lookup role), prod setup token (lookup role), prod and spike backup buckets (both) | pending: resource does not exist yet |
 | `aws sso logout`, then cache scan | no token or credentials left |
 
-Observation for the re-run: the lookup role received `ParameterNotFound`, not AccessDenied, for `/memory-anywhere/setup-token`, so it may call `ssm:GetParameter` on every path. Its only barrier to a secret's value is the denied `kms:Decrypt`, which holds only while every secret parameter is a SecureString. The `with-stack` run checks this against the real setup token.
+Observation for the re-run: the lookup role received `ParameterNotFound`, not AccessDenied, for `/memory-anywhere/setup-token`, so it may call `ssm:GetParameter` on every path. Its only barrier to a secret's value is the denied `kms:Decrypt`, which holds only while every secret parameter is a SecureString.
+
+**Removal of the M0 exception, 2026-11-10.** The owner removed `memory-anywhere-operator` from `ma-deploy` in management-account CloudShell, then re-ran the reviewed `bootstrap-identity.sh` (commit `7deba3b`): "OK: exactly the two expected assignments." (`memory-anywhere-deploy` → `ma-deploy`, `memory-anywhere-operator` → `ma-operator`). The PC's temporary `memory-anywhere-operator` profile was deleted from `~/.aws/config` and its cached role credentials removed. Evidence: [`operator-exception-removed.txt`](../results/evidence/ADR-0113/operator-exception-removed.txt).
+
+Run `final`, 2026-11-10, after the removal, with the spike stack up (backup bucket, CMK and a real SecureString setup token): **19 pass, 0 fail, 0 pending, 3 deferred.** Evidence: [`q25-final.json`](../results/evidence/ADR-0113/q25-final.json).
+- `sso list-account-roles` lists exactly `memory-anywhere-deploy` again; the operator role is gone.
+- Spike setup token: the deploy role and the CDK lookup role both fail at `kms:Decrypt` on the stack's CMK, each "with an explicit deny in an identity-based policy". So the SecureString's encryption is the barrier, as observed above.
+- Spike backup bucket: 403 for both.
+- The 3 deferred checks read prod resources (`/memory-anywhere/setup-token` through the lookup role; the prod backup bucket through both) that do not exist until M2. M2's first prod deploy re-runs Q25 with them.
+- `aws sso logout` left no token or role credentials.
 
 ### Decision
-Pending. The pre-stack result matches the design. The run labelled `with-stack` repeats every check once the spike stack exists (bucket, CMK and a real SecureString setup token); Q25 is accepted only if that run has 0 fail and 0 pending.
+**Accepted: design as written.** The final run has 0 fail and 0 pending against real resources. The only open checks need prod resources, which M2 creates; the M2 deploy checklist re-runs `q25.ts` once they exist. Every secret parameter must stay a SecureString under the stack's CMK, because the lookup role can call `ssm:GetParameter`.
 
 ## Q26 Operator path
 
