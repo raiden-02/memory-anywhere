@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { deployAws, destroyAws, type Deps, type DeployOptions } from "../src/deploy/aws.ts";
+import { existsSync, readFileSync } from "node:fs";
+import { defaultFileDeps, deployAws, destroyAws, type Deps, type DeployOptions } from "../src/deploy/aws.ts";
 import { classifyName, isCloudflareIp } from "../src/deploy/dns.ts";
 import type { RunResult } from "../src/deploy/process.ts";
 
@@ -22,9 +23,20 @@ function has(args: string[], ...words: string[]) {
 }
 
 /** A fake AWS account and DNS, answering in the order the commands call them. */
-function world(opts: { arn?: string; bootstrap?: boolean; imdsHops?: number; stackExists?: boolean; dns?: string[][]; cdkFailures?: number } = {}) {
+/** A CloudTrail-style key: long enough that 1,000 of them inline overflow a Windows command line. */
+const trailKey = (i: number) => `AWSLogs/${ACCOUNT}/CloudTrail/us-east-1/2026/11/10/${ACCOUNT}_CloudTrail_us-east-1_20261110T0005Z_${String(i).padStart(16, "0")}.json.gz`;
+
+function world(
+  opts: { arn?: string; bootstrap?: boolean; imdsHops?: number; stackExists?: boolean; dns?: string[][]; cdkFailures?: number; trailObjects?: number } = {},
+) {
   const calls: Call[] = [];
   const logs: string[] = [];
+  /** Temporary files the code under test wrote, by path. */
+  const tempFiles = new Map<string, string>();
+  /** Object versions per bucket; the trail bucket starts with trailObjects versions and as many delete markers. */
+  const buckets = new Map<string, { Key: string; VersionId: string }[]>([
+    ["b-trail", Array.from({ length: (opts.trailObjects ?? 0) * 2 }, (_, i) => ({ Key: trailKey(i >> 1), VersionId: `v${i}`.padEnd(32, "x") }))],
+  ]);
   let stackExists = opts.stackExists ?? false;
   let cdkFailures = opts.cdkFailures ?? 0;
   const dnsAnswers = [...(opts.dns ?? [[EIP]])];
@@ -64,7 +76,26 @@ function world(opts: { arn?: string; bootstrap?: boolean; imdsHops?: number; sta
         : undefined,
     (a) => (has(a, "get-instance-metadata-defaults") ? ok(JSON.stringify({ AccountLevel: { HttpTokens: "required", HttpPutResponseHopLimit: opts.imdsHops ?? 1 } })) : undefined),
     (a) => (has(a, "describe-stacks", "MemoryAnywhere-spike") || has(a, "describe-stacks", "MemoryAnywhere-prod") ? (stackExists ? ok(JSON.stringify(outputs)) : fail("does not exist")) : undefined),
-    (a) => (has(a, "list-object-versions") ? ok("{}") : undefined),
+    (a) => {
+      if (!has(a, "list-object-versions")) return undefined;
+      // Like the CLI with --max-items 1000: up to 1,000 versions plus up to 1,000 delete markers.
+      const all = buckets.get(a[a.indexOf("--bucket") + 1] ?? "") ?? [];
+      const versions = all.filter((_, i) => i % 2 === 0).slice(0, 1000);
+      const markers = all.filter((_, i) => i % 2 === 1).slice(0, 1000);
+      return ok(all.length ? JSON.stringify({ Versions: versions, DeleteMarkers: markers }) : "{}");
+    },
+    (a) => {
+      if (!has(a, "delete-objects")) return undefined;
+      const ref = a[a.indexOf("--delete") + 1] ?? "";
+      const payload = tempFiles.get(ref.slice("file://".length));
+      if (!payload) return fail(`expected --delete file://<temp file>, got ${ref.slice(0, 40)}`);
+      const doomed = JSON.parse(payload) as { Objects: { VersionId: string }[] };
+      if (doomed.Objects.length > 1000) return fail("MalformedXML: more than 1000 keys");
+      const bucket = a[a.indexOf("--bucket") + 1] ?? "";
+      const gone = new Set(doomed.Objects.map((o) => o.VersionId));
+      buckets.set(bucket, (buckets.get(bucket) ?? []).filter((o) => !gone.has(o.VersionId)));
+      return ok();
+    },
     (a) => (has(a, "sso", "logout") ? ok() : undefined),
   ];
   const deps: Deps = {
@@ -99,8 +130,13 @@ function world(opts: { arn?: string; bootstrap?: boolean; imdsHops?: number; sta
     readText: async () => JSON.stringify({ "memory-anywhere:ami-al2023-arm64": { "us-east-1": "ami-0123456789abcdef0" } }),
     writeText: async () => {},
     sha256File: async () => "0".repeat(64),
+    withTempFile: async (text, use) => {
+      const path = `C:/fake tmp/mema-${tempFiles.size}/payload.json`;
+      tempFiles.set(path, text);
+      return use(path);
+    },
   };
-  return { deps, calls, logs };
+  return { deps, calls, logs, buckets };
 }
 
 const spikeOpts: DeployOptions = { stage: "spike", region: "us-east-1", profile: "memory-anywhere-deploy", update: false, yes: true, dns: "manual" };
@@ -202,6 +238,18 @@ describe("mema destroy aws", () => {
     expect(w.calls.filter((c) => has(c.args, "list-object-versions"))).toHaveLength(6);
   });
 
+  it("empties a large bucket in batches of at most 1,000 keys, each passed through a temporary file", async () => {
+    const w = world({ stackExists: true, dns: [[]], trailObjects: 1700 });
+    await destroyAws({ stage: "spike", region: "us-east-1", profile: "memory-anywhere-deploy" }, w.deps);
+    expect(w.buckets.get("b-trail")).toEqual([]);
+    const deletes = w.calls.filter((c) => has(c.args, "delete-objects"));
+    // 3,400 entries: two listing pages of 2,000 and 1,400, each split into batches of at most 1,000.
+    expect(deletes).toHaveLength(4);
+    // Windows limits a whole command line to 32,767 characters; every argument stays far below that.
+    for (const c of deletes) expect(Math.max(...c.args.map((x) => x.length))).toBeLessThan(200);
+    expect(w.logs).toContain("  b-trail: deleted 3400 object versions");
+  });
+
   it("does not empty prod buckets", async () => {
     const w = world({ stackExists: true, dns: [[]] });
     w.calls.length = 0;
@@ -237,5 +285,29 @@ describe("systemTar", () => {
     const { systemTar } = await import("../src/deploy/process.ts");
     expect(systemTar("win32", { SystemRoot: "C:\\Windows" })).toBe("C:\\Windows\\System32\\tar.exe");
     expect(systemTar("linux", {})).toBe("tar");
+  });
+});
+
+describe("defaultFileDeps.withTempFile", () => {
+  it("gives the callback a readable file with the text, then removes it", async () => {
+    let seen = "";
+    const result = await defaultFileDeps.withTempFile('{"Objects":[]}', async (path) => {
+      seen = path;
+      expect(readFileSync(path, "utf8")).toBe('{"Objects":[]}');
+      return 42;
+    });
+    expect(result).toBe(42);
+    expect(existsSync(seen)).toBe(false);
+  });
+
+  it("removes the file when the callback throws", async () => {
+    let seen = "";
+    await expect(
+      defaultFileDeps.withTempFile("x", async (path) => {
+        seen = path;
+        throw new Error("boom");
+      }),
+    ).rejects.toThrow("boom");
+    expect(existsSync(seen)).toBe(false);
   });
 });

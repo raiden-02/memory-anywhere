@@ -7,7 +7,9 @@
 
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { AMI_CONTEXT_KEY, AMI_SSM_PARAMETER, CDK_CLI, CDK_CONTEXT_FILE, DEPLOY_AWS_DIR } from "@memory-anywhere/deploy-aws/dir";
 import {
   CDK_QUALIFIER,
@@ -34,6 +36,8 @@ export interface Deps {
   readText: (path: string) => Promise<string>;
   writeText: (path: string, text: string) => Promise<void>;
   sha256File: (path: string) => Promise<string>;
+  /** Writes text to a new private temporary file, passes its path to use, then deletes it. */
+  withTempFile: <T>(text: string, use: (path: string) => Promise<T>) => Promise<T>;
 }
 
 export const defaultFileDeps = {
@@ -47,6 +51,16 @@ export const defaultFileDeps = {
         .on("error", reject)
         .on("end", () => resolve(h.digest("hex")));
     }),
+  withTempFile: async <T>(text: string, use: (path: string) => Promise<T>): Promise<T> => {
+    const dir = await mkdtemp(join(tmpdir(), "mema-"));
+    try {
+      const file = join(dir, "payload.json");
+      await writeFile(file, text, { encoding: "utf8", mode: 0o600 });
+      return await use(file);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  },
 };
 
 export interface CommonOptions {
@@ -280,6 +294,12 @@ async function waitForHealth(ctx: Context, version: string, deps: Deps): Promise
 
 // ---------------------------------------------------------------- empty buckets
 
+/** S3 DeleteObjects accepts at most 1,000 keys per request. */
+const DELETE_BATCH = 1000;
+
+/** Deletes every object version and delete marker in a non-prod bucket. The key list goes
+ * through a temporary file (`--delete file://…`): inline JSON for 1,000 keys overflows the
+ * Windows command-line limit of 32,767 characters. */
 async function emptyBucket(ctx: Context, bucket: string, deps: Deps): Promise<number> {
   let deleted = 0;
   for (;;) {
@@ -290,8 +310,13 @@ async function emptyBucket(ctx: Context, bucket: string, deps: Deps): Promise<nu
     const body = JSON.parse(page || "{}") as { Versions?: { Key: string; VersionId: string }[]; DeleteMarkers?: { Key: string; VersionId: string }[] };
     const objects = [...(body.Versions ?? []), ...(body.DeleteMarkers ?? [])].map((o) => ({ Key: o.Key, VersionId: o.VersionId }));
     if (objects.length === 0) return deleted;
-    await ctx.aws(`emptying ${bucket}`, ["s3api", "delete-objects", "--bucket", bucket, "--delete", JSON.stringify({ Objects: objects, Quiet: true })]);
-    deleted += objects.length;
+    for (let i = 0; i < objects.length; i += DELETE_BATCH) {
+      const batch = objects.slice(i, i + DELETE_BATCH);
+      await deps.withTempFile(JSON.stringify({ Objects: batch, Quiet: true }), (file) =>
+        ctx.aws(`emptying ${bucket}`, ["s3api", "delete-objects", "--bucket", bucket, "--delete", `file://${file}`]),
+      );
+      deleted += batch.length;
+    }
     deps.log(`  ${bucket}: deleted ${deleted} object versions`);
   }
 }
