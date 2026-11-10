@@ -11,3 +11,6 @@ cdk.out/
 evals/datasets/public/data/
 # Local scratch output of spikes before it is scrubbed into docs/results/evidence/.
 spikes/**/out/
+
+# The M1 gate run's test repository (P10); never committed.
+/.gate/

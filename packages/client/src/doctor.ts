@@ -48,7 +48,7 @@ async function storeChecks(d: CommandDeps): Promise<Check[]> {
     health = undefined;
   }
   out.push(health?.ok ? pass("store.reachable", `${d.store.url ?? ""} answers`) : fail("store.reachable", `no healthy store at ${d.store.url ?? "(none)"}`,
-    d.config.store.mode === "local" ? "start the server: `schtasks /Run /TN \"memory-anywhere server\"` (or log out and in)" : "check `mema status`"));
+    d.config.store.mode === "local" ? "start the server: log out and in, or run `wscript //B <data>\\server\\start-hidden.js`" : "check `mema status`"));
   if (health?.min_client_version) {
     const [a, b] = CLIENT_VERSION.split(".").map(Number) as [number, number];
     const [c, e] = health.min_client_version.split(".").map(Number) as [number, number];

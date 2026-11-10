@@ -1,8 +1,10 @@
-// Local mode's server lifecycle (topology-and-ipc.md §4; spec-issues #22): `mema init --local`
-// writes server.toml, runs the server's own `init` (store + model), registers a per-user logon
-// task that starts the server with no window, and starts it at once. No admin rights are needed.
+// Local mode's server lifecycle (topology-and-ipc.md §4; spec-issues #22, #48): `mema init --local`
+// writes server.toml, runs the server's own `init` (store + model), registers a per-user start at
+// logon with no window, and starts the server at once. No admin rights are needed.
 //
-//   Windows  Task Scheduler, at logon of this user, conhost --headless node … start --local
+//   Windows  HKCU\…\Run "memory-anywhere server": wscript runs {data}\server\start-hidden.js, which
+//            starts node … start --local with a hidden window, waits, and retries a crash 3 times
+//            (an at-logon Task Scheduler task needs admin rights)
 //   macOS    ~/Library/LaunchAgents/dev.memory-anywhere.server.plist (RunAtLoad, KeepAlive)
 //   Linux    ~/.config/systemd/user/memory-anywhere.service (WantedBy=default.target)
 //
@@ -49,20 +51,34 @@ export const run: Runner = (command, args, env) => {
 };
 
 /**
- * PowerShell for the Windows logon task. The values arrive in environment variables, so no path
- * is ever spliced into the script text.
+ * The Windows launcher: a Windows Script Host file that runs the server with a hidden window and
+ * waits for it. A crash (non-zero exit) is retried up to 3 times, a minute apart; a clean stop
+ * ends it. Starting node directly would open a console window at every logon, and
+ * `conhost --headless` exits at once when not started from a console (spec-issues #45). Written
+ * as UTF-16 so any path survives.
  */
-export const WINDOWS_TASK_SCRIPT = [
-  "$ErrorActionPreference = 'Stop'",
-  "$user = \"$env:USERDOMAIN\\$env:USERNAME\"",
-  "$argline = ($env:MA_TASK_ARGS | ConvertFrom-Json | ForEach-Object { '\"' + $_ + '\"' }) -join ' '",
-  "$action = New-ScheduledTaskAction -Execute 'conhost.exe' -Argument ('--headless ' + $argline)",
-  "$trigger = New-ScheduledTaskTrigger -AtLogOn -User $user",
-  "$principal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -RunLevel Limited",
-  "$settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -MultipleInstances IgnoreNew -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)",
-  "Register-ScheduledTask -TaskName $env:MA_TASK_NAME -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force | Out-Null",
-  "Start-ScheduledTask -TaskName $env:MA_TASK_NAME",
-].join("; ");
+export function windowsLauncher(argv: readonly string[]): Buffer {
+  const commandLine = argv.map((a) => `"${a}"`).join(" ");
+  const text = [
+    "// memory-anywhere: starts the local server with no window (written by mema init).",
+    'var shell = new ActiveXObject("WScript.Shell");',
+    "var code = 0;",
+    "for (var attempt = 0; attempt < 4; attempt++) {",
+    `  code = shell.Run(${JSON.stringify(commandLine)}, 0, true);`,
+    "  if (code === 0) break;",
+    "  if (attempt < 3) WScript.Sleep(60000);",
+    "}",
+    "WScript.Quit(code);",
+    "",
+  ].join("\r\n");
+  return Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(text, "utf16le")]);
+}
+
+/** The per-user Run key that starts the launcher at logon. */
+export const RUN_KEY = "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+
+/** The Run value's command: wscript in batch mode on the launcher. */
+export const runValue = (launcherFile: string): string => `wscript.exe //B //Nologo "${launcherFile}"`;
 
 export function launchAgentPlist(argv: readonly string[]): string {
   const esc = (s: string): string => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
@@ -96,11 +112,26 @@ WantedBy=default.target
 `;
 }
 
-/** Registers the logon task and starts the server now. Throws with the tool's message on failure. */
-export function registerAndStart(argv: readonly string[], runner: Runner = run, platform: NodeJS.Platform = process.platform, home = os.homedir()): void {
+/** Starts a process that outlives this one, with no window and no inherited handles. */
+export type Detached = (command: string, args: readonly string[]) => void;
+
+export const detached: Detached = (command, args) => {
+  spawn(command, args, { detached: true, stdio: "ignore", windowsHide: true }).unref();
+};
+
+/**
+ * Registers the start at logon and starts the server now. Throws with the tool's message on
+ * failure. `launcherFile` is where Windows keeps its launcher (`{data}\server\start-hidden.js`).
+ */
+export function registerAndStart(
+  argv: readonly string[], launcherFile: string, runner: Runner = run, platform: NodeJS.Platform = process.platform, home = os.homedir(), start: Detached = detached,
+): void {
   if (platform === "win32") {
-    const r = runner("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", WINDOWS_TASK_SCRIPT], { MA_TASK_NAME: TASK_NAME, MA_TASK_ARGS: JSON.stringify(argv) });
-    if (r.status !== 0) throw new Error(`could not register the logon task: ${r.stderr.trim() || r.stdout.trim()}`);
+    mkdirSync(path.dirname(launcherFile), { recursive: true });
+    writeFileSync(launcherFile, windowsLauncher(argv));
+    const r = runner("reg.exe", ["add", RUN_KEY, "/v", TASK_NAME, "/t", "REG_SZ", "/d", runValue(launcherFile), "/f"]);
+    if (r.status !== 0) throw new Error(`could not register the start at logon: ${r.stderr.trim() || r.stdout.trim()}`);
+    start("wscript.exe", ["//B", "//Nologo", launcherFile]);
     return;
   }
   if (platform === "darwin") {

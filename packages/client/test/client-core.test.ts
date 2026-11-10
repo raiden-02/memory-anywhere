@@ -8,7 +8,7 @@ import { resolveToolPaths } from "@memory-anywhere/contracts/paths";
 import { afterEach, describe, expect, it } from "vitest";
 import { unifiedDiff } from "../src/diff.ts";
 import { codexPluginManifest, planClaudeCode, planCodex, planCursor, planSkill } from "../src/install.ts";
-import { launchAgentPlist, registerAndStart, serverToml, systemdUnit, TASK_NAME, WINDOWS_TASK_SCRIPT } from "../src/local-server.ts";
+import { launchAgentPlist, registerAndStart, RUN_KEY, runValue, serverToml, systemdUnit, TASK_NAME, windowsLauncher } from "../src/local-server.ts";
 import { denied, fromCursorRoot, NONE, normalizeRemote, repoIdentity } from "../src/repo-key.ts";
 import { drain, enforceLimits, spoolStats, spoolWrite } from "../src/spool.ts";
 import { StoreClient } from "../src/store-client.ts";
@@ -158,19 +158,39 @@ describe("local server lifecycle", () => {
     expect(serverToml(paths)).toContain(`local_token_file = ${JSON.stringify(paths.localTokenFile)}`);
   });
 
-  it("registers the Windows task with values in environment variables, not in the script", () => {
-    const calls: { command: string; args: readonly string[]; env?: NodeJS.ProcessEnv }[] = [];
-    registerAndStart(["C:\\node.exe", "C:\\my repo\\cli.ts", "start", "--local"], (command, args, env) => {
-      calls.push({ command, args, ...(env ? { env } : {}) });
+  it("registers the Windows start at logon in HKCU Run, writes the launcher, and starts it", () => {
+    const { paths } = home();
+    const launcher = path.join(paths.localServerDataDir, "start-hidden.js");
+    const calls: { command: string; args: readonly string[] }[] = [];
+    const started: { command: string; args: readonly string[] }[] = [];
+    registerAndStart(["C:\\node.exe", "C:\\my repo\\cli.ts", "start", "--local"], launcher, (command, args) => {
+      calls.push({ command, args });
       return { status: 0, stdout: "", stderr: "" };
-    }, "win32");
-    expect(calls[0]?.args.at(-1)).toBe(WINDOWS_TASK_SCRIPT);
-    expect(calls[0]?.env).toEqual({ MA_TASK_NAME: TASK_NAME, MA_TASK_ARGS: JSON.stringify(["C:\\node.exe", "C:\\my repo\\cli.ts", "start", "--local"]) });
-    expect(WINDOWS_TASK_SCRIPT).not.toContain("my repo");
+    }, "win32", "unused", (command, args) => void started.push({ command, args }));
+    expect(calls).toEqual([{ command: "reg.exe", args: ["add", RUN_KEY, "/v", TASK_NAME, "/t", "REG_SZ", "/d", runValue(launcher), "/f"] }]);
+    expect(started).toEqual([{ command: "wscript.exe", args: ["//B", "//Nologo", launcher] }]);
+    const text = readFileSync(launcher).subarray(2).toString("utf16le");
+    expect(text).toContain(String.raw`shell.Run("\"C:\\node.exe\" \"C:\\my repo\\cli.ts\" \"start\" \"--local\"", 0, true)`);
   });
 
   it("escapes arguments in the macOS and Linux units", () => {
     expect(launchAgentPlist(["/a & b/node"])).toContain("<string>/a &amp; b/node</string>");
     expect(systemdUnit(["/my dir/node", 'x"y'])).toContain('ExecStart="/my dir/node" "x\\"y"');
+  });
+});
+
+describe.runIf(process.platform === "win32")("Windows launcher", () => {
+  it("starts the command hidden through Windows Script Host, and retries only a crash", () => {
+    const h = home();
+    const out = path.join(h.dir, "launched file.txt");
+    const launcher = path.join(h.dir, "launcher dir", "start-hidden.js");
+    mkdirSync(path.dirname(launcher), { recursive: true });
+    writeFileSync(launcher, windowsLauncher([process.execPath, "-e", "require('fs').writeFileSync(process.argv[1], 'ran'); process.exit(0)", out]));
+    const r = spawnSync("cscript.exe", ["//B", "//Nologo", launcher], { encoding: "utf8" });
+    expect(r.status).toBe(0);
+    expect(readFileSync(out, "utf8")).toBe("ran");
+    const text = readFileSync(launcher).subarray(2).toString("utf16le");
+    expect(text).toContain("if (code === 0) break;");
+    expect(text).toContain("for (var attempt = 0; attempt < 4; attempt++)");
   });
 });

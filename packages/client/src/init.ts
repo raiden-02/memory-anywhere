@@ -73,7 +73,8 @@ export async function init(d: CommandDeps, o: InitOptions): Promise<void> {
   const bundle = path.join(workspace, "packages", "client", "dist", "memory-anywhere.mjs");
 
   // 2. Config files.
-  const denyRemotes = o.dryRun ? d.config.repos.deny_remotes : await askDenyList(d);
+  // --yes keeps the current deny-list (edit client.toml [repos] deny_remotes later); otherwise ask.
+  const denyRemotes = o.dryRun || o.yes ? d.config.repos.deny_remotes : await askDenyList(d);
   const configPlan: InstallPlan = {
     tool: "skill",
     files: [...fileChange(d.paths.clientConfigFile, localClientToml(denyRemotes)), ...fileChange(d.paths.localServerConfigFile, serverToml(d.paths))],
@@ -98,7 +99,7 @@ export async function init(d: CommandDeps, o: InitOptions): Promise<void> {
 
   // 3–5. Server: store and model, logon task, health.
   await serverInit(serverCli, d.paths.localServerConfigFile);
-  registerAndStart(serverArgv(serverCli, d.paths.localServerConfigFile));
+  registerAndStart(serverArgv(serverCli, d.paths.localServerConfigFile), path.join(d.paths.localServerDataDir, "start-hidden.js"));
   if (!(await waitHealthy(LOCAL_URL, 60_000))) throw new Error("the local server did not become healthy within 60 s; see `mema doctor`");
   d.out(`server running at ${LOCAL_URL}`);
 
