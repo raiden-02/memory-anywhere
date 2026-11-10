@@ -47,7 +47,13 @@ export function sensitiveCategory(
   return SENSITIVE.find((s) => blocked.includes(s.category) && normalized.some((n) => s.lex.matches(n)))?.category;
 }
 
-/** The first blocked category whose lexicon a recall query mentions (memory-policy.md §7.2 rule 7). */
+/** Every blocked category whose lexicon matches the text (the render-time recheck, memory-policy.md §7.2 rule 8). */
+export function sensitiveCategories(text: string, blocked: readonly SensitiveCategory[]): SensitiveCategory[] {
+  const n = norm(text);
+  return SENSITIVE.filter((s) => blocked.includes(s.category) && s.lex.matches(n)).map((s) => s.category);
+}
+
+/** Whether a recall query mentions a category (memory-policy.md §7.2 rule 7). */
 export function queryMentions(category: SensitiveCategory, query: string): boolean {
   return SENSITIVE.find((s) => s.category === category)?.lex.matches(norm(query)) ?? false;
 }
