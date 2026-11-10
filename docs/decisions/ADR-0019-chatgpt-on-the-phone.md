@@ -30,12 +30,12 @@ Evidence: [`docs/results/evidence/ADR-0019/phone-and-desktop.md`](../results/evi
 - **ChatGPT phone app: recall and save work.** The log shows `tools/call:memory_recall` and then `tools/call:memory_save`, with the
   row "The user's test color is amber." The connector made on the web was available in the app with no setup.
 - **ChatGPT desktop app (Windows): recall works.**
-- **chatgpt.com in the phone's browser:** not reported by the owner, so not claimed.
+- **chatgpt.com in the phone's browser:** not run. The owner decided it is the same chatgpt.com web app already tested on the PC (ADR-0101), so it needs no separate test.
 
 ## Decision
 - **ChatGPT on the phone is supported through the ChatGPT app** (option 1). Suite X gets a "ChatGPT phone app" row, and also a
   "ChatGPT desktop app" row.
-- **The phone browser** gets no row until it is checked. The owner uses the app, so this is not a limitation of the product.
+- **The phone browser** gets no separate suite X row. It is the web app covered by the PC web row (owner decision, 2026-11-10).
 - **No design change.** The re-test triggers below are dropped, because the surface works.
 
 ## Consequences

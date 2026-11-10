@@ -28,7 +28,22 @@ Stub rows written:
 | ChatGPT app (phone) | works | works (the 00:28:52 row) |
 | ChatGPT desktop app (Windows) | works | not tried |
 | Claude app (phone), connector added on the web | works | works (the 00:29:13 row) |
-| chatgpt.com in the phone's browser | not reported | not reported |
-| Grok app (phone) | not reported | not reported |
+| chatgpt.com in the phone's browser | not run (owner decision, below) | not run |
+| Grok app (phone) | works | works (the 00:36:57 row) |
 
 The phone needed no setup: each connector added on the web was already available in that vendor's phone app.
+
+## Grok app (phone), 2026-11-10
+Owner: "the grok app seems like it also worked."
+```
+00:35:28Z POST /oauth/token 200 ua Grok                         <- refresh (Grok is a public DCR client; rotation on)
+00:36:10Z POST /mcp 200 tools/call:memory_recall  client gxNg… ua grok-connectors-manager/0.1.0
+00:36:57Z POST /mcp 200 tools/call:memory_save    client gxNg… ua grok-connectors-manager/0.1.0
+{"id":"mem_71d5be905939dc9d","text":"The user's test color is amber.","user_words":"Rmeber that my test color is amber","client":"oauth","saved_at":"2026-11-10T00:36:57.221Z"}
+```
+- The connector added on grok.com was available in the app.
+- `user_words` kept the owner's typo verbatim, while the saved text is the corrected fact.
+
+## chatgpt.com in the phone's browser: not run
+Owner decision (2026-11-10): this is the same chatgpt.com web app already tested in Chrome on the PC (ADR-0101), so it is not
+tested separately.

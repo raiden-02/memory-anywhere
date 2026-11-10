@@ -78,7 +78,7 @@
         "web_pc": "works (read and write)",
         "desktop": "works (Windows app, recall)",
         "phone_app": "works (recall and save)",
-        "phone_browser": "not checked",
+        "phone_browser": "same web app as web_pc (owner decision; not tested separately)",
         "codex": "appears as codex_apps tools (ADR-0110)"
       }
     },
@@ -157,7 +157,7 @@
       },
       "surfaces": {
         "web": "works",
-        "mobile": "not checked"
+        "mobile": "works (phone app; connector added on grok.com)"
       }
     }
   },

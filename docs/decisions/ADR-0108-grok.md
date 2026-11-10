@@ -44,10 +44,10 @@ Evidence: [`docs/results/evidence/ADR-0108/grok-web.md`](../results/evidence/ADR
   (`search_connected_tools`) and opens a new MCP session before each call.
 - **Instructions:** server instructions do not pass (0/3, ADR-0104).
 - **xAI API:** supports function calling ("Define custom tools that the model can invoke", docs.x.ai). Remote MCP is not mentioned.
-- **Mobile:** see *Mobile* below.
+- **Mobile:** the Grok phone app recalls and saves with the connector added on grok.com (see *Mobile* below).
 
 ### Mobile
-Pending the owner's phone check ("What is my test planet?" in the Grok app). Recorded here when done.
+Owner's phone, Grok app, 2026-11-10: a token refresh (`POST /oauth/token 200`, ua `Grok`; the public client's rotation works), then `tools/call:memory_recall` and `tools/call:memory_save` (row `The user's test color is amber.`). Evidence: [`../results/evidence/ADR-0019/phone-and-desktop.md`](../results/evidence/ADR-0019/phone-and-desktop.md).
 
 ## Decision
 - **DCR inside the pairing window** is Grok's method: the only one its dialog allows. `config/vendors.json` (`grok`) records:
