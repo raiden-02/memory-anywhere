@@ -36,7 +36,7 @@ Evidence: [`docs/results/evidence/ADR-0019/phone-and-desktop.md`](../results/evi
 - **ChatGPT on the phone is supported through the ChatGPT app** (option 1). Suite X gets a "ChatGPT phone app" row, and also a
   "ChatGPT desktop app" row.
 - **The phone browser** gets no separate suite X row. It is the web app covered by the PC web row (owner decision, 2026-11-10).
-- **No design change.** The re-test triggers below are dropped, because the surface works.
+- **No design change.** The re-test triggers of the earlier draft are dropped, because the surface works.
 
 ## Consequences
 - **Same grant everywhere.** The phone app uses the ChatGPT web grant, `client_policy` and approval behaviour.
