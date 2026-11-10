@@ -161,10 +161,11 @@ export function purgeMemory(ctx: StoreContext, memoryId: string, actor: string):
   ctx.db.exec("INSERT INTO memory_fts(memory_fts) VALUES('optimize')");
 }
 
-/** Purges every forgotten memory whose `purge_after` has passed (job `purge`). Local mode then checkpoints. */
-export function purgeDue(ctx: StoreContext, mode: "local" | "aws"): number {
-  const due = prepared(ctx.db, "SELECT id FROM memory WHERE status = 'forgotten' AND purge_after <= ?").all(iso(ctx.clock.now())) as { id: string }[];
-  for (const d of due) purgeMemory(ctx, d.id, "job:purge");
+/** The purge job: every forgotten memory past `purge_after`; returns their ids. */
+export function purgeDue(ctx: StoreContext, mode: "local" | "aws"): string[] {
+  const due = (prepared(ctx.db, "SELECT id FROM memory WHERE status = 'forgotten' AND purge_after <= ? ORDER BY id").all(iso(ctx.clock.now())) as { id: string }[]).map((d) => d.id);
+  for (const id of due) purgeMemory(ctx, id, "job:purge");
+  // Local mode has no Litestream: fold the WAL back so freed pages leave the -wal file now.
   if (due.length > 0 && mode === "local") ctx.db.exec("PRAGMA wal_checkpoint(TRUNCATE)");
-  return due.length;
+  return due;
 }

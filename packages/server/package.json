@@ -1,5 +1,6 @@
 {
   "name": "@memory-anywhere/server",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "bin": {
@@ -16,5 +17,8 @@
     "ulid": "3.0.2",
     "yaml": "2.9.1",
     "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.4.0"
   }
 }

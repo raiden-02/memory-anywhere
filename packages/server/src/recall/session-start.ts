@@ -46,6 +46,8 @@ interface Built {
   readonly memoryIds: readonly string[];
   readonly renderHits: readonly string[];
   readonly untrackedShown: boolean;
+  /** The repo's linked project, whose activity each session records. */
+  readonly projectEntityId: string | null;
 }
 
 /** Cached session-start contexts, emptied after every commit (WriteEnv.onCommit). */
@@ -76,6 +78,12 @@ export class SessionStartCache {
           recordReads(ctx.db, reader.clientId, b.memoryIds, ctx.clock.now(), false);
           flagRenderSensitive(ctx, reader, b.renderHits);
           if (b.untrackedShown && reader.repoKey) prepared(ctx.db, "UPDATE repo SET untracked_prompted = 1 WHERE repo_key = ?").run(reader.repoKey);
+          // memory-policy.md §10 "Ongoing": a session in the repo counts as activity on its project.
+          if (b.projectEntityId) {
+            prepared(ctx.db, `INSERT INTO entity_activity (entity_id, last_activity_at, last_client_id, session_count) VALUES (?, ?, ?, 1)
+              ON CONFLICT(entity_id) DO UPDATE SET last_activity_at = excluded.last_activity_at, last_client_id = excluded.last_client_id, session_count = session_count + 1`)
+              .run(b.projectEntityId, iso(ctx.clock.now()), reader.clientId);
+          }
         });
         // The one-time notice is now spent, so the next session must not reuse this context.
         if (b.untrackedShown) this.invalidate();
@@ -116,7 +124,7 @@ function build(env: SessionStartEnv, reader: Reader, tool: CodingTool, maxChars:
   };
   if (!policy.repo) {
     const context = NOT_ENABLED_CONTEXT;
-    return { response: { ...base, context, repo_enabled: false, capture_enabled: false, notices: [...extraNotices] }, memoryIds: [], renderHits: [], untrackedShown: false };
+    return { response: { ...base, context, repo_enabled: false, capture_enabled: false, notices: [...extraNotices] }, memoryIds: [], renderHits: [], untrackedShown: false, projectEntityId: null };
   }
 
   const total = Math.min(TOOL_TARGET[tool], maxChars);
@@ -166,6 +174,7 @@ function build(env: SessionStartEnv, reader: Reader, tool: CodingTool, maxChars:
     memoryIds: [...ids],
     renderHits,
     untrackedShown: untracked && notices.includes(UNTRACKED_NOTICE),
+    projectEntityId: projectName ? projectId : null,
   };
 }
 
