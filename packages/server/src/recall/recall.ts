@@ -45,6 +45,8 @@ const RRF_K = 60;
 const TEXT_BUDGET = 8000;
 const TIME_ONLY_LIMIT = 5;
 const PARTNER_EXTRA = 2;
+/** Added when a memory's world time overlaps a date or range in the query (spec-issues #46). */
+const TIME_BOOST = 0.005;
 const STOPWORD_SET: ReadonlySet<string> = new Set(STOPWORDS);
 
 export interface RecallResult {
@@ -73,19 +75,31 @@ interface Candidate {
   cosine: number;
 }
 
-export async function recall(env: ReadEnv, reader: Reader, input: RecallInputT): Promise<RecallResult> {
+/** The outcome of steps 1–7: a notice that ends the call, or the ranked rows to select from. */
+export type Ranking =
+  | { readonly kind: "notice"; readonly notice: string; readonly renderHits: readonly string[] }
+  | {
+      readonly kind: "ranked";
+      readonly ranked: readonly { readonly row: ItemRow; readonly score: number }[];
+      readonly renderHits: readonly string[];
+      readonly limit: number;
+      readonly itemKey: (row: ItemRow) => string;
+      readonly passesHard: (row: ItemRow) => boolean;
+    };
+
+/**
+ * Steps 1–7 of retrieval.md §2: query check, time, candidates, fusion, hard filters, boosts and
+ * abstention. Suite R scores this ranking directly (spec-issues #26), because its documents are
+ * conversation rounds far longer than a memory, which the 8,000-character render step would cut.
+ */
+export async function rank(env: ReadEnv, reader: Reader, input: RecallInputT, started: number = env.ctx.clock.now()): Promise<Ranking> {
   const { ctx, config } = env;
   const { db } = ctx;
-  const started = ctx.clock.now();
   const policy = readPolicy(db, reader);
-  const empty = (notice: string, extra: Partial<RecallOutputT> = {}, ids: readonly string[] = []): RecallResult => ({
-    output: { notice, items: [], truncated: false, budget_exhausted: false, offline: false, ...extra },
-    text: notice,
-    record: () => audit(env, reader, input.query, ids, extra.budget_exhausted ? "budget_exhausted" : "empty", started),
-  });
+  const notice = (n: string, renderHits: readonly string[] = []): Ranking => ({ kind: "notice", notice: n, renderHits });
 
-  if (repoBlocked(reader, policy)) return empty(NOTICE.repoNotEnabled);
-  if (!specificEnough(input.query)) return empty(NOTICE.tooBroad);
+  if (repoBlocked(reader, policy)) return notice(NOTICE.repoNotEnabled);
+  if (!specificEnough(input.query)) return notice(NOTICE.tooBroad);
 
   // 2. Time.
   const time = readTime(input.query, started, config.owner.timezone);
@@ -127,8 +141,7 @@ export async function recall(env: ReadEnv, reader: Reader, input: RecallInputT):
   const narrows = (row: ItemRow): boolean =>
     (section === undefined || row.sectionId === section) &&
     (kinds === undefined || kinds.has(row.kind)) &&
-    (input.as_of === undefined || trueAt(row.validFrom, row.validTo, input.as_of)) &&
-    (time.range === undefined || overlaps(row.validFrom, row.validTo, time.range));
+    (input.as_of === undefined || trueAt(row.validFrom, row.validTo, input.as_of));
 
   // One item per memory; with history included, one per version, so "Works at Acme until …"
   // can appear next to the current value of the same memory.
@@ -139,7 +152,8 @@ export async function recall(env: ReadEnv, reader: Reader, input: RecallInputT):
     if (!row || !passesHard(row) || !narrows(row)) continue;
     // 6. Boosts.
     const ageDays = Math.max(0, (started - Date.parse(row.recordedAt)) / DAY_MS);
-    c.score += (row.pinned ? 0.01 : 0) + (row.tier === 0 ? 0.005 : row.tier === 1 ? 0.003 : 0) + 0.004 * Math.exp(-ageDays / 180);
+    const inRange = time.range !== undefined && overlaps(row.validFrom, row.validTo, time.range);
+    c.score += (inRange ? TIME_BOOST : 0) + (row.pinned ? 0.01 : 0) + (row.tier === 0 ? 0.005 : row.tier === 1 ? 0.003 : 0) + 0.004 * Math.exp(-ageDays / 180);
     const prev = best.get(itemKey(row));
     if (!prev || c.score > prev.c.score) best.set(itemKey(row), { row, c });
   }
@@ -148,7 +162,25 @@ export async function recall(env: ReadEnv, reader: Reader, input: RecallInputT):
   // 7. Abstention.
   const anyFts = ranked.some((r) => r.c.fromFts);
   const bestCosine = Math.max(-1, ...ranked.map((r) => r.c.cosine));
-  if (ranked.length === 0 || (!anyFts && bestCosine < abstainCosine(env))) return { ...empty(NOTICE.noMatch), record: () => recordRender(env, reader, renderHits, input.query, [], started) };
+  if (ranked.length === 0 || (!anyFts && bestCosine < abstainCosine(env))) return notice(NOTICE.noMatch, renderHits);
+  return { kind: "ranked", ranked: ranked.map((r) => ({ row: r.row, score: r.c.score })), renderHits, limit, itemKey, passesHard };
+}
+
+export async function recall(env: ReadEnv, reader: Reader, input: RecallInputT): Promise<RecallResult> {
+  const { ctx } = env;
+  const { db } = ctx;
+  const started = ctx.clock.now();
+  const policy = readPolicy(db, reader);
+  const empty = (notice: string, extra: Partial<RecallOutputT> = {}, ids: readonly string[] = []): RecallResult => ({
+    output: { notice, items: [], truncated: false, budget_exhausted: false, offline: false, ...extra },
+    text: notice,
+    record: () => audit(env, reader, input.query, ids, extra.budget_exhausted ? "budget_exhausted" : "empty", started),
+  });
+  const r = await rank(env, reader, input, started);
+  if (r.kind === "notice") {
+    return r.notice === NOTICE.noMatch ? { ...empty(r.notice), record: () => recordRender(env, reader, r.renderHits, input.query, [], started) } : empty(r.notice);
+  }
+  const { ranked, renderHits, limit, itemKey, passesHard } = r;
 
   // 8–9. Read budget, selection, contested partners.
   const budget = readBudget(db, reader.clientId, policy, started);

@@ -235,3 +235,13 @@ describe("session-start", () => {
     expect(cache.sessionStart(r, CODING, "codex", 6000).response.context).not.toContain(UNTRACKED_NOTICE);
   });
 });
+
+describe("time in a query", () => {
+  it("ranks memories from the named period first but drops none (spec-issues #46)", async () => {
+    const { w, r } = await world();
+    const april = await put(w, chatCaller(), stated("Finished the cloud architecture certification", "i finished the cloud architecture certification", { valid_from: "2026-04-15" }));
+    const may = await put(w, chatCaller(), stated("Started the cloud security certification", "i started the cloud security certification", { valid_from: "2026-05-20" }));
+    const ids = (await recall(r, CHAT, ask("cloud certification in April 2026"))).output.items.map((i) => i.id);
+    expect(ids).toEqual([april.id, may.id]);
+  });
+});

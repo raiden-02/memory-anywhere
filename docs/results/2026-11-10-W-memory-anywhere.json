@@ -1,0 +1,36 @@
+{
+  "suite": "W",
+  "system": "memory-anywhere",
+  "dataset": "w-factconsolidation-550",
+  "split": "test",
+  "labels": "public",
+  "n": 260,
+  "gate": {
+    "eligible": 130,
+    "wrong_supersedes": 0,
+    "upper95": 0.0227806070912292,
+    "pass": true
+  },
+  "confusion": {
+    "update": {
+      "new": 84,
+      "dup": 15,
+      "reject": 17
+    },
+    "new": {
+      "new": 136,
+      "reject": 8
+    }
+  },
+  "accuracy": {
+    "k": 136,
+    "n": 260,
+    "ci95": [
+      0.46247244472874416,
+      0.5830094141530281
+    ]
+  },
+  "git_sha": "d54b9a374ae0addd992514f515b715e28e13a690",
+  "policy_version": "P1",
+  "started_at": "2026-11-10T04:01:17.269Z"
+}

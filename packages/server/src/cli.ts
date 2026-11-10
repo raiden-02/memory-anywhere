@@ -91,7 +91,7 @@ async function init(l: Layout): Promise<void> {
   process.stdout.write(`${JSON.stringify({ ok: true, store: l.storeFile, schema_version: SCHEMA_VERSION, model: model.modelId })}\n`);
 }
 
-async function start(l: Layout, port: number, ephemeral: boolean): Promise<void> {
+async function start(l: Layout, port: number, ephemeral: boolean, rateLimits: boolean): Promise<void> {
   if (l.config.server.mode !== "local") throw new Error("this build serves local mode only (start --local)");
   const [host] = l.config.server.listen.split(":");
   if (host !== "127.0.0.1") throw new Error(`local mode binds 127.0.0.1 only, not ${host ?? "?"} (topology-and-ipc.md §4)`);
@@ -106,7 +106,7 @@ async function start(l: Layout, port: number, ephemeral: boolean): Promise<void>
     db = openStore(l.storeFile, { mode: "local" });
     if (schemaVersion(db) === 0) throw new Error(`the store at ${l.storeFile} is empty; run \`memory-anywhere-server init\``);
   }
-  const app = new App({ db, config: l.config, embedder });
+  const app = new App({ db, config: l.config, embedder, rateLimits });
   const token = localToken(l.tokenFile);
   const logger = new Logger();
   const server = createHttpServer({ app, port, localToken: token, logger });
@@ -138,7 +138,7 @@ async function main(argv: readonly string[]): Promise<void> {
     args: rest,
     options: {
       config: { type: "string" }, local: { type: "boolean" }, port: { type: "string" }, ephemeral: { type: "boolean" },
-      "dry-run": { type: "boolean" }, canonical: { type: "boolean" }, content: { type: "boolean" }, out: { type: "string" },
+      "dry-run": { type: "boolean" }, "no-rate-limits": { type: "boolean" }, canonical: { type: "boolean" }, content: { type: "boolean" }, out: { type: "string" },
     },
     allowPositionals: false,
   });
@@ -148,7 +148,8 @@ async function main(argv: readonly string[]): Promise<void> {
     case "start": {
       const port = Number(values.port ?? l.config.server.listen.split(":")[1] ?? "47821");
       if (!Number.isInteger(port) || port < 1 || port > 65_535) throw new Error(`invalid port ${values.port ?? ""}`);
-      return start(l, port, values.ephemeral === true);
+      if (values["no-rate-limits"] && !values.ephemeral) throw new Error("--no-rate-limits is only for --ephemeral servers (latency evals)");
+      return start(l, port, values.ephemeral === true, values["no-rate-limits"] !== true);
     }
     case "init":
       return init(l);

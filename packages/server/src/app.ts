@@ -15,6 +15,8 @@ import type { StoreContext } from "./store/context.ts";
 import { prepared } from "./store/db.ts";
 import { assertSchemaCurrent, latestVersion } from "./store/migrate.ts";
 import type { WriteEnv } from "./write/pipeline.ts";
+import { RateLimiter, UNLIMITED, type Limiter } from "./http/rate.ts";
+import { HOUR_MS } from "./store/clock.ts";
 
 const PACKAGE = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as { version: string };
 
@@ -32,6 +34,20 @@ export interface AppOptions {
   readonly embedder: Embedder;
   readonly clock?: Clock;
   readonly ids?: IdSource;
+  /** Off only for an ephemeral server used by latency evals (`--no-rate-limits`). */
+  readonly rateLimits?: boolean;
+}
+
+/** Per-client limits that hold on every route (operations.md §3). */
+export interface ClientLimits {
+  /** Recall calls: 60 per hour per client. */
+  readonly recall: Limiter;
+  /** Prompt intake (/v1/writes op prompt): 600 per hour per client. */
+  readonly prompt: Limiter;
+  /** /mcp and /v1 requests: 120 per minute per grant. */
+  readonly requests: Limiter;
+  /** Requests without a valid token: 30 per minute per IP prefix. */
+  readonly unauthenticated: Limiter;
 }
 
 export class App {
@@ -40,6 +56,7 @@ export class App {
   readonly embedder: Embedder;
   readonly index: VectorIndex;
   readonly sessions = new SessionStartCache();
+  readonly limits: ClientLimits;
   readonly write: WriteEnv;
   readonly read: ReadEnv;
 
@@ -55,6 +72,10 @@ export class App {
     this.index = VectorIndex.load(o.db, o.embedder.modelId);
     this.write = { ctx: this.ctx, config: o.config, embedder: o.embedder, onCommit: (ids) => this.committed(ids) };
     this.read = { ctx: this.ctx, config: o.config, embedder: o.embedder, index: this.index };
+    const now = (): number => this.ctx.clock.now();
+    this.limits = o.rateLimits === false
+      ? { recall: UNLIMITED, prompt: UNLIMITED, requests: UNLIMITED, unauthenticated: UNLIMITED }
+      : { recall: new RateLimiter(60, HOUR_MS, now), prompt: new RateLimiter(600, HOUR_MS, now), requests: new RateLimiter(120, 60_000, now), unauthenticated: new RateLimiter(30, 60_000, now) };
   }
 
   /** After every commit: the touched memories' vectors are re-read and cached contexts dropped. */

@@ -21,7 +21,6 @@ import type { App } from "../app.ts";
 import { localGrant, type Grant } from "../api/grant.ts";
 import { mcpHandler, type McpRequestExtra } from "../api/mcp.ts";
 import { ipPrefix, Logger, type LogLine } from "./log.ts";
-import { RateLimiter } from "./rate.ts";
 import { admin, apiError, clientVersionOk, health, projection, recallRoute, reposCheck, sessionStart, statusRoute, tooOld, writes, type V1Response } from "./v1.ts";
 
 const MCP_BODY_MAX = 64 * 1024;
@@ -91,8 +90,7 @@ export function createHttpServer(o: HttpOptions): Server {
   const now = o.now ?? Date.now;
   const hosts = new Set([`127.0.0.1:${o.port}`, `localhost:${o.port}`]);
   const origins = new Set([`http://127.0.0.1:${o.port}`, `http://localhost:${o.port}`]);
-  const unauthenticated = new RateLimiter(30, 60_000, now);
-  const perGrant = new RateLimiter(120, 60_000, now);
+  const { unauthenticated, requests: perGrant } = app.limits;
   const mcp = mcpHandler(app);
   const routes = new Set<string>(ROUTES);
 

@@ -1,7 +1,14 @@
 // In-process token buckets (operations.md §3): a key may spend `capacity` requests at once and
 // regains them evenly over the period. Over the limit, the caller learns how long to wait.
 
-export class RateLimiter {
+/** A limiter that never limits: `--ephemeral --no-rate-limits` servers for latency evals only. */
+export const UNLIMITED = { take: (_key: string): number => 0 };
+
+export interface Limiter {
+  take(key: string): number;
+}
+
+export class RateLimiter implements Limiter {
   readonly #capacity: number;
   readonly #periodMs: number;
   readonly #now: () => number;

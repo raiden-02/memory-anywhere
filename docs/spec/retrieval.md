@@ -18,7 +18,7 @@ Budgets are in Unicode code points of the rendered text. There is no tokenizer d
 Input: `query`, optional `section`, `scope`, `kinds`, `as_of`, `limit` (mcp-interface.md §3.1).
 
 1. **Query check.** Content words of the query (data-model.md §1) must number ≥ 2, or ≥ 1 if that word is ≥ 4 chars and not a stopword. Otherwise return `items: []`, `notice` = "Query too broad; ask about something specific." (not an error). Wildcards (`*`, `%`, `?` alone) count as no words.
-2. **Time parse.** chrono-node in the owner's timezone (`server.toml` `owner.timezone`) extracts a date or range ("last month", "in 2024", "before I moved"). If found, it becomes a world-time filter (§3). If the query contains a past marker from `policy/past_markers.txt` (`used to`, `previously`, `before`, `formerly`, `history of`, `what changed`, `last year`, `in 20`), superseded and historical versions are included. A query whose content words are all time words is **time-only**; its `limit` is capped at 5.
+2. **Time parse.** chrono-node in the owner's timezone (`server.toml` `owner.timezone`) extracts a date or range ("last month", "in 2024", "March 2025"); a weekday or time of day alone names no period. If found, it becomes a world-time **boost** (§3, step 6), not a filter: `valid_from` usually defaults to the day a fact was said, so a filter would drop facts said after the period they describe (spec-issues #46). If the query contains a past marker from `policy/past_markers.txt` (`used to`, `previously`, `before`, `formerly`, `history of`, `what changed`, `last year`, `in 20`), superseded and historical versions are included. A query whose content words are all time words is **time-only**; its `limit` is capped at 5.
 3. **Candidates.**
    - FTS: the query's tokens (lowercased, stopwords removed, **no** `s`-stripping; the index's `porter` tokenizer stems both sides, data-model.md §2), each double-quoted and escaped, joined with `OR`, run as `memory_fts MATCH` ordered by `bm25(memory_fts, 0, 1.0, 0.5, 0.5)`, top 50. The content-word `s`-stripping of data-model.md §1 is used only for overlap checks, never for FTS.
    - Vector: embed `query_prefix + query`; dot product against every current-version embedding for the active model (brute force over a `Float32Array` loaded at start and kept in sync on write), top 50.
@@ -34,8 +34,8 @@ Input: `query`, optional `section`, `scope`, `kinds`, `as_of`, `limit` (mcp-inte
    7. Sensitivity (memory-policy.md §7.2 rule 7), including the render-time recheck.
    8. `section` input narrows to that section (resolved by name or alias). It never widens the allow-list or lifts abstention.
    9. `kinds` input narrows by kind.
-   10. `as_of` / parsed time filter on world time (§3).
-6. **Boost** (added to the fused score): pinned +0.010; tier T0 +0.005, T1 +0.003; recency +0.004 × exp(−age_days / 180) using `recorded_at` of the current version.
+   10. `as_of` on world time (§3). A date or range parsed from the query does not filter; it boosts (step 6).
+6. **Boost** (added to the fused score): world time overlapping the query's date or range +0.005 (§3); pinned +0.010; tier T0 +0.005, T1 +0.003; recency +0.004 × exp(−age_days / 180) using `recorded_at` of the current version. Fusion stays RRF with k = 60 and equal weights: on the LongMemEval-S dev split, tuning k and the vector weight changed nDCG@10 by at most +0.007, within noise, so nothing was tuned (M1).
 7. **Abstain.** If no candidate came from FTS and the best vector cosine < `meta.abstain_cosine` (initial 0.30; calibrated in M1, write-path.md §12), return `items: []` with `notice` = "No stored memory matches." The model is told nothing else.
 8. **Read budget** (§5). Remove items that would exceed the budget; if none remain, return `items: []`, `budget_exhausted: true`.
 9. **Select** the top `limit` (default 6, max 10). Contested partners of selected items are added right after them even if that exceeds `limit` by up to 2.
@@ -44,7 +44,7 @@ Input: `query`, optional `section`, `scope`, `kinds`, `as_of`, `limit` (mcp-inte
 
 ## 3. Time semantics
 
-- World-time filter for a date or range `[a, b)`: keep versions with `expired_at IS NULL` and interval `[valid_from, coalesce(valid_to, +∞))` overlapping `[a, b)`. A NULL `valid_from` overlaps any range whose start is before the version's `valid_to`.
+- World-time match for a date or range `[a, b)`: a version with `expired_at IS NULL` whose interval `[valid_from, coalesce(valid_to, +∞))` overlaps `[a, b)` gets the time boost of §2 step 6. A NULL `valid_from` overlaps any range whose start is before the version's `valid_to`.
 - `as_of` (ISO date) restricts to versions true at that instant.
 - System-time queries ("what did you know in March") are not exposed over MCP in v1. The admin UI shows full version history.
 

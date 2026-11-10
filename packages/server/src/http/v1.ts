@@ -102,6 +102,8 @@ export async function recallRoute(app: App, grant: Grant, body: unknown): Promis
   const parsed = RecallRequest.safeParse(body);
   if (!parsed.success) return invalid(parsed.error);
   const { repo_key, ...input } = parsed.data;
+  const wait = app.limits.recall.take(grant.clientId);
+  if (wait > 0) return apiError("RATE_LIMITED", "recall limit reached", { retry_after_s: wait });
   const r = await recall(app.read, withRepo(grant, repo_key), input);
   return { status: 200, body: r.output, after: r.record, op: "recall", outcome: r.output.items.length > 0 ? "items" : "empty" };
 }
@@ -142,6 +144,7 @@ async function writeEntry(app: App, grant: Grant, entry: EntryT): Promise<WriteR
     switch (entry.op) {
       case "prompt": {
         if (!g.scopes.capture) return rejected("FORBIDDEN");
+        if (app.limits.prompt.take(g.clientId) > 0) return rejected("RATE_LIMITED");
         const p = PromptPayload.safeParse(entry.payload);
         if (!p.success) return rejected("INVALID_INPUT");
         const caller: Caller = { ...writeCaller(app, g), channel: "spool_save" };

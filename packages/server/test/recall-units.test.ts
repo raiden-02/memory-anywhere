@@ -69,3 +69,10 @@ describe("rendering", () => {
     expect(line).toBe("- [mem_01JC9Z3N4V8Q2W5X7Y9Z0A1B2C] (fact · Profile · since 2025-06 · T0 (owner) · via Claude) Lives in Denver, CO.");
   });
 });
+
+describe("time names a period only when it is explicit (spec-issues #46)", () => {
+  it("gives no range for a weekday or time of day alone", () => {
+    expect(readTime("what time do I wake up on Saturday mornings", NOW, "UTC").range).toBeUndefined();
+    expect(readTime("what did I cook on Wednesday", NOW, "UTC").range).toBeUndefined();
+  });
+});

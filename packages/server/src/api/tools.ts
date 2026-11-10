@@ -121,6 +121,8 @@ async function run(app: App, grant: Grant, canRead: boolean, tool: ToolName, arg
   switch (tool) {
     case "memory_recall": {
       if (!canRead) return { result: errorResult("FORBIDDEN", "this app may not read memories"), after: none };
+      const wait = app.limits.recall.take(grant.clientId);
+      if (wait > 0) return { result: errorResult("RATE_LIMITED", "recall limit reached", { retry_after_s: wait }), after: none };
       const r = await recall(app.read, grant, args);
       return { result: ok(r.text, r.output), after: r.record };
     }

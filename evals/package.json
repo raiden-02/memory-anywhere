@@ -1,5 +1,12 @@
 {
   "name": "@memory-anywhere/evals",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "@memory-anywhere/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "hyparquet": "1.31.5",
+    "@modelcontextprotocol/client": "2.4.0"
+  }
 }

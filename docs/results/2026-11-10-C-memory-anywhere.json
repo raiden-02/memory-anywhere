@@ -1,0 +1,16 @@
+{
+  "suite": "C",
+  "target": "local",
+  "n": 200,
+  "recall_ms": {
+    "p50": 83,
+    "p95": 112,
+    "max": 152
+  },
+  "recall_pass": true,
+  "session_start_chars": 860,
+  "session_start_pass": true,
+  "git_sha": "d54b9a374ae0addd992514f515b715e28e13a690",
+  "policy_version": "P1",
+  "started_at": "2026-11-10T04:02:47.506Z"
+}

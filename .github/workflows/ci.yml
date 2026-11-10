@@ -40,7 +40,55 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm lint
+      # Generated schemas, policy texts and plugin texts must match their sources.
+      - run: pnpm gen --check
       - run: pnpm test
+
+  embed-smoke:
+    # The real model on the CPU (retrieval.md §10): load, embed, and a server started with it.
+    # The model is cached by the hash of its manifest, so it downloads once per pin.
+    name: embed smoke (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-24.04]
+    defaults:
+      run:
+        working-directory: work space
+    env:
+      MA_TEST_MODEL_DIR: ${{ github.workspace }}/model cache/embeddinggemma
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: work space
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          package_json_file: work space/package.json
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24.22.2"
+          cache: pnpm
+          cache-dependency-path: work space/pnpm-lock.yaml
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: model cache
+          key: model-${{ hashFiles('work space/config/models.json') }}
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/fetch-model.ts "$MA_TEST_MODEL_DIR"
+        shell: bash
+      - run: pnpm vitest run packages/server/test/embed.test.ts packages/server/test/cli.test.ts
+
+  plugin-validate:
+    # clients.md §3.2: the Claude Code plugin passes Claude Code's own strict validator.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24.22.2"
+      - run: npm install --global @anthropic-ai/claude-code@2.1.319
+      - run: claude plugin validate --strict plugins/claude-code
 
   shellcheck:
     # Scripts that run in CloudShell and on the instance (deployment-aws.md §3.3, §4).

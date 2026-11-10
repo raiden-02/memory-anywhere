@@ -1,7 +1,8 @@
 // Step 2 of recall (retrieval.md §2, §3): what a query says about time.
 //
-// - A date or range ("last month", "in 2024", "March 2025") becomes a world-time filter [from, to),
-//   as calendar dates in the owner's time zone.
+// - A date or range ("last month", "in 2024", "March 2025") becomes a range [from, to) of calendar
+//   dates in the owner's time zone. Memories whose world time overlaps it rank higher; nothing is
+//   excluded, because valid_from usually defaults to the day a fact was said (spec-issues #46).
 // - A past marker ("used to", "before", "in 20…") brings superseded and historical versions in.
 // - A query made only of time words ("last year") is time-only, and returns at most 5 items.
 //
@@ -53,8 +54,8 @@ export function readTime(query: string, nowMs: number, timeZone: string): TimeRe
     matched = years[0];
   } else {
     const parsed = chrono.parse(query, { instant: new Date(nowMs), timezone: offsetMinutes(nowMs, timeZone) }, { forwardDate: false })[0];
-    if (parsed) {
-      range = rangeOf(parsed, timeZone);
+    range = parsed ? rangeOf(parsed, timeZone) : undefined;
+    if (parsed && range) {
       matched = parsed.text;
     } else if (year?.[1]) {
       range = { from: `${year[1]}-01-01`, to: `${Number(year[1]) + 1}-01-01` };
@@ -68,15 +69,18 @@ export function readTime(query: string, nowMs: number, timeZone: string): TimeRe
 }
 
 /** A chrono result as a date range: an explicit end, or the unit the text names, or the most precise certain component. */
-function rangeOf(r: chrono.ParsedResult, timeZone: string): DateRange {
+function rangeOf(r: chrono.ParsedResult, timeZone: string): DateRange | undefined {
   const start = localDate(r.start.date().getTime(), timeZone);
   if (r.end) return { from: start, to: addDays(localDate(r.end.date().getTime(), timeZone), 1) };
   const [y, m] = start.split("-").map(Number) as [number, number];
   const unit = [...r.tags()].includes("result/relativeDate") ? RELATIVE_UNIT.exec(r.text.toLowerCase())?.[1] : undefined;
   if (unit === "week") return { from: start, to: addDays(start, 7) };
-  if (unit === "year" || (!r.start.isCertain("month") && !r.start.isCertain("day"))) return { from: `${y}-01-01`, to: `${y + 1}-01-01` };
-  if (unit === "month" || !r.start.isCertain("day")) return { from: `${start.slice(0, 7)}-01`, to: nextMonth(y, m) };
-  return { from: start, to: addDays(start, 1) };
+  if (unit === "year") return { from: `${y}-01-01`, to: `${y + 1}-01-01` };
+  if (unit === "month") return { from: `${start.slice(0, 7)}-01`, to: nextMonth(y, m) };
+  if (r.start.isCertain("day")) return { from: start, to: addDays(start, 1) };
+  if (r.start.isCertain("month")) return { from: `${start.slice(0, 7)}-01`, to: nextMonth(y, m) };
+  if (r.start.isCertain("year")) return { from: `${y}-01-01`, to: `${y + 1}-01-01` };
+  return undefined; // a weekday or a time of day alone names no period
 }
 
 /** The zone's UTC offset in minutes at an instant (chrono takes minutes, not IANA names). */
