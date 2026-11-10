@@ -1,0 +1,728 @@
+[
+  {
+    "id": "att_name",
+    "name": "name",
+    "entity_type": "self",
+    "cardinality": "one",
+    "section_id": "sec_profile",
+    "taste_class": false,
+    "profile_key": true,
+    "restricted": false,
+    "aliases": [
+      "full name",
+      "first name",
+      "called"
+    ],
+    "sort_order": 10,
+    "description": "The user's name"
+  },
+  {
+    "id": "att_title",
+    "name": "title",
+    "entity_type": "self",
+    "cardinality": "one",
+    "section_id": "sec_profile",
+    "taste_class": false,
+    "profile_key": true,
+    "restricted": false,
+    "aliases": [
+      "job title",
+      "role",
+      "position",
+      "occupation"
+    ],
+    "sort_order": 20,
+    "description": "The user's job title or role"
+  },
+  {
+    "id": "att_employer",
+    "name": "employer",
+    "entity_type": "self",
+    "cardinality": "one",
+    "section_id": "sec_profile",
+    "taste_class": false,
+    "profile_key": true,
+    "restricted": false,
+    "aliases": [
+      "company",
+      "works_at",
+      "workplace",
+      "organization"
+    ],
+    "sort_order": 30,
+    "description": "Where the user works"
+  },
+  {
+    "id": "att_city",
+    "name": "city",
+    "entity_type": "self",
+    "cardinality": "one",
+    "section_id": "sec_profile",
+    "taste_class": false,
+    "profile_key": true,
+    "restricted": false,
+    "aliases": [
+      "location",
+      "lives_in",
+      "home city",
+      "based_in"
+    ],
+    "sort_order": 40,
+    "description": "The city the user lives in"
+  },
+  {
+    "id": "att_home_country",
+    "name": "home_country",
+    "entity_type": "self",
+    "cardinality": "one",
+    "section_id": "sec_profile",
+    "taste_class": false,
+    "profile_key": true,
+    "restricted": false,
+    "aliases": [
+      "country",
+      "nationality"
+    ],
+    "sort_order": 50,
+    "description": "The country the user lives in"
+  },
+  {
+    "id": "att_timezone",
+    "name": "timezone",
+    "entity_type": "self",
+    "cardinality": "one",
+    "section_id": "sec_profile",
+    "taste_class": false,
+    "profile_key": true,
+    "restricted": false,
+    "aliases": [
+      "time zone",
+      "tz"
+    ],
+    "sort_order": 60,
+    "description": "The user's time zone"
+  },
+  {
+    "id": "att_education",
+    "name": "education",
+    "entity_type": "self",
+    "cardinality": "many",
+    "section_id": "sec_profile",
+    "taste_class": false,
+    "profile_key": true,
+    "restricted": false,
+    "aliases": [
+      "degree",
+      "school",
+      "university",
+      "studied"
+    ],
+    "sort_order": 70,
+    "description": "Degrees and schools"
+  },
+  {
+    "id": "att_language",
+    "name": "language",
+    "entity_type": "self",
+    "cardinality": "many",
+    "section_id": "sec_profile",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "languages",
+      "speaks"
+    ],
+    "sort_order": 80,
+    "description": "Languages the user speaks"
+  },
+  {
+    "id": "att_age",
+    "name": "age",
+    "entity_type": "self",
+    "cardinality": "one",
+    "section_id": "sec_profile",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "years old"
+    ],
+    "sort_order": 90,
+    "description": "The user's age"
+  },
+  {
+    "id": "att_preference_response_style",
+    "name": "preference.response_style",
+    "entity_type": "self",
+    "cardinality": "many",
+    "section_id": "sec_preferences",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "response_style",
+      "answer style",
+      "format",
+      "tone"
+    ],
+    "sort_order": 100,
+    "description": "How answers should be shaped: length, format, tone"
+  },
+  {
+    "id": "att_preference_tooling",
+    "name": "preference.tooling",
+    "entity_type": "self",
+    "cardinality": "many",
+    "section_id": "sec_preferences",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "tooling",
+      "preferred tools",
+      "tool preference"
+    ],
+    "sort_order": 110,
+    "description": "Tools or approaches to recommend in answers"
+  },
+  {
+    "id": "att_preference_avoid",
+    "name": "preference.avoid",
+    "entity_type": "self",
+    "cardinality": "many",
+    "section_id": "sec_preferences",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "avoid",
+      "dislikes in answers",
+      "do not suggest"
+    ],
+    "sort_order": 120,
+    "description": "Topics, phrasings or approaches to avoid in answers"
+  },
+  {
+    "id": "att_os",
+    "name": "os",
+    "entity_type": "self",
+    "cardinality": "one",
+    "section_id": "sec_tools",
+    "taste_class": false,
+    "profile_key": true,
+    "restricted": false,
+    "aliases": [
+      "operating system",
+      "operating_system"
+    ],
+    "sort_order": 130,
+    "description": "The operating system on the user's main computer"
+  },
+  {
+    "id": "att_editor",
+    "name": "editor",
+    "entity_type": "self",
+    "cardinality": "many",
+    "section_id": "sec_tools",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "ide",
+      "code editor"
+    ],
+    "sort_order": 140,
+    "description": "Editors and IDEs the user uses"
+  },
+  {
+    "id": "att_device",
+    "name": "device",
+    "entity_type": "self",
+    "cardinality": "many",
+    "section_id": "sec_tools",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "devices",
+      "computer",
+      "phone",
+      "laptop"
+    ],
+    "sort_order": 150,
+    "description": "Devices the user owns or uses"
+  },
+  {
+    "id": "att_subscription",
+    "name": "subscription",
+    "entity_type": "self",
+    "cardinality": "many",
+    "section_id": "sec_tools",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "subscriptions",
+      "subscribed to"
+    ],
+    "sort_order": 160,
+    "description": "Services the user subscribes to"
+  },
+  {
+    "id": "att_plan",
+    "name": "plan",
+    "entity_type": "thing",
+    "cardinality": "one",
+    "section_id": "sec_tools",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "tier",
+      "plan level"
+    ],
+    "sort_order": 170,
+    "description": "The plan the user has for a product (entity = the product)"
+  },
+  {
+    "id": "att_skill",
+    "name": "skill",
+    "entity_type": "self",
+    "cardinality": "many",
+    "section_id": "sec_work",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "skills",
+      "expertise",
+      "knows"
+    ],
+    "sort_order": 180,
+    "description": "The user's skills"
+  },
+  {
+    "id": "att_career_goal",
+    "name": "career_goal",
+    "entity_type": "self",
+    "cardinality": "many",
+    "section_id": "sec_work",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "career goal",
+      "goal",
+      "aspiration"
+    ],
+    "sort_order": 190,
+    "description": "The user's career goals"
+  },
+  {
+    "id": "att_learning",
+    "name": "learning",
+    "entity_type": "self",
+    "cardinality": "many",
+    "section_id": "sec_work",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "studying",
+      "currently learning"
+    ],
+    "sort_order": 200,
+    "description": "What the user is learning"
+  },
+  {
+    "id": "att_job_search",
+    "name": "job_search",
+    "entity_type": "self",
+    "cardinality": "many",
+    "section_id": "sec_work",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "job hunt",
+      "looking for work"
+    ],
+    "sort_order": 210,
+    "description": "The user's job search"
+  },
+  {
+    "id": "att_likes",
+    "name": "likes",
+    "entity_type": "self",
+    "cardinality": "many",
+    "section_id": "sec_interests",
+    "taste_class": true,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "like",
+      "loves",
+      "enjoys",
+      "fan of"
+    ],
+    "sort_order": 220,
+    "description": "Things the user likes"
+  },
+  {
+    "id": "att_dislikes",
+    "name": "dislikes",
+    "entity_type": "self",
+    "cardinality": "many",
+    "section_id": "sec_interests",
+    "taste_class": true,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "dislike",
+      "hates"
+    ],
+    "sort_order": 230,
+    "description": "Things the user dislikes"
+  },
+  {
+    "id": "att_watched",
+    "name": "watched",
+    "entity_type": "self",
+    "cardinality": "many",
+    "section_id": "sec_interests",
+    "taste_class": true,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "has watched",
+      "seen"
+    ],
+    "sort_order": 240,
+    "description": "Films and shows the user watched"
+  },
+  {
+    "id": "att_plays",
+    "name": "plays",
+    "entity_type": "self",
+    "cardinality": "many",
+    "section_id": "sec_interests",
+    "taste_class": true,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "games",
+      "playing"
+    ],
+    "sort_order": 250,
+    "description": "Games and sports the user plays"
+  },
+  {
+    "id": "att_reads",
+    "name": "reads",
+    "entity_type": "self",
+    "cardinality": "many",
+    "section_id": "sec_interests",
+    "taste_class": true,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "reading",
+      "books"
+    ],
+    "sort_order": 260,
+    "description": "What the user reads"
+  },
+  {
+    "id": "att_interested_in",
+    "name": "interested_in",
+    "entity_type": "self",
+    "cardinality": "many",
+    "section_id": "sec_interests",
+    "taste_class": true,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "interests",
+      "curious about"
+    ],
+    "sort_order": 270,
+    "description": "Topics the user is interested in"
+  },
+  {
+    "id": "att_collects",
+    "name": "collects",
+    "entity_type": "self",
+    "cardinality": "many",
+    "section_id": "sec_interests",
+    "taste_class": true,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "collection",
+      "collecting"
+    ],
+    "sort_order": 280,
+    "description": "What the user collects"
+  },
+  {
+    "id": "att_home_type",
+    "name": "home_type",
+    "entity_type": "self",
+    "cardinality": "one",
+    "section_id": "sec_home",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "housing",
+      "lives in a"
+    ],
+    "sort_order": 290,
+    "description": "The kind of home the user lives in"
+  },
+  {
+    "id": "att_commute",
+    "name": "commute",
+    "entity_type": "self",
+    "cardinality": "one",
+    "section_id": "sec_home",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "gets to work",
+      "travel to work"
+    ],
+    "sort_order": 300,
+    "description": "How the user commutes"
+  },
+  {
+    "id": "att_routine",
+    "name": "routine",
+    "entity_type": "self",
+    "cardinality": "many",
+    "section_id": "sec_home",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "routines",
+      "habit",
+      "schedule"
+    ],
+    "sort_order": 310,
+    "description": "The user's routines"
+  },
+  {
+    "id": "att_vehicle",
+    "name": "vehicle",
+    "entity_type": "self",
+    "cardinality": "many",
+    "section_id": "sec_home",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "car",
+      "bike",
+      "drives"
+    ],
+    "sort_order": 320,
+    "description": "Vehicles the user has"
+  },
+  {
+    "id": "att_person_relation",
+    "name": "person.relation",
+    "entity_type": "person",
+    "cardinality": "one",
+    "section_id": "sec_people",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "relation",
+      "relationship"
+    ],
+    "sort_order": 330,
+    "description": "How this person relates to the user"
+  },
+  {
+    "id": "att_person_context",
+    "name": "person.context",
+    "entity_type": "person",
+    "cardinality": "many",
+    "section_id": "sec_people",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "about",
+      "context"
+    ],
+    "sort_order": 340,
+    "description": "Lasting context about this person's relation to the user"
+  },
+  {
+    "id": "att_org_relation",
+    "name": "org.relation",
+    "entity_type": "org",
+    "cardinality": "one",
+    "section_id": "sec_work",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "org relation",
+      "organization relation"
+    ],
+    "sort_order": 350,
+    "description": "How this organization relates to the user"
+  },
+  {
+    "id": "att_project_status",
+    "name": "project.status",
+    "entity_type": "project",
+    "cardinality": "one",
+    "section_id": "sec_projects",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "status"
+    ],
+    "sort_order": 360,
+    "description": "One of idea, active, paused, shipped, archived"
+  },
+  {
+    "id": "att_project_goal",
+    "name": "project.goal",
+    "entity_type": "project",
+    "cardinality": "one",
+    "section_id": "sec_projects",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "goal",
+      "purpose"
+    ],
+    "sort_order": 370,
+    "description": "What the project is for"
+  },
+  {
+    "id": "att_project_role",
+    "name": "project.role",
+    "entity_type": "project",
+    "cardinality": "one",
+    "section_id": "sec_projects",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "role"
+    ],
+    "sort_order": 380,
+    "description": "The user's role in the project"
+  },
+  {
+    "id": "att_project_repo",
+    "name": "project.repo",
+    "entity_type": "project",
+    "cardinality": "one",
+    "section_id": "sec_projects",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": true,
+    "aliases": [
+      "repo",
+      "repository",
+      "repo_url"
+    ],
+    "sort_order": 390,
+    "description": "The project's repository (owner-set; CLI and export only)"
+  },
+  {
+    "id": "att_project_stack",
+    "name": "project.stack",
+    "entity_type": "project",
+    "cardinality": "many",
+    "section_id": "sec_projects",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "stack",
+      "tech stack",
+      "technology"
+    ],
+    "sort_order": 400,
+    "description": "Technologies the project uses"
+  },
+  {
+    "id": "att_project_decision",
+    "name": "project.decision",
+    "entity_type": "project",
+    "cardinality": "many",
+    "section_id": "sec_projects",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "decision",
+      "decided"
+    ],
+    "sort_order": 410,
+    "description": "A lasting decision about the project, with its reason"
+  },
+  {
+    "id": "att_project_constraint",
+    "name": "project.constraint",
+    "entity_type": "project",
+    "cardinality": "many",
+    "section_id": "sec_projects",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "constraint",
+      "requirement",
+      "rule"
+    ],
+    "sort_order": 420,
+    "description": "A constraint the project must respect"
+  },
+  {
+    "id": "att_project_outcome",
+    "name": "project.outcome",
+    "entity_type": "project",
+    "cardinality": "many",
+    "section_id": "sec_projects",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": false,
+    "aliases": [
+      "outcome",
+      "result",
+      "shipped"
+    ],
+    "sort_order": 430,
+    "description": "A result the project achieved"
+  },
+  {
+    "id": "att_project_portfolio_relevance",
+    "name": "project.portfolio_relevance",
+    "entity_type": "project",
+    "cardinality": "many",
+    "section_id": "sec_projects",
+    "taste_class": false,
+    "profile_key": false,
+    "restricted": true,
+    "aliases": [
+      "portfolio relevance",
+      "portfolio"
+    ],
+    "sort_order": 440,
+    "description": "Why the project matters for the user's portfolio (CLI and export only)"
+  }
+]
