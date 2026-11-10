@@ -304,7 +304,7 @@ Status never lists sections, projects, entities or exact counts.
 | Not visible or unknown id | `isError: true`, code `NOT_FOUND` |
 | Policy outcome (rejected, review, observation) | Normal result, `isError: false` |
 
-`structuredContent` of an error result is the `Error` object. `content[0].text` is `"<code>: <message>"`.
+An error result has no `structuredContent` (clients check it against the tool's output schema): the `Error` object is in `_meta["memory-anywhere/error"]`, and `content[0].text` is `"<code>: <message>"` (spec-issues #50).
 
 ## 5. Elicitation
 
