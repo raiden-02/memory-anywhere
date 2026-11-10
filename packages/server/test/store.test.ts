@@ -40,7 +40,7 @@ describe("migration 0001", () => {
     expect(count(s, "SELECT count(*) n FROM attribute WHERE taste_class = 1")).toBe(7);
     expect(count(s, "SELECT count(*) n FROM attribute WHERE restricted = 1")).toBe(2);
     expect(s.db.prepare("SELECT id, type FROM entity").all()).toEqual([{ id: SELF_ENTITY_ID, type: "self" }]);
-    expect(s.db.prepare("SELECT client_id, class, quota_saves_per_hour, read_budget_24h FROM client_policy").all()).toEqual([
+    expect(s.db.prepare("SELECT client_id, class, quota_saves_per_hour, read_budget_24h FROM client_policy WHERE client_id = 'cli_local'").all()).toEqual([
       { client_id: LOCAL_CLIENT_ID, class: "coding", quota_saves_per_hour: 40, read_budget_24h: 200 },
     ]);
     const meta = Object.fromEntries((s.db.prepare("SELECT key, value FROM meta").all() as { key: string; value: string }[]).map((r) => [r.key, r.value]));

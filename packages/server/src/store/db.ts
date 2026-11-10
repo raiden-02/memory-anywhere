@@ -6,7 +6,7 @@
 // BEGIN is retried 5 times, 50 ms apart.
 
 import { closeSync, existsSync, openSync } from "node:fs";
-import { DatabaseSync, type SQLInputValue } from "node:sqlite";
+import { DatabaseSync, type SQLInputValue, type StatementSync } from "node:sqlite";
 
 export type Mode = "local" | "aws";
 
@@ -69,6 +69,26 @@ export function transaction<T>(db: DatabaseSync, body: () => T): T {
     db.exec("ROLLBACK");
     throw e;
   }
+}
+
+const STATEMENTS = new WeakMap<DatabaseSync, Map<string, StatementSync>>();
+
+/**
+ * A prepared statement for `sql`, compiled once per connection and reused. Hot paths (every save,
+ * every recall) go through this, so SQLite parses each query once instead of on every call.
+ */
+export function prepared(db: DatabaseSync, sql: string): StatementSync {
+  let cache = STATEMENTS.get(db);
+  if (!cache) {
+    cache = new Map();
+    STATEMENTS.set(db, cache);
+  }
+  let stmt = cache.get(sql);
+  if (!stmt) {
+    stmt = db.prepare(sql);
+    cache.set(sql, stmt);
+  }
+  return stmt;
 }
 
 /** The first row of `sql`, or undefined. */

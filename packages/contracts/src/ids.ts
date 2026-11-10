@@ -11,7 +11,7 @@ import { monotonicFactory } from "ulid";
 export const ULID_PATTERN = "[0-9A-HJKMNP-TV-Z]{26}";
 
 export const ID_PREFIXES = [
-  "ent", "mem", "ver", "src", "obs", "omn", "sec", "att", "evt", "rev", "imb", "sup", "job", "cli", "grt", "alr", "pel",
+  "ent", "mem", "ver", "src", "msr", "obs", "omn", "sec", "att", "evt", "rev", "imb", "sup", "job", "cli", "grt", "alr", "pel", "spr",
   // Request keys: spool entry, proxy save, admin request, proxy instance.
   "spl", "pxs", "adm", "pxy",
 ] as const;
