@@ -10,6 +10,7 @@
 //                            └─ memory_status → health "offline", spool count
 
 import { createHash } from "node:crypto";
+import path from "node:path";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import { Server, type CallToolResult, type Tool } from "@modelcontextprotocol/server";
 import { serveStdio } from "@modelcontextprotocol/server/stdio";
@@ -21,6 +22,7 @@ import { CLIENT_TEXTS, POLICY_VERSION } from "@memory-anywhere/contracts/policy-
 import { ERROR_META_KEY, IDEMPOTENCY_META_KEY, TOOLS, TOOL_ORDER, type ToolName } from "@memory-anywhere/contracts/schemas/tools";
 import { CLIENT_VERSION, type ClientConfigT } from "./config.ts";
 import { offlineHeader, readCursorActive, readProfile, readRepoContext, readTools, writeTools } from "./cache.ts";
+import { logLine } from "./log.ts";
 import { NONE, proxyRepoDir, repoIdentity } from "./repo-key.ts";
 import { drain, spoolStats, spoolWrite } from "./spool.ts";
 import type { StoreClient } from "./store-client.ts";
@@ -79,6 +81,7 @@ export class Proxy {
   readonly #fixedRepoKey: string;
   readonly #session: string;
   #remote: Client | undefined;
+  #logged = false;
   lastContact: number | undefined;
 
   constructor(deps: ProxyDeps) {
@@ -99,7 +102,13 @@ export class Proxy {
    */
   #currentRepo(): string {
     const { tool, paths, now } = this.#deps;
-    const repo = tool === "cursor" ? (readCursorActive(paths, now(), CURSOR_ACTIVE_MAX_AGE_MS) ?? this.#fixedRepoKey) : this.#fixedRepoKey;
+    const active = tool === "cursor" ? readCursorActive(paths, now(), CURSOR_ACTIVE_MAX_AGE_MS) : undefined;
+    const repo = active ?? this.#fixedRepoKey;
+    if (repo !== this.#repoKey || !this.#logged) {
+      // One line per decision, so `mema doctor` and the owner can see which repo the proxy acts for.
+      logLine(path.join(paths.logsDir, "client.log"), { op: "proxy.repo", tool, repo_key: repo, source: active ? "cursor-hook" : "start-folder", fixed_repo_key: this.#fixedRepoKey });
+      this.#logged = true;
+    }
     if (repo !== this.#repoKey) {
       this.#dropClient();
       this.#repoKey = repo;
