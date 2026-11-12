@@ -73,7 +73,7 @@ export function adminUi(o: AdminUiOptions): (req: IncomingMessage, res: ServerRe
           const filters = { text: q.get("q") ?? undefined, section: q.get("section") || undefined, status: q.get("status") || undefined, page: Number(q.get("page") ?? 0) || 0 };
           return page(res, "admin-memories", "Memories", "/memories", csrf, { rows: views.memories(app, filters), filters, sections: views.sectionOptions(app) });
         }
-        case "/reviews": return page(res, "admin-reviews", "Review", "/reviews", csrf, { rows: views.reviews(app) });
+        case "/reviews": return page(res, "admin-reviews", "Review", "/reviews", csrf, views.reviews(app));
         case "/observations": return page(res, "admin-observations", "Observations", "/observations", csrf, { rows: views.observations(app) });
         case "/changes": return page(res, "admin-changes", "Changes", "/changes", csrf, { rows: views.changes(app) });
         case "/apps": return page(res, "admin-apps", "Apps", "/apps", csrf, { rows: views.clients(app), approvals: views.approvals(app), vendors: Object.entries(VENDORS).map(([id, v]) => ({ id, label: v.label, methods: v.methods })) });

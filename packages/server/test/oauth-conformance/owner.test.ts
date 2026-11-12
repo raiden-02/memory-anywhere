@@ -272,6 +272,53 @@ describe("step-up for the CLI's owner commands (§6.2)", () => {
   }, 90_000);
 });
 
+describe("elicitation for a verified client (mcp-interface.md §5)", () => {
+  const ENVELOPE = { "io.modelcontextprotocol/protocolVersion": "2026-07-28", "io.modelcontextprotocol/clientCapabilities": { elicitation: {} } };
+  const PREFERENCE = { content: "Prefers short answers to quick questions", kind: "preference", why_durable: "how to answer", user_words: "I prefer short answers to quick questions", explicit_request: false };
+
+  async function rpc(issuer: Issuer, access: string, params: Record<string, unknown>): Promise<Record<string, unknown>> {
+    const res = await fetch(issuer.mcpUrl, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${access}`, "content-type": "application/json", accept: "application/json, text/event-stream",
+        "mcp-protocol-version": "2026-07-28", "mcp-method": "tools/call", "mcp-name": String(params["name"]),
+      },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { _meta: ENVELOPE, ...params } }),
+    });
+    const text = await res.text();
+    const json = text.startsWith("{") ? text : (/^data: (.*)$/mu.exec(text)?.[1] ?? "{}");
+    const body = JSON.parse(json) as { result?: Record<string, unknown> };
+    if (!body.result) throw new Error(`tools/call: ${res.status} ${text}`);
+    return body.result;
+  }
+
+  test("Claude asks the person, and the answered retry stores the preference at T1; the state works once", async () => {
+    const issuer = await issuerWith();
+    const owner = await ownerSetup(issuer);
+    const claude = await grant(issuer, owner, { vendor: "claude", method: "static" });
+    issuer.db.prepare("UPDATE client_policy SET elicitation = 'verified' WHERE vendor = 'claude'").run();
+
+    const asked = await rpc(issuer, claude.access, { name: "memory_save", arguments: PREFERENCE });
+    expect(JSON.stringify(asked)).toContain("Apply this preference in all your AI apps");
+    const state = String(asked["requestState"]);
+    const answer = { inputResponses: { confirm: { action: "accept", content: { confirm: true } } }, requestState: state };
+    const saved = await rpc(issuer, claude.access, { name: "memory_save", arguments: PREFERENCE, ...answer });
+    expect(saved["structuredContent"]).toMatchObject({ outcome: "active", tier: "T1" });
+    // A replayed answer is no answer: the table's "else" branch.
+    const replayed = await rpc(issuer, claude.access, { name: "memory_save", arguments: { ...PREFERENCE, content: "Prefers short answers to every question" }, ...answer });
+    expect((replayed["structuredContent"] as { tier?: string } | undefined)?.tier).not.toBe("T1");
+  }, 60_000);
+
+  test("an unverified client is never asked", async () => {
+    const issuer = await issuerWith();
+    const owner = await ownerSetup(issuer);
+    const claude = await grant(issuer, owner, { vendor: "claude", method: "static" });
+    const r = await rpc(issuer, claude.access, { name: "memory_save", arguments: PREFERENCE });
+    expect(r["requestState"]).toBeUndefined();
+    expect(r["structuredContent"]).toBeDefined();
+  }, 60_000);
+});
+
 describe("rate limits (operations.md §3)", () => {
   test("/oauth/auth answers 429 after the per-IP limit", async () => {
     const issuer = await issuerWith({ rateLimits: { authorize_per_ip_per_min: 3 } });

@@ -90,13 +90,18 @@ export function memoryDetail(app: App, id: string) {
 }
 
 export function reviews(app: App) {
-  return prepared(app.ctx.db, `SELECT r.id, r.kind, r.created_at, coalesce(c.display_name, r.client_id) client,
-      coalesce(v.content, json_extract(r.payload_json, '$.content'), o.content, '') content, r.memory_id
-    FROM review_item r
-    LEFT JOIN memory_version v ON v.id = (SELECT max(id) FROM memory_version WHERE memory_id = r.memory_id)
-    LEFT JOIN observation o ON o.id = r.observation_id
-    LEFT JOIN client_policy c ON c.client_id = r.client_id
-    WHERE r.resolved_at IS NULL ORDER BY r.created_at`).all() as { id: string; kind: string; created_at: string; client: string; content: string; memory_id: string | null }[];
+  return {
+    rows: prepared(app.ctx.db, `SELECT r.id, r.kind, r.created_at, coalesce(c.display_name, r.client_id) client,
+        coalesce(v.content, json_extract(r.payload_json, '$.content'), o.content, '') content, r.memory_id, m.sensitivity_category category
+      FROM review_item r
+      LEFT JOIN memory m ON m.id = r.memory_id
+      LEFT JOIN memory_version v ON v.id = (SELECT max(id) FROM memory_version WHERE memory_id = r.memory_id)
+      LEFT JOIN observation o ON o.id = r.observation_id
+      LEFT JOIN client_policy c ON c.client_id = r.client_id
+      WHERE r.resolved_at IS NULL ORDER BY r.created_at`).all() as { id: string; kind: string; created_at: string; client: string; content: string; memory_id: string | null; category: string | null }[],
+    /** The apps a sensitive memory can be shared with when approved. */
+    apps: prepared(app.ctx.db, "SELECT client_id, display_name FROM client_policy WHERE revoked_at IS NULL AND read = 1 ORDER BY display_name").all() as { client_id: string; display_name: string }[],
+  };
 }
 
 export function observations(app: App) {

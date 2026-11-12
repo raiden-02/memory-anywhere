@@ -5,7 +5,7 @@
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { RequestStates } from "../../../../spikes/oauth-oidc-provider/src/mrtr.ts";
+import { argsDigest, consumeElicitation, startElicitation } from "../../src/api/mrtr.ts";
 import { routeInventory } from "./routes.ts";
 import { authorize, authUrl, Browser, callMcp, openWindow, ownerSetup, pkce, startIssuer, token, type Issuer } from "./issuer.ts";
 
@@ -498,23 +498,22 @@ describe("surfaces", () => {
     expect(issuer.pairing.get(w3.w.window_id)?.close_reason).toBe("code_attempts");
   }, 20_000); // several round trips; slow on Windows runners
 
-  test("20. MRTR requestState: tampered, expired, replayed or other-grant state falls back", () => {
-    let t = 1_000_000;
-    const states = new RequestStates(undefined, 60_000, () => t);
-    const fresh = () => states.sign("grant-a", { step: 2 });
-    expect(states.verify(fresh(), "grant-a")).toEqual({ step: 2 });
-    const tok = fresh();
-    const [body = "", mac = ""] = tok.split(".");
-    const forged = Buffer.from(JSON.stringify({ ...JSON.parse(Buffer.from(body, "base64url").toString()), d: { step: 9 } })).toString("base64url");
-    expect(states.verify(`${forged}.${mac}`, "grant-a")).toBeNull();
-    expect(states.verify(`${body}.${mac.slice(0, -2)}xx`, "grant-a")).toBeNull();
-    expect(states.verify("garbage", "grant-a")).toBeNull();
-    expect(states.verify(fresh(), "grant-b")).toBeNull();
+  test("20. MRTR requestState: tampered, expired, replayed, other-grant or other-argument state falls back", () => {
+    const ctx = issuer.app.ctx;
+    const digest = argsDigest("memory_save", { content: "Prefers tea" });
+    const fresh = () => startElicitation(ctx, "grant-a", "memory_save", digest, "Apply this preference?");
+    expect(consumeElicitation(ctx, fresh(), "grant-a", digest)).toBe(true);
+    const raw = Buffer.from(fresh(), "base64url");
+    raw[20] = (raw[20] ?? 0) ^ 1; // one flipped bit inside the ciphertext
+    expect(consumeElicitation(ctx, raw.toString("base64url"), "grant-a", digest)).toBe(false);
+    expect(consumeElicitation(ctx, "garbage", "grant-a", digest)).toBe(false);
+    expect(consumeElicitation(ctx, fresh(), "grant-b", digest)).toBe(false);
+    expect(consumeElicitation(ctx, fresh(), "grant-a", argsDigest("memory_save", { content: "Prefers coffee" }))).toBe(false);
     const replay = fresh();
-    expect(states.verify(replay, "grant-a")).toEqual({ step: 2 });
-    expect(states.verify(replay, "grant-a")).toBeNull();
+    expect(consumeElicitation(ctx, replay, "grant-a", digest)).toBe(true);
+    expect(consumeElicitation(ctx, replay, "grant-a", digest)).toBe(false);
     const old = fresh();
-    t += 60_001;
-    expect(states.verify(old, "grant-a")).toBeNull();
+    issuer.clock.advance(5 * 60_000 + 1);
+    expect(consumeElicitation(ctx, old, "grant-a", digest)).toBe(false);
   });
 });

@@ -2,9 +2,17 @@
 <h1>Review</h1>
 <ul class="list">
 <% for (const r of it.rows) { %>
-  <li><span class="muted"><%= r.kind %> · <%= r.client %> · <%= r.created_at %></span><br><%= r.content %>
+  <li><span class="muted"><%= r.kind %><% if (r.category) { %> · <%= r.category %><% } %> · <%= r.client %> · <%= r.created_at %></span><br><%= r.content %>
     <div class="actions">
-      <form class="act inline" data-action="review.decide"><input type="hidden" name="id" value="<%= r.id %>"><input type="hidden" name="approve" value="true" data-type="bool"><button type="submit">Approve</button></form>
+      <form class="act inline" data-action="review.decide">
+        <input type="hidden" name="id" value="<%= r.id %>"><input type="hidden" name="approve" value="true" data-type="bool">
+        <% if (r.kind === "sensitive") { %>
+        <fieldset class="choices"><legend class="muted">Apps that may recall it</legend>
+          <% for (const a of it.apps) { %><label><input type="checkbox" name="clients" value="<%= a.client_id %>" data-type="list"> <%= a.display_name %></label><% } %>
+        </fieldset>
+        <% } %>
+        <button type="submit">Approve</button>
+      </form>
       <form class="act inline" data-action="review.decide"><input type="hidden" name="id" value="<%= r.id %>"><input type="hidden" name="approve" value="false" data-type="bool"><button type="submit" class="secondary">Reject</button></form>
     </div></li>
 <% } %>

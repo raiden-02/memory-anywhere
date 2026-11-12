@@ -142,6 +142,19 @@ describe("owner actions", () => {
     expect(await (await owner.fetch(admin("/exports"))).text()).toContain("Laptop key");
   });
 
+  test("approving a sensitive memory needs a passkey and shares it only with the apps the owner ticks", async () => {
+    const r = await save(issuer.app.write, chatCaller(), saveReq("Has type 1 diabetes", { explicit_request: true, user_words: "remember that I have type 1 diabetes" }), { idempotencyKey: newId("pxs"), observedAt: issuer.clock.now() });
+    expect(r.kind === "result" && r.outcome.outcome).toBe("review");
+    const review = issuer.db.prepare("SELECT id FROM review_item WHERE kind = 'sensitive' AND resolved_at IS NULL").get() as { id: string };
+    expect(await (await owner.fetch(admin("/reviews"))).text()).toContain("Apps that may recall it");
+    issuer.clock.advance(6 * 60_000);
+    expect((await act("review.decide", { id: review.id, approve: true, clients: [CHAT_CLIENT_ID] })).data).toEqual({ error: "step_up_required" });
+    const options = await owner.postJson(admin("/api/stepup/options"));
+    await owner.postJson(admin("/api/stepup/verify"), issuer.authenticator.get(options.data as never));
+    expect((await act("review.decide", { id: review.id, approve: true, clients: [CHAT_CLIENT_ID] })).status).toBe(200);
+    expect(JSON.parse((issuer.db.prepare("SELECT sensitive_allow_json j FROM client_policy WHERE client_id = ?").get(CHAT_CLIENT_ID) as { j: string }).j)).toEqual(["health"]);
+  });
+
   test("alerts are dismissed from the home page", async () => {
     const id = issuer.app.alerts.raise("disk_low", { free_pct: 12 });
     expect(await (await owner.fetch(admin("/"))).text()).toContain("disk_low");

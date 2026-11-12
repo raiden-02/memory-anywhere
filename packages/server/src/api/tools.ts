@@ -80,19 +80,34 @@ function asError(e: unknown): ToolResult {
   return errorResult("INTERNAL", "internal error");
 }
 
+/** Whether this call may ask the person a question, and the answer if this is the retry (mcp-interface.md §5). */
+export interface Elicitation {
+  readonly canElicit: boolean;
+  readonly answer: boolean | undefined;
+}
+
+const NO_ELICITATION: Elicitation = { canElicit: false, answer: undefined };
+
 /** The write identity of a tool call: channel mcp at T2, with the client's floor (write-path.md §2). */
-export function writeCaller(app: App, grant: Grant): Caller {
+export function writeCaller(app: App, grant: Grant, elicit: Elicitation = NO_ELICITATION): Caller {
   const floor = prepared(app.ctx.db, "SELECT save_floor FROM client_policy WHERE client_id = ?").get(grant.clientId) as { save_floor: string } | undefined;
   const sessionKey = grant.clientClass === "coding"
     ? `${grant.clientId}:${grant.session}`
     : `${grant.clientId}:${Math.floor(app.ctx.clock.now() / 1000 / 21_600)}`;
   return {
     clientId: grant.clientId, clientClass: grant.clientClass, channel: "mcp", tier: 2, sessionKey, repoKey: grant.repoKey, tool: grant.tool,
-    floored: floor?.save_floor === "observation", canElicit: false, elicitationAnswer: undefined,
+    floored: floor?.save_floor === "observation", canElicit: elicit.canElicit, elicitationAnswer: elicit.answer,
   };
 }
 
-export async function callTool(app: App, grant: Grant, name: string, args: unknown, meta: Record<string, unknown> | undefined): Promise<{ result: ToolResult; after: AfterResponse }> {
+/** A tool call's outcome: a result, or a yes/no question for the person (MRTR input required). */
+export interface ToolOutcome {
+  readonly result: ToolResult;
+  readonly after: AfterResponse;
+  readonly question?: string;
+}
+
+export async function callTool(app: App, grant: Grant, name: string, args: unknown, meta: Record<string, unknown> | undefined, elicit: Elicitation = NO_ELICITATION): Promise<ToolOutcome> {
   const none: AfterResponse = () => undefined;
   if (!(TOOL_ORDER as readonly string[]).includes(name)) return { result: errorResult("INVALID_INPUT", `unknown tool ${name}`, { field: "name" }), after: none };
   const tool = name as ToolName;
@@ -105,11 +120,11 @@ export async function callTool(app: App, grant: Grant, name: string, args: unkno
     return { result: errorResult("INVALID_INPUT", issue?.message ?? "invalid input", { field: issue?.path.join(".") || "arguments" }), after: none };
   }
   let timer: NodeJS.Timeout | undefined;
-  const timeout = new Promise<{ result: ToolResult; after: AfterResponse }>((resolve) => {
+  const timeout = new Promise<ToolOutcome>((resolve) => {
     timer = setTimeout(() => resolve({ result: errorResult("STORE_UNAVAILABLE", "the store did not answer in time"), after: none }), CALL_TIMEOUT_MS);
   });
   try {
-    return await Promise.race([run(app, grant, policy.read, tool, parsed.data as never, meta), timeout]);
+    return await Promise.race([run(app, grant, policy.read, tool, parsed.data as never, meta, elicit), timeout]);
   } catch (e) {
     return { result: asError(e), after: none };
   } finally {
@@ -117,7 +132,7 @@ export async function callTool(app: App, grant: Grant, name: string, args: unkno
   }
 }
 
-async function run(app: App, grant: Grant, canRead: boolean, tool: ToolName, args: never, meta: Record<string, unknown> | undefined): Promise<{ result: ToolResult; after: AfterResponse }> {
+async function run(app: App, grant: Grant, canRead: boolean, tool: ToolName, args: never, meta: Record<string, unknown> | undefined, elicit: Elicitation): Promise<ToolOutcome> {
   const none: AfterResponse = () => undefined;
   const now = app.ctx.clock.now();
   switch (tool) {
@@ -139,23 +154,23 @@ async function run(app: App, grant: Grant, canRead: boolean, tool: ToolName, arg
       };
     }
     case "memory_save": {
-      const caller = writeCaller(app, grant);
+      const caller = writeCaller(app, grant, elicit);
       const req = args as Parameters<typeof save>[2];
       const proxyKey = typeof meta?.[IDEMPOTENCY_META_KEY] === "string" && grant.clientClass === "coding" ? (meta[IDEMPOTENCY_META_KEY] as string) : undefined;
       const key = proxyKey ?? mcpIdempotencyKey(grant.clientId, req, contentNormHash(req.content), now);
       const r = await save(app.write, caller, req, { idempotencyKey: key, observedAt: now });
-      if (r.kind !== "result") return { result: errorResult("INTERNAL", "confirmation is not available in local mode"), after: none };
+      if (r.kind !== "result") return { result: errorResult("INTERNAL", "confirmation needed"), after: none, question: r.question };
       const o = r.outcome;
       return { result: ok(`${o.outcome}: ${o.message}${o.id ? ` (${o.id})` : ""}`, o), after: none };
     }
     case "memory_forget": {
       const { id } = args as { id: string; reason: string };
-      const caller = writeCaller(app, grant);
+      const caller = writeCaller(app, grant, elicit);
       const proxyKey = typeof meta?.[IDEMPOTENCY_META_KEY] === "string" && grant.clientClass === "coding" ? (meta[IDEMPOTENCY_META_KEY] as string) : undefined;
       // Without a proxy key: one forget of this id per client per 6-hour bucket (spec-issues #40).
       const key = proxyKey ?? createHash("sha256").update(["forget", grant.clientId, id, String(Math.floor(now / 1000 / 21_600))].join("\n")).digest("hex");
       const r = await forget(app.write, caller, id, { idempotencyKey: key, observedAt: now });
-      if (r.kind !== "result") return { result: errorResult("INTERNAL", "confirmation is not available in local mode"), after: none };
+      if (r.kind !== "result") return { result: errorResult("INTERNAL", "confirmation needed"), after: none, question: r.question };
       return { result: ok(`${r.outcome.outcome}: ${r.outcome.message}`, r.outcome), after: none };
     }
     case "memory_status":

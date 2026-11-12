@@ -144,12 +144,26 @@ export const ACTIONS = {
     },
   }),
   "review.decide": action({
-    input: z.strictObject({ id: Id("rev"), approve: z.boolean() }),
+    // Approving a sensitive memory also says which apps may recall it (§8.1): its category joins their allow-list.
+    input: z.strictObject({ id: Id("rev"), approve: z.boolean(), clients: z.array(ClientId).max(50).optional() }),
     // Approving held instructions and sensitive memories is a §3.4 action.
     uv: (i, app) => i.approve && ["instruction", "sensitive", "import_sensitive", "render_sensitive"].includes(
       (prepared(app.ctx.db, "SELECT kind FROM review_item WHERE id = ?").get(i.id) as { kind: string } | undefined)?.kind ?? ""),
     run(app, i) {
+      const category = (prepared(app.ctx.db, "SELECT m.sensitivity_category c FROM review_item r JOIN memory m ON m.id = r.memory_id WHERE r.id = ? AND r.kind = 'sensitive'").get(i.id) as { c: string | null } | undefined)?.c;
       const touched = resolveReviews(app.ctx, [{ id: i.id, resolution: i.approve ? "approved" : "rejected" }], app.config.retention.forgotten_purge_days);
+      if (i.approve && category && i.clients && i.clients.length > 0) {
+        transaction(app.ctx.db, () => {
+          for (const clientId of i.clients ?? []) {
+            const row = prepared(app.ctx.db, "SELECT sensitive_allow_json FROM client_policy WHERE client_id = ? AND revoked_at IS NULL").get(clientId) as { sensitive_allow_json: string } | undefined;
+            if (!row) continue;
+            const allowed = new Set(JSON.parse(row.sensitive_allow_json) as string[]).add(category);
+            prepared(app.ctx.db, "UPDATE client_policy SET sensitive_allow_json = ? WHERE client_id = ?").run(JSON.stringify([...allowed].sort()), clientId);
+          }
+          appendEvent(app.ctx, { actor: "owner", op: "client.sensitive_allow", refs: { category, clients: i.clients ?? [] } });
+        });
+        app.sessions.invalidate();
+      }
       app.committed(touched);
     },
   }),

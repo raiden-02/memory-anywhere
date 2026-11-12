@@ -36,13 +36,16 @@ async function registration(optionsPath, extra) {
   return credential.toJSON();
 }
 
-/** A form's fields as JSON: data-type="bool" and "datetime" turn into booleans and ISO times. */
+/** A form's fields as JSON: data-type "bool", "datetime" and "list" (ticked boxes) become booleans, ISO times and arrays. */
 function fieldsOf(form) {
   const out = {};
   for (const el of form.elements) {
     if (!el.name) continue;
     const type = el.dataset.type;
-    if (type === "bool") out[el.name] = el.type === "checkbox" ? el.checked : el.value === "true";
+    if (type === "list") {
+      out[el.name] ??= [];
+      if (el.checked) out[el.name].push(el.value);
+    } else if (type === "bool") out[el.name] = el.type === "checkbox" ? el.checked : el.value === "true";
     else if (type === "datetime") out[el.name] = el.value ? new Date(el.value).toISOString() : "";
     else if (el.value !== "") out[el.name] = el.value;
   }
