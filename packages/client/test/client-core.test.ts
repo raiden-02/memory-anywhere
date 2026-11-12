@@ -198,5 +198,5 @@ describe.runIf(process.platform === "win32")("Windows launcher", () => {
     const text = readFileSync(launcher).subarray(2).toString("utf16le");
     expect(text).toContain("if (code === 0) break;");
     expect(text).toContain("for (var attempt = 0; attempt < 4; attempt++)");
-  });
+  }, 30_000); // cscript and node start-up take several seconds on CI runners
 });

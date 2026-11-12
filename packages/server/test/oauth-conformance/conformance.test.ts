@@ -481,7 +481,7 @@ describe("surfaces", () => {
     const path3 = (await other.fetch(authUrl(issuer, { client_id: w3.id, redirect_uri: w3.redirect, ...S256() }))).headers.get("location") ?? "";
     for (let i = 0; i < 5; i++) await other.postJson(`${path3}/code`, { code: "BBBBBBBB" });
     expect(issuer.pairing.get(w3.w.window_id)?.close_reason).toBe("code_attempts");
-  });
+  }, 20_000); // several round trips; slow on Windows runners
 
   test("20. MRTR requestState: tampered, expired, replayed or other-grant state falls back", () => {
     let t = 1_000_000;
