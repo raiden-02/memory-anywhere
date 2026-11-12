@@ -1,0 +1,4 @@
+{
+  "$comment": "USD per million tokens, per pinned model (write-path.md §6.2). Update with each model pin.",
+  "claude-haiku-5-5": { "input_per_mtok": 0.1, "output_per_mtok": 0.5 }
+}

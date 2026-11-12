@@ -65,7 +65,7 @@ function projectEntity(env: WriteEnv, name: string): string {
     return existing.id;
   }
   return ensureEntity(env.ctx, OWNER, {
-    entity: { name, type: "project", isNew: true }, attribute: undefined, sectionId: SECTION.projects, isPeopleSection: false, tasteClass: false,
+    entity: { name, type: "project", isNew: true }, attribute: undefined, slotFromLlm: false, sectionId: SECTION.projects, isPeopleSection: false, tasteClass: false,
   }, 0).id;
 }
 

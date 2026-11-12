@@ -1,6 +1,7 @@
 // The write pipeline (write-path.md §1): one entry point for every save, whatever the channel.
-//   pre-checks → idempotency → verify → resolve → screens → decision table → embedding (outside the
-//   transaction) → one transaction: store rules or observation or review, FTS, events, write_request.
+//   pre-checks → idempotency → verify → resolve → screens (+ LLM sensitive check) → decision table
+//   (+ LLM slot proposal before D14) → embedding (outside the transaction) → one transaction: store
+//   rules or observation or review, FTS, events, write_request.
 // Saves from tools, spool replays and capture all come through `save()`; forgets through `forget()`.
 
 import { createHash } from "node:crypto";
@@ -9,6 +10,10 @@ import { reasonMessage, USER_WORDS_NOT_FOUND_SUFFIX, type ReasonCode } from "@me
 import type { ServerConfigT } from "../config/schema.ts";
 import type { Alerts } from "../ops/alerts.ts";
 import type { Embedder } from "../embed/types.ts";
+import type { Llm } from "../llm/adapter.ts";
+import { sensitiveCheck } from "../llm/prompts.ts";
+import { noteKeyMissing, proposeSlot, queueReslot } from "../llm/slots.ts";
+import type { SensitiveCategory } from "../policy/generated.ts";
 import { POLICY_VERSION } from "../policy/generated.ts";
 import { DAY_MS, HOUR_MS, iso } from "../store/clock.ts";
 import type { StoreContext } from "../store/context.ts";
@@ -21,7 +26,7 @@ import { createReview, insertSource, linkSource, periodStart, refreshFts, curren
 import { instructionHit, secretHit, sensitiveCategory, shortLivedHit } from "./screens.ts";
 import { applyStoreRules, storeForReview, type StoreResult } from "./store-rules.ts";
 import { isSuppressed, liftMatching } from "./suppression.ts";
-import { tierLabel, WriteError, type Caller, type SaveRequest, type TierNum, type WriteOutcome } from "./types.ts";
+import { tierLabel, WriteError, type Caller, type SaveRequest, type Screens, type TierNum, type WriteOutcome } from "./types.ts";
 import { verify } from "./verify.ts";
 
 export interface WriteEnv {
@@ -32,6 +37,23 @@ export interface WriteEnv {
   readonly onCommit?: (touchedMemoryIds: readonly string[]) => void;
   /** Quota and remote-supersede alerts (operations.md §2); none in unit tests. */
   readonly alerts?: Alerts;
+  /** The LLM adapter (write-path.md §6.2); absent means provider none. */
+  readonly llm?: Llm;
+}
+
+/** Rows the slot proposal runs before: only saves no earlier row decided (write-path.md §6.1 step 2.3). */
+const SLOT_ROWS: ReadonlySet<string> = new Set(["D14", "D15", "D16", "D17", "D18", "D19"]);
+
+/**
+ * The `sensitive_check` call (memory-policy.md §7.3), for a save rows D1–D2 will not decide and the
+ * lexicons did not flag. It can only add a category, and only one the owner blocks.
+ */
+async function llmSensitive(env: WriteEnv, content: string, userWords: string | undefined): Promise<SensitiveCategory | undefined> {
+  if (!env.llm || !env.config.sensitive.llm_check) return undefined;
+  const a = await env.llm.ask(sensitiveCheck(userWords ? `${content}
+(the user's words: ${userWords})` : content));
+  if (!a.ok || a.value.sensitive_category === "none") return undefined;
+  return env.config.sensitive.blocked.includes(a.value.sensitive_category) ? a.value.sensitive_category : undefined;
 }
 
 export interface RequestMeta {
@@ -156,15 +178,22 @@ export async function save(env: WriteEnv, caller: Caller, req: SaveRequest, m: R
 
   const v = await verify(req, { supportMin: config.write.support_min, findInPrompts: promptFinder(env, caller) });
   const registry = loadRegistry(ctx.db);
-  const resolution = resolve(ctx.db, registry, { content: v.content, entity: req.entity, attribute: req.attribute, section: req.section });
+  const resolveInput = { content: v.content, entity: req.entity, attribute: req.attribute, section: req.section };
+  let resolution = resolve(ctx.db, registry, resolveInput);
   const slot = !resolution.entity.isNew && resolution.attribute ? { entityId: resolution.entity.id, attributeId: resolution.attribute.id } : undefined;
-  const screens = {
+  // Capture stays no-LLM until M3 (spec-issues #54), whatever the provider.
+  const llm = caller.channel === "capture" || !env.llm?.configured ? undefined : env.llm;
+  let screens: Screens = {
     secretHit: secretHit([v.content, v.userWords, v.whyDurable]),
     instructionHit: instructionHit(v.content, req.kind),
     sensitiveCategory: sensitiveCategory([v.content, v.userWords], config.sensitive.blocked),
     shortLivedHit: shortLivedHit(v.content),
     suppressionHit: isSuppressed(ctx, v.content, slot),
   };
+  if (llm && !screens.secretHit && !(caller.tier !== 0 && screens.instructionHit) && !screens.sensitiveCategory) {
+    const category = await llmSensitive({ ...env, llm }, v.content, v.userWords);
+    if (category) screens = { ...screens, sensitiveCategory: category };
+  }
   const scope = req.scope === "repo" && caller.clientClass === "coding" && caller.repoKey && caller.repoKey !== "none" ? `repo:${caller.repoKey}` : "global";
   const scopes = scope === "global" ? ["global", ...(caller.repoKey && caller.repoKey !== "none" ? [`repo:${caller.repoKey}`] : [])] : ["global", scope];
   const duplicate = prepared(ctx.db, 
@@ -174,7 +203,7 @@ export async function save(env: WriteEnv, caller: Caller, req: SaveRequest, m: R
     )
     .get(v.contentHash, ...scopes) as { id: string } | undefined;
 
-  const input: DecideInput = {
+  let input: DecideInput = {
     tier: caller.tier,
     channel: caller.channel === "spool_save" || caller.channel === "capture" || caller.channel === "admin" ? caller.channel : "mcp",
     kind: req.kind,
@@ -189,8 +218,21 @@ export async function save(env: WriteEnv, caller: Caller, req: SaveRequest, m: R
     elicitationAnswer: caller.elicitationAnswer,
   };
   let d = decide(input);
-  // Capture without an LLM stages every candidate that passes the screens (write-path.md §10.3).
-  if (caller.channel === "capture" && config.llm.provider === "none" && (d.kind === "active" || d.kind === "observation")) {
+  // Step 2.3: a free-text save no earlier row decided asks the LLM for its slot, then the table
+  // runs again on the new resolution (rows before D14 do not depend on the attribute).
+  let reslotLater = false;
+  if (llm && SLOT_ROWS.has(d.row) && !resolution.attribute) {
+    const entityType = resolution.entity.isNew ? undefined : resolution.entity.type;
+    const proposal = await proposeSlot(llm, registry, { content: v.content, entity: req.entity, entityType });
+    if (proposal.ok && proposal.value) {
+      resolution = resolve(ctx.db, registry, { ...resolveInput, proposed: proposal.value });
+      input = { ...input, resolution };
+      d = decide(input);
+    } else if (!proposal.ok && proposal.why === "no_key") noteKeyMissing(ctx);
+    else if (!proposal.ok && proposal.why !== "off") reslotLater = true;
+  }
+  // Capture stages every candidate that passes the screens (write-path.md §10.3; M2 has no extractor).
+  if (caller.channel === "capture" && (d.kind === "active" || d.kind === "observation")) {
     d = { row: d.row, kind: "observation", reason: "capture_no_llm", floored: false };
   }
   if (d.kind === "elicit") return { kind: "input_required", question: d.question };
@@ -267,6 +309,8 @@ export async function save(env: WriteEnv, caller: Caller, req: SaveRequest, m: R
       env.alerts?.raise("supersede_remote", { memory: r.memoryId }, { subject: caller.clientId });
     }
     touched = r.touched;
+    // The slot proposal could not answer in time: ask again later (write-path.md §6.2).
+    if (reslotLater && (r.status === "active" || r.status === "contested") && r.reason !== "already_stored") queueReslot(ctx, r.memoryId);
     return finish(outcomeFor(env, r, m.idempotencyKey), touched, op);
   });
   prepared(ctx.db, "UPDATE client_policy SET last_policy_version = ?, last_policy_version_at = ? WHERE client_id = ? AND ? IS NOT NULL").run(

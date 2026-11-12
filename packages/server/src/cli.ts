@@ -20,6 +20,7 @@ import { idSource } from "@memory-anywhere/contracts/ids";
 import { currentPaths } from "@memory-anywhere/contracts/paths";
 import { ensurePrivateDir, writeFileAtomic } from "@memory-anywhere/contracts/secure-fs";
 import { App, SCHEMA_VERSION, SERVER_VERSION } from "./app.ts";
+import { providerFromEnv } from "./llm/adapter.ts";
 import { localTokenAuth } from "./api/grant.ts";
 import type { OwnerCredentials } from "./auth/owner.ts";
 import { defaultConfig, listenTarget, parseConfig, type ListenTarget, type ServerConfigT } from "./config/schema.ts";
@@ -134,7 +135,10 @@ async function start(l: Layout, target: ListenTarget, ephemeral: boolean, rateLi
   });
   const db = ephemeral ? await prepareStore(l, model) : await openForServing(l);
   const outbox = mode === "aws" && target.kind === "unix" ? new FileOutbox(outboxDirFor(target.path)) : NO_OUTBOX;
-  const app = new App({ db, config: l.config, embedder, rateLimits, outbox });
+  const llmProvider = await providerFromEnv(l.config, process.env);
+  // The key stays in this process only.
+  delete process.env.MA_LLM_API_KEY;
+  const app = new App({ db, config: l.config, embedder, rateLimits, outbox, ...(llmProvider ? { llmProvider } : {}) });
   if (mode === "aws") enterRestoredState(app.ctx, app.alerts, restoredFlagFile(l.dataDir));
 
   // Local mode runs hidden, so its log also goes to {data}\server\server.log; aws mode logs to the journal.
@@ -160,6 +164,8 @@ async function start(l: Layout, target: ListenTarget, ephemeral: boolean, rateLi
   const where = await listen(server, target);
   worker.start();
   logger.log({ level: "info", op: "start", outcome: `listening ${where}`, reason: ephemeral ? "ephemeral" : mode });
+  const llm = app.llm.degraded();
+  if (llm) logger.log({ level: "warn", op: "llm", outcome: llm, reason: `provider ${l.config.llm.provider}: saves fall back to the no-LLM rules` });
   if (ephemeral) process.stdout.write(`${JSON.stringify({ listen: where, token_file: l.tokenFile })}\n`);
 
   const stop = (): void => {

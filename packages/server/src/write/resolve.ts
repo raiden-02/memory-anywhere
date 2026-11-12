@@ -19,14 +19,14 @@ export const SECTION = {
 
 const PATTERNS = ATTRIBUTE_PATTERNS.map((p) => ({ attribute: p.attribute, re: new RegExp(p.pattern, "u") }));
 
-interface Registry {
-  readonly attributes: readonly (AttributeRow & { readonly keys: readonly string[] })[];
+export interface Registry {
+  readonly attributes: readonly (AttributeRow & { readonly keys: readonly string[]; readonly description: string })[];
   readonly sections: readonly { readonly id: string; readonly keys: readonly string[] }[];
 }
 
 /** Attributes and active sections, each with its normalized name and aliases. */
 export function loadRegistry(db: DatabaseSync): Registry {
-  const attributes = (prepared(db, "SELECT * FROM attribute").all() as unknown as (AttributeRow & { aliases_json: string })[]).map((a) => ({
+  const attributes = (prepared(db, "SELECT * FROM attribute").all() as unknown as (AttributeRow & { aliases_json: string; description: string })[]).map((a) => ({
     ...a,
     keys: [a.name, ...(JSON.parse(a.aliases_json) as string[])].map(norm),
   }));
@@ -55,7 +55,7 @@ function findEntity(db: DatabaseSync, name: string): EntityRow | undefined {
   return row;
 }
 
-const typeFits = (attr: AttributeRow, type: EntityType | undefined): boolean =>
+export const typeFits = (attr: AttributeRow, type: EntityType | undefined): boolean =>
   attr.entity_type === "any" || type === undefined || attr.entity_type === type;
 
 export interface ResolveInput {
@@ -63,6 +63,8 @@ export interface ResolveInput {
   readonly entity: string;
   readonly attribute?: string | undefined;
   readonly section?: string | undefined;
+  /** Step 2.3: the slot proposal's answer, used only when the hint and the patterns found none. */
+  readonly proposed?: string | undefined;
 }
 
 export function resolve(db: DatabaseSync, registry: Registry, input: ResolveInput): Resolution {
@@ -73,7 +75,8 @@ export function resolve(db: DatabaseSync, registry: Registry, input: ResolveInpu
 
   const hintSection = input.section ? registry.sections.find((s) => s.keys.includes(norm(input.section ?? "")))?.id : undefined;
 
-  // 2. Attribute: the hint, then the deterministic patterns; both must fit the entity's type.
+  // 2. Attribute: the hint, then the deterministic patterns, then the LLM's proposal (when the
+  //    pipeline re-resolves with one); each must fit the entity's type.
   const hint = input.attribute ? norm(input.attribute) : undefined;
   let attribute: AttributeRow | undefined = hint
     ? registry.attributes.find((a) => a.keys.includes(hint) && typeFits(a, existingType))
@@ -83,6 +86,14 @@ export function resolve(db: DatabaseSync, registry: Registry, input: ResolveInpu
     const hit = PATTERNS.find((p) => p.re.test(normalized));
     const candidate = hit ? registry.attributes.find((a) => a.name === hit.attribute) : undefined;
     if (candidate && typeFits(candidate, existingType)) attribute = candidate;
+  }
+  let slotFromLlm = false;
+  if (!attribute && input.proposed) {
+    const proposed = registry.attributes.find((a) => a.name === input.proposed && a.restricted === 0);
+    if (proposed && typeFits(proposed, existingType)) {
+      attribute = proposed;
+      slotFromLlm = true;
+    }
   }
 
   // 3. Type of a new entity.
@@ -94,7 +105,10 @@ export function resolve(db: DatabaseSync, registry: Registry, input: ResolveInpu
   else type = "thing";
 
   // 4. Re-check: an attribute of another type is dropped.
-  if (attribute && attribute.entity_type !== "any" && attribute.entity_type !== type) attribute = undefined;
+  if (attribute && attribute.entity_type !== "any" && attribute.entity_type !== type) {
+    attribute = undefined;
+    slotFromLlm = false;
+  }
 
   // 5. Section (memory-policy.md §9.1): attribute, entity type, hint, Unsorted.
   const sectionId =
@@ -108,6 +122,7 @@ export function resolve(db: DatabaseSync, registry: Registry, input: ResolveInpu
       ? { id: existing.id, type: existing.type, isNew: false }
       : { name: input.entity.trim().slice(0, 80), type, isNew: true },
     attribute,
+    slotFromLlm,
     sectionId,
     isPeopleSection: sectionId === SECTION.people,
     tasteClass: attribute ? attribute.taste_class === 1 : sectionId === SECTION.interests,

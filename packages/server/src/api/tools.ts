@@ -191,10 +191,12 @@ export function status(app: App, grant: Grant): ToolResult {
     | undefined;
   const memories = (prepared(db, "SELECT count(*) AS n FROM memory WHERE status IN ('active','contested')").get() as { n: number }).n;
   const failing = (prepared(db, "SELECT count(*) AS n FROM job WHERE status = 'dropped'").get() as { n: number }).n;
+  const llm = app.llm.degraded();
+  const degraded = [...(llm ? [llm] : []), ...(failing > 0 ? ["jobs_failing" as const] : [])];
   const out = {
     store: app.config.server.mode,
-    health: failing > 0 ? "degraded" : "ok",
-    ...(failing > 0 ? { degraded_reasons: ["jobs_failing"] } : {}),
+    health: degraded.length > 0 ? "degraded" : "ok",
+    ...(degraded.length > 0 ? { degraded_reasons: degraded } : {}),
     client: {
       name: policy.displayName, class: row?.class ?? grant.clientClass, read: policy.read, write: row?.write === 1,
       repo_enabled: grant.clientClass === "coding" ? policy.repo !== undefined : null,

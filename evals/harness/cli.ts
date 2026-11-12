@@ -1,4 +1,4 @@
-// pnpm eval run --suite <R|P|W|C> [--system …] [--split test|dev] [--out <file>] (evals.md §9).
+// pnpm eval run --suite <R|P|W|C> [--system …] [--split test|dev] [--llm fake-adversarial] [--out <file>] (evals.md §9).
 // Needs no API keys. R: with no --system, runs every baseline that is available and the full
 // system. P: server stage. W: FactConsolidation cases. C: local latency against an ephemeral server.
 // W and C need the pinned model files (MA_TEST_MODEL_DIR, else the M0 spike's download folder).
@@ -11,6 +11,7 @@ import { buildCases } from "../datasets/w/build.ts";
 import { runSuiteC } from "./suite-c.ts";
 import { runSuiteP } from "./suite-p.ts";
 import { runSuiteW } from "./suite-w.ts";
+import { adversarialSlots } from "./fake-llm.ts";
 import { parseArgs } from "node:util";
 import { bm25Rank } from "../adapters/bm25.ts";
 import { fetchLongMemEval } from "../datasets/public/fetch-longmemeval.ts";
@@ -33,10 +34,14 @@ export async function loadItems(split: "dev" | "test"): Promise<RetrievalItem[]>
 async function main(): Promise<number> {
   const { positionals, values } = parseArgs({
     allowPositionals: true,
-    options: { suite: { type: "string", default: "R" }, system: { type: "string" }, split: { type: "string", default: "test" }, out: { type: "string" } },
+    options: { suite: { type: "string", default: "R" }, system: { type: "string" }, split: { type: "string", default: "test" }, llm: { type: "string" }, out: { type: "string" } },
   });
   if (positionals[0] !== "run" || !["R", "P", "W", "C"].includes(values.suite ?? "")) {
-    console.error("usage: pnpm eval run --suite <R|P|W|C> [--system bm25,vector:<model>,memory-anywhere] [--split test|dev] [--out <file>]");
+    console.error("usage: pnpm eval run --suite <R|P|W|C> [--system bm25,vector:<model>,memory-anywhere] [--split test|dev] [--llm fake-adversarial] [--out <file>]");
+    return 1;
+  }
+  if (values.llm !== undefined && (values.suite !== "W" || values.llm !== "fake-adversarial")) {
+    console.error("--llm fake-adversarial applies to suite W only");
     return 1;
   }
   const split = values.split === "dev" ? "dev" : "test";
@@ -63,9 +68,10 @@ async function main(): Promise<number> {
       return r.recall_pass && r.session_start_pass ? 0 : 1;
     }
     const embedder = await OnnxEmbedder.load(modelFiles, activeModel());
-    const { result } = await runSuiteW(await buildCases(), embedder, split);
+    const llm = values.llm === "fake-adversarial" ? { name: "fake-adversarial" as const, provider: adversarialSlots() } : undefined;
+    const { result } = await runSuiteW(await buildCases(), embedder, split, llm);
     await embedder.release();
-    console.log(`Suite W (${split}), n = ${result.n}: ${result.gate.wrong_supersedes} wrong supersedes of ${result.gate.eligible} eligible (95% upper bound ${(result.gate.upper95 * 100).toFixed(1)}%) ${result.gate.pass ? "PASS" : "FAIL"}`);
+    console.log(`Suite W (${split}, LLM ${result.llm}), n = ${result.n}: ${result.gate.wrong_supersedes} wrong supersedes of ${result.gate.eligible} eligible (95% upper bound ${(result.gate.upper95 * 100).toFixed(1)}%) ${result.gate.pass ? "PASS" : "FAIL"}`);
     console.log(`  ops as expected ${result.accuracy.k}/${result.accuracy.n}`);
     for (const [exp, row] of Object.entries(result.confusion)) console.log(`  expected ${exp.padEnd(7)} → ${Object.entries(row).map(([o, n]) => `${o} ${n}`).join(", ")}`);
     write(result);

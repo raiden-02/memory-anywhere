@@ -98,6 +98,8 @@ export interface Resolution {
   /** An existing entity, or a new one to create when something is stored. */
   readonly entity: { readonly id: string; readonly type: EntityType; readonly isNew: false } | { readonly name: string; readonly type: EntityType; readonly isNew: true };
   readonly attribute: AttributeRow | undefined;
+  /** The attribute came from the slot proposal (step 2.3): it may fill or contest a slot, never update it (spec-issues #53). */
+  readonly slotFromLlm: boolean;
   readonly sectionId: string;
   /** The section resolved to People (rule D3, entity typing). */
   readonly isPeopleSection: boolean;

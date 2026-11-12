@@ -4,7 +4,8 @@
 //
 // | Job             | When                              | Does                                      |
 // | extract         | a capture batch is flushed        | no-LLM capture (write-path.md §10.3)      |
-// | reslot          | after a free-text save            | nothing without an LLM: marked done       |
+// | reslot          | a slot proposal that timed out    | asks again; fills or contests, never      |
+// |                 | (write-path.md §6.2)              | supersedes (retries 1 h, 6 h, 17 h)       |
 // | expire          | hourly                            | observations past their TTL               |
 // | purge           | hourly                            | forgotten memories past purge_after       |
 // | prune           | hourly                            | rows past retention                       |
@@ -24,6 +25,7 @@ import { DAY_MS, HOUR_MS, iso } from "../store/clock.ts";
 import { prepared } from "../store/db.ts";
 import { purgeDue } from "../write/forget.ts";
 import { runNoLlmExtract } from "../write/prompt.ts";
+import { RESLOT_BACKOFF_MS, runReslot } from "../llm/slots.ts";
 import { expireObservations, prune, rotateAuditKey, vacuum } from "./maintenance.ts";
 import { clusterSections } from "./sections.ts";
 
@@ -136,7 +138,7 @@ export class JobWorker {
       prepared(db, "UPDATE job SET status = 'done', last_error = NULL WHERE id = ?").run(job.id);
     } catch (e) {
       const attempts = job.attempts + 1;
-      const delay = BACKOFF_MS[attempts - 1];
+      const delay = (job.kind === "reslot" ? RESLOT_BACKOFF_MS : BACKOFF_MS)[attempts - 1];
       // Only the error's class and code are kept: messages may quote stored text.
       const code = `${e instanceof Error ? e.name : "Error"}${(e as { code?: string }).code ? `:${(e as { code?: string }).code}` : ""}`;
       prepared(db, "UPDATE job SET status = ?, attempts = ?, next_at = ?, last_error = ? WHERE id = ?")
@@ -184,7 +186,8 @@ export class JobWorker {
         rotateAuditKey(app.ctx);
         return;
       case "reslot":
-        return; // slot proposals need an LLM (write-path.md §6.2); with provider none there is nothing to do
+        app.committed(await runReslot(app.ctx, app.llm, job.payload_json));
+        return;
       default:
         throw new Error(`job kind ${job.kind} is not run by this server`);
     }

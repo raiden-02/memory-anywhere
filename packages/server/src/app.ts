@@ -17,6 +17,8 @@ import { assertSchemaCurrent, latestVersion } from "./store/migrate.ts";
 import type { WriteEnv } from "./write/pipeline.ts";
 import { RateLimiter, UNLIMITED, type Limiter } from "./http/rate.ts";
 import { Alerts } from "./ops/alerts.ts";
+import { Llm, type LlmProvider } from "./llm/adapter.ts";
+import { backfillAfterKey } from "./llm/slots.ts";
 import { NO_OUTBOX, type Outbox } from "./ops/outbox.ts";
 import { HOUR_MS } from "./store/clock.ts";
 
@@ -40,6 +42,8 @@ export interface AppOptions {
   readonly rateLimits?: boolean;
   /** Where alerts and other outbound files go (aws mode); none by default. */
   readonly outbox?: Outbox;
+  /** The model behind the LLM adapter; absent when `provider = none` or no key is set (write-path.md §6.2). */
+  readonly llmProvider?: LlmProvider;
 }
 
 /** Per-client limits that hold on every route (operations.md §3). */
@@ -65,6 +69,7 @@ export class App {
   readonly alerts: Alerts;
   readonly write: WriteEnv;
   readonly read: ReadEnv;
+  readonly llm: Llm;
 
   constructor(o: AppOptions) {
     assertSchemaCurrent(o.db);
@@ -77,8 +82,11 @@ export class App {
     this.embedder = o.embedder;
     this.outbox = o.outbox ?? NO_OUTBOX;
     this.alerts = new Alerts(this.ctx, this.outbox);
+    this.llm = new Llm({ ctx: this.ctx, config: o.config, provider: o.llmProvider, alerts: this.alerts });
+    // A key that arrived after saves were stored without one: those saves get their slot proposal.
+    if (this.llm.available) backfillAfterKey(this.ctx);
     this.index = VectorIndex.load(o.db, o.embedder.modelId);
-    this.write = { ctx: this.ctx, config: o.config, embedder: o.embedder, onCommit: (ids) => this.committed(ids), alerts: this.alerts };
+    this.write = { ctx: this.ctx, config: o.config, embedder: o.embedder, onCommit: (ids) => this.committed(ids), alerts: this.alerts, llm: this.llm };
     this.read = { ctx: this.ctx, config: o.config, embedder: o.embedder, index: this.index, alerts: this.alerts };
     const now = (): number => this.ctx.clock.now();
     this.limits = o.rateLimits === false

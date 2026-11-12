@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { decide, type DecideInput } from "../src/write/decide.ts";
 import type { AttributeRow, Resolution, Screens } from "../src/write/types.ts";
 
-const SELF: Resolution = { entity: { id: "ent_self", type: "self", isNew: false }, attribute: undefined, sectionId: "sec_unsorted", isPeopleSection: false, tasteClass: false };
+const SELF: Resolution = { entity: { id: "ent_self", type: "self", isNew: false }, attribute: undefined, slotFromLlm: false, sectionId: "sec_unsorted", isPeopleSection: false, tasteClass: false };
 const CITY: AttributeRow = { id: "att_city", name: "city", entity_type: "self", cardinality: "one", section_id: "sec_profile", taste_class: 0, profile_key: 1, restricted: 0 };
 const LIKES: AttributeRow = { ...CITY, id: "att_likes", name: "likes", cardinality: "many", section_id: "sec_interests", taste_class: 1, profile_key: 0 };
 const NO_SCREENS = { secretHit: false, instructionHit: false, sensitiveCategory: undefined, shortLivedHit: false, suppressionHit: false };

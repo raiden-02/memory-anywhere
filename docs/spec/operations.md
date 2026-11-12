@@ -68,7 +68,7 @@ One worker loop in the server process polls `job` every 1 s (`status = queued AN
 | Job | Schedule | Does |
 | --- | --- | --- |
 | `extract` | on capture batch flush; import | write-path.md §10 |
-| `reslot` | after an LLM-less free-text save | write-path.md §6.2 |
+| `reslot` | a slot proposal that timed out, failed or hit the cap; or a key that appeared after saves made without one | write-path.md §6.2; first try after 5 min, then retries after 1 h, 6 h and 17 h |
 | `embed` | after write if inline embedding failed | embedding |
 | `reembed` | on model change | data-model.md §8 |
 | `section_cluster` | weekly Sun 03:00 owner time | memory-policy.md §9.2 |

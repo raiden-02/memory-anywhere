@@ -10,9 +10,13 @@
 // The gate counts wrong supersedes: a prior version closed or expired when the expected op was not
 // a supersede. A case is supersede-eligible when its expected op is not a supersede and its prior
 // was stored, so a supersede was possible.
+//
+// With an LLM provider (`--llm fake-adversarial`), the product's slot proposal and sensitive check
+// run too, through the real adapter, so the gate also covers slots the LLM chose.
 
 import { idSource, seededPrng } from "@memory-anywhere/contracts/ids";
 import { defaultConfig } from "../../packages/server/src/config/schema.ts";
+import { Llm, type LlmProvider } from "../../packages/server/src/llm/adapter.ts";
 import type { Embedder } from "../../packages/server/src/embed/types.ts";
 import { steppingClock } from "../../packages/server/src/store/clock.ts";
 import { openStore } from "../../packages/server/src/store/db.ts";
@@ -41,7 +45,7 @@ export interface WResult {
   readonly wrongSupersede: boolean;
 }
 
-export async function runCase(c: WCase, embedder: Embedder): Promise<WResult> {
+export async function runCase(c: WCase, embedder: Embedder, llmProvider?: LlmProvider): Promise<WResult> {
   const db = openStore(":memory:", { mode: "local" });
   try {
     await migrate(db, undefined);
@@ -49,7 +53,9 @@ export async function runCase(c: WCase, embedder: Embedder): Promise<WResult> {
     initStore(ctx, { embedding: { modelId: embedder.modelId, dim: embedder.dim, queryPrefix: "", docPrefix: "", filesSha256: {} }, localClient: undefined });
     db.prepare(`INSERT INTO client_policy (client_id, display_name, vendor, class, read, write, section_allow_json, quota_saves_per_hour, created_at)
       VALUES (?, 'eval chat', 'eval', 'chat', 1, 1, '["*"]', 1000, '2026-11-10T00:00:00.000Z')`).run(CLIENT);
-    const env = { ctx, config: defaultConfig(), embedder };
+    const base = defaultConfig();
+    const config = llmProvider ? { ...base, llm: { ...base.llm, provider: "anthropic" as const } } : base;
+    const env = { ctx, config, embedder, ...(llmProvider ? { llm: new Llm({ ctx, config, provider: llmProvider }) } : {}) };
     const put = (fact: { entity: string; content: string }, n: number) =>
       save(env, caller, { content: fact.content, kind: "fact", why_durable: "a lasting fact", user_words: fact.content.toLowerCase(), explicit_request: false, entity: fact.entity, scope: "global", change: "update" },
         { idempotencyKey: `pxs_01JC9Z3N4V8Q2W5X7Y9Z0A1B${String(n).padStart(2, "0")}`, observedAt: ctx.clock.now() });
@@ -87,6 +93,8 @@ export interface SuiteWResult {
   readonly system: "memory-anywhere";
   readonly dataset: string;
   readonly split: WCase["split"];
+  /** The LLM behind the write path: none, or the scripted adversary (no key, no network). */
+  readonly llm: "none" | "fake-adversarial";
   readonly labels: "public";
   readonly n: number;
   readonly gate: { eligible: number; wrong_supersedes: number; upper95: number; pass: boolean };
@@ -94,9 +102,9 @@ export interface SuiteWResult {
   readonly accuracy: { k: number; n: number; ci95: [number, number] };
 }
 
-export async function runSuiteW(cases: readonly WCase[], embedder: Embedder, split: WCase["split"]): Promise<{ result: SuiteWResult; rows: WResult[] }> {
+export async function runSuiteW(cases: readonly WCase[], embedder: Embedder, split: WCase["split"], llm?: { name: "fake-adversarial"; provider: LlmProvider }): Promise<{ result: SuiteWResult; rows: WResult[] }> {
   const rows: WResult[] = [];
-  for (const c of cases.filter((x) => x.split === split)) rows.push(await runCase(c, embedder));
+  for (const c of cases.filter((x) => x.split === split)) rows.push(await runCase(c, embedder, llm?.provider));
   const confusion: Record<string, Record<string, number>> = {};
   for (const r of rows) {
     const row = (confusion[r.expected] ??= {});
@@ -108,7 +116,7 @@ export async function runSuiteW(cases: readonly WCase[], embedder: Embedder, spl
   return {
     rows,
     result: {
-      suite: "W", system: "memory-anywhere", dataset: `w-factconsolidation-${cases.length}`, split, labels: "public", n: rows.length,
+      suite: "W", system: "memory-anywhere", dataset: `w-factconsolidation-${cases.length}`, split, llm: llm?.name ?? "none", labels: "public", n: rows.length,
       gate: { eligible, wrong_supersedes: wrong, upper95: zeroUpperBound(eligible), pass: wrong === 0 && eligible >= 100 && rows.length >= 150 },
       confusion,
       accuracy: { k: correct, n: rows.length, ci95: wilson(correct, rows.length).ci95 },

@@ -208,7 +208,11 @@ export function applyStoreRules(ctx: StoreContext, caller: Caller, p: StorePropo
       .all(entity.id, attr.id) as { id: string }[])
       .map((m) => currentVersion(ctx, m.id))
       .filter((v): v is CurrentVersion => v !== undefined);
-    if (members.length > 0) {
+    // A slot the LLM proposed never updates its current value (spec-issues #53); a value that only
+    // rephrases a member is the same fact, which rule 6 links as a source instead of contesting it.
+    const llm = p.resolution.slotFromLlm;
+    const rephrases = llm && members.some((m) => cosine(p.vector, readEmbedding(ctx, "version", m.id, p.modelId) ?? new Float32Array(p.vector.length)) >= p.dupThreshold);
+    if (members.length > 0 && !rephrases) {
       // The current occupant: the most trusted member, the most recent among equals.
       const cur = [...members].sort((a, b) => a.trust_tier - b.trust_tier || b.recorded_at.localeCompare(a.recorded_at))[0] as CurrentVersion;
       // Rule 2: an older dated value arrives after the current one.
@@ -224,15 +228,15 @@ export function applyStoreRules(ctx: StoreContext, caller: Caller, p: StorePropo
       if (members.length > 1) {
         // A contested slot keeps exactly one pair: update the least trusted member the caller may
         // change, or send the value to the owner (spec-issues #32).
-        const target = [...members].filter((m) => p.tier <= m.trust_tier).sort((a, b) => b.trust_tier - a.trust_tier || b.recorded_at.localeCompare(a.recorded_at))[0];
+        const target = llm ? undefined : [...members].filter((m) => p.tier <= m.trust_tier).sort((a, b) => b.trust_tier - a.trust_tier || b.recorded_at.localeCompare(a.recorded_at))[0];
         if (!target) return storeForReview(ctx, caller, p, "contested");
         return updateSlot(ctx, caller, p, target, members.filter((m) => m.memory_id !== target.memory_id).map((m) => m.memory_id));
       }
       // Rule 4a: a profile key written at T2 by another client is contested, not overwritten.
       const crossClient = attr.profile_key === 1 && p.tier === 2 && cur.trust_tier === 2 && cur.client_id !== caller.clientId;
-      // Rule 4: rights over the current value.
-      if (!crossClient && p.tier <= cur.trust_tier) return updateSlot(ctx, caller, p, cur, []);
-      // Rules 4a and 5: no rights (or another client's profile key): both values stay, contested.
+      // Rule 4: rights over the current value, through a hint or pattern slot.
+      if (!crossClient && !llm && p.tier <= cur.trust_tier) return updateSlot(ctx, caller, p, cur, []);
+      // Rules 4a and 5, and an LLM slot: both values stay, contested.
       const memoryId = insertNew(ctx, caller, p, entity.id, attr, "contested", { validFrom: p.validFrom ?? dateOf(p.observedAt), changeKind: "initial" });
       contest(ctx, cur.memory_id, memoryId);
       appendEvent(ctx, { actor: caller.clientId, op: "memory.contest", refs: { memory_id: memoryId, other_memory_id: cur.memory_id } });
