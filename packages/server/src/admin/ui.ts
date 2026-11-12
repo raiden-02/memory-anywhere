@@ -9,6 +9,9 @@
 // Every page needs the admin session; without one the sign-in page is shown. Every action carries
 // the session's CSRF token, and §3.4 actions need a passkey within the last 5 minutes: the endpoint
 // answers `step_up_required` and the page asks for the passkey, then retries.
+//
+// Local mode serves the same pages under /admin on 127.0.0.1 (local-ui.ts): there the session comes
+// from `mema ui`'s one-time link, the local token being the owner credential, and no passkey exists.
 
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { App } from "../app.ts";
@@ -25,6 +28,12 @@ export interface AdminUiOptions {
   readonly origin: string;
   readonly secret: string;
   readonly csrfOf: (idHash: string) => string;
+  /** Path prefix: "" on admin.{host}, "/admin" on the local server. */
+  readonly root?: string;
+  /** The session cookie: `__Host-ma_admin` (aws) or `ma_admin_local` (local). */
+  readonly sessionCookie?: string;
+  /** Local mode: no passkeys, so step-up is always satisfied and pairing is hidden. */
+  readonly local?: boolean;
 }
 
 const PAGES = ["/", "/memories", "/reviews", "/observations", "/changes", "/apps", "/sections", "/repos", "/exports", "/system"] as const;
@@ -39,22 +48,30 @@ const ACT = /^\/api\/act\/([a-z]+\.[a-z]+)$/u;
 /** Serves a page or action; returns the status, or undefined when the path is not the UI's. */
 export function adminUi(o: AdminUiOptions): (req: IncomingMessage, res: ServerResponse) => number | Promise<number> | undefined {
   const { app, owner } = o;
+  const root = o.root ?? "";
+  const cookieName = o.sessionCookie ?? ADMIN_COOKIE;
+  const local = o.local === true;
 
   function page(res: ServerResponse, template: string, title: string, active: string, csrf: string, data: Record<string, unknown>): number {
-    sendPage(res, 200, template, { title, page: "admin", csrf, nav: NAV, active, ...data });
+    sendPage(res, 200, template, { title, page: "admin", csrf, nav: NAV, active, root, local, ...data });
     return 200;
   }
 
   return (req, res) => {
     const url = new URL(req.url ?? "/", o.origin);
-    const path = url.pathname;
+    if (root && url.pathname !== root && !url.pathname.startsWith(`${root}/`)) return undefined;
+    const path = url.pathname.slice(root.length) || "/";
     const isPage = req.method === "GET" && ((PAGES as readonly string[]).includes(path) || MEMORY_PAGE.test(path));
     const act = req.method === "POST" ? ACT.exec(path) : null;
     const resetCancel = req.method === "POST" && path === "/api/reset/cancel";
     if (!isPage && !act && !resetCancel) return undefined;
 
-    const session = owner.session(cookies(req)[ADMIN_COOKIE]);
+    const session = owner.session(cookies(req)[cookieName]);
     if (isPage) {
+      if (!session && local) {
+        sendPage(res, 200, "admin-empty", { title: "Open with mema ui", page: "admin", nav: [], root, message: "Run mema ui on this computer to open the admin page." });
+        return 200;
+      }
       if (!session) {
         sendPage(res, 200, "approve", { title: "Sign in", page: "signin", signedIn: false, lines: [], userCode: "", open: false, needsSecondConfirm: false });
         return 200;
@@ -91,7 +108,7 @@ export function adminUi(o: AdminUiOptions): (req: IncomingMessage, res: ServerRe
       };
       if (!session) return json(401, { error: "login_required" });
       if (!csrfOk(req, o.origin, o.secret, `admin:${session.idHash}`)) return json(403, { error: "csrf" });
-      const fresh = app.ctx.clock.now() - session.uvAt <= STEP_UP_MS;
+      const fresh = local || app.ctx.clock.now() - session.uvAt <= STEP_UP_MS;
       const body = (await readPageJson(req)) ?? {};
       if (resetCancel) {
         if (!fresh) return json(401, { error: "step_up_required" });

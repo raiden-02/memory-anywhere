@@ -14,11 +14,11 @@
 </form>
 <% } %>
 <div class="tiles">
-  <a class="tile" href="/memories"><span class="n"><%= it.counts.memories %></span>memories</a>
-  <a class="tile" href="/memories?status=contested"><span class="n"><%= it.counts.contested %></span>contested</a>
-  <a class="tile" href="/reviews"><span class="n"><%= it.counts.reviews %></span>to review</a>
-  <a class="tile" href="/observations"><span class="n"><%= it.counts.observations %></span>observations</a>
-  <a class="tile" href="/apps"><span class="n"><%= it.counts.approvals %></span>approvals waiting</a>
-  <a class="tile" href="/system"><span class="n">$<%= it.llmToday.toFixed(2) %></span>LLM today of $<%= it.llmCap.toFixed(2) %></a>
+  <a class="tile" href="<%= it.root ?? "" %>/memories"><span class="n"><%= it.counts.memories %></span>memories</a>
+  <a class="tile" href="<%= it.root ?? "" %>/memories?status=contested"><span class="n"><%= it.counts.contested %></span>contested</a>
+  <a class="tile" href="<%= it.root ?? "" %>/reviews"><span class="n"><%= it.counts.reviews %></span>to review</a>
+  <a class="tile" href="<%= it.root ?? "" %>/observations"><span class="n"><%= it.counts.observations %></span>observations</a>
+  <a class="tile" href="<%= it.root ?? "" %>/apps"><span class="n"><%= it.counts.approvals %></span>approvals waiting</a>
+  <a class="tile" href="<%= it.root ?? "" %>/system"><span class="n">$<%= it.llmToday.toFixed(2) %></span>LLM today of $<%= it.llmCap.toFixed(2) %></a>
 </div>
 <p class="muted">Store <%= it.healthy ? "healthy" : "not writable" %><% if (it.counts.jobsFailing > 0) { %> · <span class="danger"><%= it.counts.jobsFailing %> failed jobs</span><% } %></p>

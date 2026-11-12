@@ -1,5 +1,5 @@
 <% layout("./admin") %>
-<form class="filters" method="get" action="/memories">
+<form class="filters" method="get" action="<%= it.root ?? "" %>/memories">
   <input name="q" value="<%= it.filters.text ?? '' %>" placeholder="Search" aria-label="Search">
   <select name="section" aria-label="Section"><option value="">All sections</option><% for (const s of it.sections) { %><option value="<%= s.id %>"<% if (s.id === it.filters.section) { %> selected<% } %>><%= s.name %></option><% } %></select>
   <select name="status" aria-label="Status">
@@ -9,7 +9,7 @@
 </form>
 <ul class="list">
 <% for (const m of it.rows) { %>
-  <li><a href="/memories/<%= m.id %>"><%= m.content %></a>
+  <li><a href="<%= it.root ?? "" %>/memories/<%= m.id %>"><%= m.content %></a>
     <span class="muted"><%= m.section %> · <%= m.entity %><% if (m.attribute) { %> · <%= m.attribute %><% } %> · T<%= m.tier %> · <%= m.status %><% if (m.pinned) { %> · pinned<% } %></span></li>
 <% } %>
 </ul>

@@ -150,7 +150,11 @@ async function start(l: Layout, target: ListenTarget, ephemeral: boolean, rateLi
     hourly.push(() => auth.owner.hourly());
     server = createHttpServer({ app, door, authenticate: auth.authenticate, mounts: auth.mounts, stepUps: auth.stepUps, logger });
   } else {
-    server = createHttpServer({ app, door: localDoor(target.kind === "tcp" ? target.port : 0), authenticate: localTokenAuth(localToken(l.tokenFile)), logger });
+    // The admin UI at /admin, opened by `mema ui` (auth-and-security.md §8.1).
+    const token = localToken(l.tokenFile);
+    const door = localDoor(target.kind === "tcp" ? target.port : 0);
+    const { localAdmin } = await import("./admin/local-ui.ts");
+    server = createHttpServer({ app, door, authenticate: localTokenAuth(token), mounts: { mcp: localAdmin({ app, door, localToken: token }) }, logger });
   }
   const worker = new JobWorker(app, ephemeral ? undefined : l.storeFile, hourly);
   const where = await listen(server, target);

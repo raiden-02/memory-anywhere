@@ -1,7 +1,8 @@
 <% layout("./admin") %>
+<% if (!it.local) { %>
 <% if (it.approvals.length > 0) { %>
 <h1>Waiting for your approval</h1>
-<ul class="list"><% for (const a of it.approvals) { %><li><a href="/approve/<%= a.id %>"><%= a.command %></a> <span class="muted"><%= a.client %> · code <%= a.user_code %></span></li><% } %></ul>
+<ul class="list"><% for (const a of it.approvals) { %><li><a href="<%= it.root ?? "" %>/approve/<%= a.id %>"><%= a.command %></a> <span class="muted"><%= a.client %> · code <%= a.user_code %></span></li><% } %></ul>
 <% } %>
 <h1>Connect an app</h1>
 <form id="pair-form" class="stack">
@@ -17,6 +18,7 @@
   <button type="submit">Open a 10-minute pairing window</button>
 </form>
 <dl id="pair-result" class="result" hidden></dl>
+<% } %>
 <h1>Connected apps</h1>
 <% for (const c of it.rows) { %>
 <section class="card">

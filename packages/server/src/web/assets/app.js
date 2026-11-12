@@ -5,6 +5,8 @@
 const body = document.body;
 const csrf = body.dataset.csrf ?? "";
 const base = body.dataset.base ?? "";
+// Where the admin UI lives: "" on admin.{host}, "/admin" on the local server (auth-and-security.md §8.1).
+const root = body.dataset.root ?? "";
 const $ = (id) => document.getElementById(id);
 const say = (text) => {
   const el = $("msg");
@@ -58,7 +60,7 @@ async function withStepUp(request) {
     return await request();
   } catch (e) {
     if (e.message !== "step_up_required") throw e;
-    await post("/api/stepup/verify", await assertion("/api/stepup/options"));
+    await post(`${root}/api/stepup/verify`, await assertion(`${root}/api/stepup/options`));
     return request();
   }
 }
@@ -143,7 +145,7 @@ const pages = {
   signin: () => {
     $("signin").addEventListener("click", async () => {
       try {
-        await post("/api/login/verify", await assertion("/api/login/options"));
+        await post(`${root}/api/login/verify`, await assertion(`${root}/api/login/options`));
         location.reload();
       } catch (e) {
         say(`Not signed in: ${e.message}`);
@@ -190,7 +192,7 @@ const pages = {
         event.preventDefault();
         if (form.dataset.confirm && !window.confirm(form.dataset.confirm)) return;
         try {
-          const r = await withStepUp(() => post(`/api/act/${form.dataset.action}`, { input: fieldsOf(form) }));
+          const r = await withStepUp(() => post(`${root}/api/act/${form.dataset.action}`, { input: fieldsOf(form) }));
           if (r.result && typeof r.result === "object" && "forgotten" in r.result) say(`Reverted: ${r.result.forgotten} forgotten, ${r.result.restored} restored, ${r.result.observations} observations closed.`);
           else location.reload();
         } catch (e) {
@@ -202,7 +204,7 @@ const pages = {
     pair?.addEventListener("submit", async (event) => {
       event.preventDefault();
       try {
-        const w = await withStepUp(() => post("/api/windows", fieldsOf(pair)));
+        const w = await withStepUp(() => post(`${root}/api/windows`, fieldsOf(pair)));
         const out = $("pair-result");
         out.replaceChildren();
         const row = (label, value) => {
@@ -228,7 +230,7 @@ const pages = {
     });
     $("cancel-reset")?.addEventListener("click", async () => {
       try {
-        await withStepUp(() => post("/api/reset/cancel"));
+        await withStepUp(() => post(`${root}/api/reset/cancel`));
         location.reload();
       } catch (e) {
         say(e.message);
