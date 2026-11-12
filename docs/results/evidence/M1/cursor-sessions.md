@@ -39,6 +39,41 @@ the proxy writes one `proxy.repo` line per call, does not exist on the PC: no pr
 call. The installed bundle (`~/.cursor/plugins/local/memory-anywhere/dist/memory-anywhere.mjs`, written 18:24) does contain the
 logging and the `cursor-active.json` read.
 
+## Diagnosis (2026-11-11)
+
+Cursor (started 16:24) had no process with `--tool cursor`. Its only memory-anywhere MCP process:
+
+```
+node.exe    pid 30808  16:29:50  node %USERPROFILE%\.claude\plugins\cache\memory-anywhere\memory-anywhere\0.1.0/dist/memory-anywhere.mjs mcp --tool claude-code
+Cursor.exe  pid 61596  16:24:39  "C:\Program Files\cursor\Cursor.exe" --type=utility --utility-sub-type=node.mojom.NodeService …
+Cursor.exe  pid 43992  16:24:36  "C:\Program Files\cursor\Cursor.exe"
+```
+
+Cursor's plugin log (`Cursor Plugins.*.log`) loads both plugins, and its MCP log restarts the shared id at 16:29:50:
+
+```
+loadUserLocalPlugin memory-anywhere loaded in 613.0ms
+loadClaudePlugin memory-anywhere@memory-anywhere loaded in 56.3ms
+loadAllPlugins completed in 12303.7ms (claude=true, userLocal=true, marketplace=2 sources, total=4 plugins, failures=0, sourceUnavailable=false)
+[McpProcessServerService] reload: plugin-memory-anywhere-memory-anywhere::… reason=config_changed
+```
+
+Cursor's hooks log for each window: `Loaded 2 user hook(s) for steps: sessionStart, beforeSubmitPrompt` (only `~/.cursor/hooks.json`).
+
+Environment of the two hosts' proxies (names only; values shown for path variables):
+
+| Variable | Cursor (pid 30808) | Claude Code (pid 57752) |
+| --- | --- | --- |
+| `CLAUDECODE` | absent | `1` |
+| `CLAUDE_PROJECT_DIR` | absent | the project folder |
+| `CLAUDE_PLUGIN_ROOT` | absent | the plugin folder |
+| `WORKSPACE_FOLDER_PATHS` | the first window's folder (another repo) | absent |
+| `VSCODE_CWD` | `C:\Program Files\cursor` | absent |
+
+After the fix (spec-issues #51), the installed Claude Code bundle started as Cursor starts it (`--tool claude-code`, home
+folder, the Cursor variables above, no `CLAUDE*`) logs `{"op":"proxy.repo","tool":"cursor",…}`; after a Cursor
+`beforeSubmitPrompt` hook for the test repo, `memory_status` reports `"repo_enabled":true`.
+
 ## The same code outside Cursor
 
 A probe (git-ignored `.gate/cursor-probe.mjs`) starts the installed bundle as `mema mcp --tool cursor` from the home folder (no

@@ -8,7 +8,7 @@ import { PassThrough } from "node:stream";
 import { afterEach, describe, expect, it } from "vitest";
 import { readRepoContext, writeRepoState } from "../src/cache.ts";
 import { hookEvent, readHookInput, runHook, type HookTool } from "../src/hooks.ts";
-import { builtInTools, Proxy } from "../src/proxy.ts";
+import { builtInTools, hostTool, Proxy } from "../src/proxy.ts";
 import { repoIdentity } from "../src/repo-key.ts";
 import { spoolStats } from "../src/spool.ts";
 import { StoreClient } from "../src/store-client.ts";
@@ -161,6 +161,18 @@ describe("proxy", () => {
     expect(proxy.repoKey).toBe(w.repoKey);
     const r = await proxy.callTool("memory_save", { content: "Writes commit messages in the imperative mood", kind: "preference", why_durable: "habit", user_words: "I write commit messages in the imperative mood" }, undefined);
     expect(r.structuredContent).toMatchObject({ outcome: "active" });
+  });
+
+  it("serves Cursor when Cursor starts the imported Claude Code plugin, and Claude Code otherwise", () => {
+    // Environments as observed on Windows: Cursor 3.29.9 and Claude Code 2.1.321.
+    const cursor = { WORKSPACE_FOLDER_PATHS: "C:\\work\\first window", VSCODE_CWD: "C:\\Program Files\\cursor" };
+    expect(hostTool("claude-code", cursor)).toBe("cursor");
+    expect(hostTool("claude-code", { VSCODE_CWD: "/Applications/Cursor.app/Contents/Resources/app" })).toBe("cursor");
+    // Claude Code started from a terminal inside Cursor or VS Code inherits VSCODE_* but sets CLAUDECODE.
+    expect(hostTool("claude-code", { ...cursor, CLAUDECODE: "1", CLAUDE_PROJECT_DIR: "C:\\work\\repo" })).toBe("claude-code");
+    expect(hostTool("claude-code", {})).toBe("claude-code");
+    expect(hostTool("codex", cursor)).toBe("codex");
+    expect(hostTool("cursor", {})).toBe("cursor");
   });
 
   it("lists the built-in tools when it has neither the store nor a cache", () => {

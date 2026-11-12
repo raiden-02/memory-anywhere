@@ -65,7 +65,7 @@ Every path ends in the same server process and the same write path and retrieval
 
 The proxy is an MCP server on stdio (SDK v2 `serveStdio`) that relays to the remote `/mcp` with an SDK MCP client.
 
-1. Start: `memory-anywhere mcp --tool <claude-code|codex|cursor>`. It computes the repo key (§8) from its working directory, creates a proxy instance id `pxy_<ULID>`, and loads the cached `tools/list` from `{data}\cache\tools.json`.
+1. Start: `memory-anywhere mcp --tool <claude-code|codex|cursor>`. It computes the repo key (§8) from `CLAUDE_PROJECT_DIR`, else `CURSOR_PROJECT_DIR`, else its working directory (spec-issues #28), creates a proxy instance id `pxy_<ULID>`, and loads the cached `tools/list` from `{data}\cache\tools.json`. Cursor shares one proxy across its windows, so a Cursor proxy takes each call's repo from the latest Cursor hook (spec-issues #49). Cursor also starts the Claude Code plugin's proxy (`--tool claude-code`); without Claude Code's `CLAUDECODE=1` and with Cursor's environment, that proxy serves as the Cursor proxy (spec-issues #51).
 2. `tools/list`: returns the server's list (fetched on start, then cached with the server's `ttlMs`). If the server is unreachable and no cache exists, it returns the five built-in tool definitions compiled into the client from `packages/contracts`.
 3. `tools/call`: forwards to the remote. For `memory_save` it adds `_meta["memory-anywhere/idempotency_key"] = "pxs_<ULID>"` (write-path.md §2.3). It sends these extra HTTP headers on every request:
 

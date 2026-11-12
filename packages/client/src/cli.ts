@@ -11,7 +11,7 @@ import { loadClientConfig } from "./config.ts";
 import { defaultFileDeps, deployAws, destroyAws, type Deps } from "./deploy/aws.ts";
 import { DeployError, runProcess } from "./deploy/process.ts";
 import { hookEvent, readHookInput, runHook, type HookTool } from "./hooks.ts";
-import { runProxy, type ProxyTool } from "./proxy.ts";
+import { hostTool, runProxy, type ProxyTool } from "./proxy.ts";
 import { StoreClient, StoreError } from "./store-client.ts";
 
 const USAGE = `usage: mema <command> [flags]
@@ -97,7 +97,7 @@ export async function main(argv: string[]): Promise<number> {
   if (command === "mcp") {
     const tool = values.tool ?? "generic";
     if (!PROXY_TOOLS.includes(tool as ProxyTool)) return usage(`unknown --tool ${tool}`);
-    runProxy({ paths, config, store, tool: tool as ProxyTool, env: process.env, cwd: process.cwd(), now: Date.now });
+    runProxy({ paths, config, store, tool: hostTool(tool as ProxyTool, process.env), env: process.env, cwd: process.cwd(), now: Date.now });
     return EXIT.ok;
   }
 

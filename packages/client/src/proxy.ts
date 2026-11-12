@@ -34,6 +34,19 @@ const SAVE_DRAIN_MS = 500;
 const DRAIN_EVERY_MS = 60_000;
 const CURSOR_ACTIVE_MAX_AGE_MS = 12 * 3_600_000;
 
+/**
+ * The tool this proxy really serves. Cursor imports Claude Code plugins and starts their MCP
+ * servers itself, so a proxy started with `--tool claude-code` may be serving Cursor, which gives
+ * it no project folder. Claude Code sets `CLAUDECODE=1` for every MCP server it starts; Cursor sets
+ * `WORKSPACE_FOLDER_PATHS` (only the first window's folder) and `VSCODE_CWD` in its install folder
+ * (spec-issues #51).
+ */
+export function hostTool(requested: ProxyTool, env: NodeJS.ProcessEnv): ProxyTool {
+  if (requested !== "claude-code" || env["CLAUDECODE"] === "1") return requested;
+  const cursor = env["WORKSPACE_FOLDER_PATHS"] !== undefined || /cursor/iu.test(env["VSCODE_CWD"] ?? "");
+  return cursor ? "cursor" : requested;
+}
+
 /** The five tools as compiled into the client, for when the store and the cache are both missing. */
 export function builtInTools(): Tool[] {
   return TOOL_ORDER.map((name) => ({
