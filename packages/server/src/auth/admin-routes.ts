@@ -8,6 +8,7 @@
 //   POST /api/stepup/{options, verify}                        a fresh user-verified assertion (5 min)
 //   POST /api/windows                                         open a pairing window (step-up)
 //   POST /api/logout
+//   GET  /approve/:id  POST /approve/:id/{options, approve, deny}   a CLI owner command (§6.2)
 //
 // Every POST must come from this origin. Requests with a session also carry X-MA-CSRF, an HMAC of
 // the session id with the store's cookie secret; setup and recovery carry their own secret token.
@@ -25,6 +26,7 @@ import { cookies, csrfFor, csrfOk, readPageJson, sendJson, sendPage, serveAsset 
 import { activeClientFor, createStaticClient } from "./clients.ts";
 import { ADMIN_COOKIE, STEP_UP_MS, type OwnerCredentials } from "./owner.ts";
 import type { Pairing } from "./pairing.ts";
+import type { StepUps } from "./stepup.ts";
 import { secondPasskeyOk, type Passkeys } from "./passkeys.ts";
 import { isVendor, VENDORS, type Method } from "./vendors.ts";
 import { sha256Hex } from "./adapter.ts";
@@ -39,10 +41,15 @@ export interface AdminRoutesOptions {
   readonly pairing: Pairing;
   readonly passkeys: Passkeys;
   readonly owner: OwnerCredentials;
+  readonly stepUps: StepUps;
 }
 
+const APPROVE_PAGE = /^\/approve\/(stp_[0-9A-HJKMNP-TV-Z]{26})$/u;
+const APPROVE_ACTION = /^\/approve\/(stp_[0-9A-HJKMNP-TV-Z]{26})\/(options|approve|deny)$/u;
+const POSTS = /^\/(?:setup\/(?:options|verify|confirm)|recover|api\/(?:login|stepup)\/(?:options|verify)|api\/windows|api\/logout|approve\/stp_[0-9A-HJKMNP-TV-Z]{26}\/(?:options|approve|deny))$/u;
+
 export function adminRoutes(o: AdminRoutesOptions): Mount {
-  const { app, door, provider, pairing, passkeys, owner } = o;
+  const { app, door, provider, pairing, passkeys, owner, stepUps } = o;
   const now = (): number => app.ctx.clock.now();
   const origin = door.adminUrl;
   const secret = (prepared(app.ctx.db, "SELECT value FROM meta WHERE key = 'cookie_secret'").get() as { value: string }).value;
@@ -135,6 +142,24 @@ export function adminRoutes(o: AdminRoutesOptions): Mount {
       owner.markVerified(session.idHash);
       return json(200, { ok: true });
     }
+    const approve = APPROVE_ACTION.exec(path);
+    if (approve?.[1]) {
+      const id = approve[1];
+      const purpose = `approve:${id}:${session.idHash}`;
+      if (approve[2] === "options") return json(200, await passkeys.assertionOptions(purpose));
+      if (approve[2] === "deny") {
+        stepUps.deny(id);
+        return json(200, { ok: true });
+      }
+      // Approving is one of the §3.4 actions: the passkey assertion here is the fresh user verification.
+      if (!(await passkeys.verify(purpose, body["response"] as never))) {
+        failed();
+        return json(403, { error: "passkey_failed" });
+      }
+      owner.markVerified(session.idHash);
+      const r = stepUps.approve(id, typeof body["confirm"] === "string" ? body["confirm"] : undefined);
+      return r === "approved" || r === "second" ? json(200, { result: r }) : json(409, { error: r });
+    }
     if (path === "/api/windows") {
       if (now() - session.uvAt > STEP_UP_MS) return json(401, { error: "step_up_required" });
       if (passkeys.count() < 2) return json(409, { error: "second_passkey_required" });
@@ -189,14 +214,32 @@ export function adminRoutes(o: AdminRoutesOptions): Mount {
         finish(200, "asset");
         return true;
       }
+      const approvePage = APPROVE_PAGE.exec(path);
+      if (req.method === "GET" && approvePage?.[1]) {
+        const session = owner.session(cookies(req)[ADMIN_COOKIE]);
+        // An unknown request looks like a closed one. Without a session the page signs the owner in first.
+        const view = stepUps.view(approvePage[1]);
+        sendPage(res, 200, "approve", {
+          title: "Approve command",
+          page: session ? "approve" : "signin",
+          csrf: session ? csrfOf(session.idHash) : "",
+          base: `/approve/${approvePage[1]}`,
+          signedIn: session !== undefined,
+          lines: view?.text.split("\n") ?? [],
+          userCode: view?.userCode ?? "",
+          open: view?.open ?? false,
+          needsSecondConfirm: view?.needsSecondConfirm ?? false,
+        });
+        finish(200, "approve");
+        return true;
+      }
       if (req.method === "GET" && (path === "/setup" || path === "/recover")) {
         const page = path.slice(1);
         sendPage(res, 200, page, { title: page === "setup" ? "Set up" : "Recover", page });
         finish(200, page);
         return true;
       }
-      const posts = /^\/(?:setup\/(?:options|verify|confirm)|recover|api\/(?:login|stepup)\/(?:options|verify)|api\/windows|api\/logout)$/u;
-      if (req.method === "POST" && posts.test(path)) {
+      if (req.method === "POST" && POSTS.test(path)) {
         const json = (status: number, body: unknown, headers: Record<string, string> = {}): void => {
           sendJson(res, status, body, headers);
           finish(status, path.replace(/^\/(api\/)?/u, "").replaceAll("/", "_"));

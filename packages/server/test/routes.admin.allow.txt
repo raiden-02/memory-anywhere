@@ -17,6 +17,12 @@ POST    /api/stepup/verify
 POST    /api/windows
 POST    /api/logout
 
+# Approving a CLI owner command (§6.2)
+GET     /approve/:stepup
+POST    /approve/:stepup/options
+POST    /approve/:stepup/approve
+POST    /approve/:stepup/deny
+
 # The pages' script and stylesheet (§8)
 GET     /assets/app.js
 GET     /assets/app.css

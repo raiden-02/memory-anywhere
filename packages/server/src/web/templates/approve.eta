@@ -1,0 +1,23 @@
+<% layout("./layout") %>
+<% if (!it.signedIn) { %>
+<h1>Sign in to approve</h1>
+<button id="signin" type="button">Sign in with passkey</button>
+<% } else if (!it.open) { %>
+<h1>This request is closed</h1>
+<p>It was approved, denied or has expired. Run the command again if you still want it.</p>
+<% } else { %>
+<p class="muted">Code</p>
+<p class="host code"><%= it.userCode %></p>
+<p class="muted">must match your terminal</p>
+<h1>Approve this command?</h1>
+<% for (const line of it.lines) { %><p class="<%= line.startsWith('WARNING') ? 'danger' : '' %>"><%= line %></p><% } %>
+<% if (it.needsSecondConfirm) { %>
+<label for="confirm">Type the last 8 characters of the key</label>
+<input id="confirm" autocomplete="off" spellcheck="false" maxlength="8">
+<% } %>
+<div class="actions">
+  <button id="approve" type="button" disabled>Approve with passkey</button>
+  <button id="deny" type="button" class="secondary">Deny</button>
+</div>
+<% } %>
+<p id="msg" role="status"></p>

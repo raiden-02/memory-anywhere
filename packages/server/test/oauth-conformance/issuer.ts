@@ -71,7 +71,7 @@ export async function startIssuer(opts: { fetch?: Configuration["fetch"]; rateLi
   const door = testDoor(mcpPort, adminPort);
   const logger = new Logger(() => undefined);
   const auth: Auth = createAuth({ app, door, logger, ...(opts.fetch ? { fetch: opts.fetch } : {}) });
-  const servers: Server[] = [mcpPort, adminPort].map(() => createHttpServer({ app, door, authenticate: auth.authenticate, mounts: auth.mounts, logger, now: clock.now }));
+  const servers: Server[] = [mcpPort, adminPort].map(() => createHttpServer({ app, door, authenticate: auth.authenticate, mounts: auth.mounts, stepUps: auth.stepUps, logger, now: clock.now }));
   await Promise.all(servers.map((s, i) => new Promise<void>((resolve) => s.listen(i === 0 ? mcpPort : adminPort, "127.0.0.1", resolve))));
   return {
     ...auth,

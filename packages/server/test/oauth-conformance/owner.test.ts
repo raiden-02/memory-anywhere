@@ -3,6 +3,7 @@
 // one grant per vendor with Replace, and what each grant may do at /mcp.
 
 import { afterEach, describe, expect, test } from "vitest";
+import { SERVER_VERSION } from "../../src/app.ts";
 import { SoftAuthenticator } from "./authenticator.ts";
 import { authorize, authUrl, Browser, callMcp, openWindow, ownerSetup, pkce, startIssuer, token, type Issuer } from "./issuer.ts";
 
@@ -174,6 +175,87 @@ describe("pairing and grants (§4.1, §5.2, §5.5)", () => {
     const page = await (await owner.fetch(start.headers.get("location") ?? "")).text();
     expect(page).toContain(loginCode(p.challenge));
   }, 60_000);
+});
+
+describe("step-up for the CLI's owner commands (§6.2)", () => {
+  const v1 = async (issuer: Issuer, access: string, method: string, path: string, body?: unknown, extra: Record<string, string> = {}) => {
+    const res = await fetch(`${issuer.origin}${path}`, {
+      method,
+      headers: { authorization: `Bearer ${access}`, "content-type": "application/json", "ma-client-version": SERVER_VERSION, ...extra },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
+    return { status: res.status, data: (await res.json().catch(() => ({}))) as Record<string, unknown> };
+  };
+  /** The owner opens the approval page, signs the challenge, and approves (optionally typing the key's suffix). */
+  const approve = async (issuer: Issuer, owner: Browser, id: string, confirm?: string) => {
+    const base = `${issuer.adminOrigin}/approve/${id}`;
+    expect((await owner.fetch(base)).status).toBe(200);
+    const options = await owner.postJson(`${base}/options`);
+    return owner.postJson(`${base}/approve`, { response: issuer.authenticator.get(options.data as never), ...(confirm === undefined ? {} : { confirm }) });
+  };
+
+  test("a PC command runs once, with exactly the approved arguments, after the owner approves with a passkey", async () => {
+    const issuer = await issuerWith();
+    const owner = await ownerSetup(issuer);
+    const pc = await grant(issuer, owner, { vendor: "pc", method: "static", machineName: "desk" }, "http://127.0.0.1:50123/callback");
+    const args = { name: "Atlas", aliases: ["atlas-app"], status: "active" };
+    expect((await v1(issuer, pc.access, "POST", "/v1/admin/project-add", args)).status).toBe(403);
+
+    const r = await v1(issuer, pc.access, "POST", "/v1/admin/stepup", { command: "project-add", args });
+    expect(r.status).toBe(200);
+    const id = String(r.data["request_id"]);
+    expect(r.data["approve_url"]).toBe(`${issuer.adminOrigin}/approve/${id}`);
+    expect(String(r.data["user_code"])).toMatch(/^[A-Z2-9]{8}$/u);
+    const page = await (await owner.fetch(`${issuer.adminOrigin}/approve/${id}`)).text();
+    expect(page).toContain("Add project &quot;Atlas&quot;.");
+    expect(page).toContain(String(r.data["user_code"]));
+    expect((await v1(issuer, pc.access, "GET", `/v1/admin/stepup/${id}`)).data).toEqual({ status: "pending" });
+
+    expect((await approve(issuer, owner, id)).data).toEqual({ result: "approved" });
+    const polled = await v1(issuer, pc.access, "GET", `/v1/admin/stepup/${id}`);
+    const stepUp = String(polled.data["token"]);
+    expect(polled.data).toMatchObject({ status: "approved", token_expires_in: 600 });
+    expect((await v1(issuer, pc.access, "GET", `/v1/admin/stepup/${id}`)).data).toEqual({ status: "approved" }); // handed out once
+
+    const header = { "ma-step-up": stepUp };
+    expect((await v1(issuer, pc.access, "POST", "/v1/admin/project-add", { ...args, name: "Other" }, header)).status).toBe(403);
+    expect((await v1(issuer, pc.access, "POST", "/v1/admin/project-add", args, header)).status).toBe(200);
+    expect((await v1(issuer, pc.access, "POST", "/v1/admin/project-add", args, header)).status).toBe(403); // single use
+  }, 90_000);
+
+  test("chat apps cannot start owner commands", async () => {
+    const issuer = await issuerWith();
+    const owner = await ownerSetup(issuer);
+    const claude = await grant(issuer, owner, { vendor: "claude", method: "static" });
+    expect((await v1(issuer, claude.access, "POST", "/v1/admin/stepup", { command: "project-add", args: { name: "X", aliases: [] } })).status).toBe(403);
+  }, 60_000);
+
+  test("an export to an unregistered key needs the key's last 8 characters and a second approval", async () => {
+    const issuer = await issuerWith();
+    const owner = await ownerSetup(issuer);
+    const pc = await grant(issuer, owner, { vendor: "pc", method: "static", machineName: "desk" }, "http://127.0.0.1:50123/callback");
+    const recipient = `age1${"q".repeat(58)}`;
+    const r = await v1(issuer, pc.access, "POST", "/v1/admin/stepup", { command: "export", args: { include_auth: false, recipient } });
+    const id = String(r.data["request_id"]);
+    const page = await (await owner.fetch(`${issuer.adminOrigin}/approve/${id}`)).text();
+    expect(page).toContain("WARNING: This key is not one of your registered export keys.");
+    const suffix = (issuer.stepUps.view(id)?.confirmSuffix ?? "").toUpperCase();
+    expect((await approve(issuer, owner, id, "00000000")).data).toEqual({ error: "wrong_suffix" });
+    expect((await approve(issuer, owner, id, suffix)).data).toEqual({ result: "second" });
+    expect((await approve(issuer, owner, id)).data).toEqual({ result: "approved" });
+  }, 90_000);
+
+  test("three denied requests in an hour raise stepup_unexpected", async () => {
+    const issuer = await issuerWith();
+    const owner = await ownerSetup(issuer);
+    const pc = await grant(issuer, owner, { vendor: "pc", method: "static", machineName: "desk" }, "http://127.0.0.1:50123/callback");
+    for (let i = 0; i < 3; i++) {
+      const r = await v1(issuer, pc.access, "POST", "/v1/admin/stepup", { command: "repo-disable", args: { repo_key: `rk_${"a".repeat(32)}` } });
+      await owner.fetch(`${issuer.adminOrigin}/approve/${String(r.data["request_id"])}`);
+      expect((await owner.postJson(`${issuer.adminOrigin}/approve/${String(r.data["request_id"])}/deny`)).status).toBe(200);
+    }
+    expect(issuer.app.alerts.open().map((a) => a.kind)).toContain("stepup_unexpected");
+  }, 90_000);
 });
 
 describe("rate limits (operations.md §3)", () => {

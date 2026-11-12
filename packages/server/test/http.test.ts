@@ -192,12 +192,15 @@ describe("/v1", () => {
 });
 
 describe("inventory and logs", () => {
-  it("serves exactly the local-mode routes of mcp-interface.md §7", () => {
+  it("serves exactly the resource routes of mcp-interface.md §7; step-up only in aws mode", async () => {
     expect([...ROUTES].sort()).toEqual([
       "GET /v1/health", "GET /v1/projection", "GET /v1/status", "POST /mcp", "POST /v1/admin/project-add", "POST /v1/admin/project-track",
-      "POST /v1/admin/repo-disable", "POST /v1/admin/repo-enable", "POST /v1/admin/review", "POST /v1/recall", "POST /v1/repos/check",
+      "POST /v1/admin/repo-disable", "POST /v1/admin/repo-enable", "POST /v1/admin/review", "POST /v1/admin/stepup", "POST /v1/recall", "POST /v1/repos/check",
       "POST /v1/session-start", "POST /v1/writes",
     ]);
+    // Local mode: the local token is the owner credential (auth-and-security.md §6.1), so there is no step-up.
+    const r = await boot();
+    expect((await call(r, "POST", "/v1/admin/stepup", { command: "project-add", args: { name: "X", aliases: [] } })).status).toBe(404);
   });
 
   it("never writes content, queries, prompts or tokens to the log", async () => {

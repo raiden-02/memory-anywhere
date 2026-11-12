@@ -113,6 +113,48 @@ const pages = {
       }
     });
   },
+  signin: () => {
+    $("signin").addEventListener("click", async () => {
+      try {
+        await post("/api/login/verify", await assertion("/api/login/options"));
+        location.reload();
+      } catch (e) {
+        say(`Not signed in: ${e.message}`);
+      }
+    });
+  },
+  approve: () => {
+    const approve = $("approve");
+    if (!approve) return;
+    setTimeout(() => { approve.disabled = false; }, 1000);
+    const once = async (confirm) => {
+      const response = await assertion(`${base}/options`);
+      return post(`${base}/approve`, { response, confirm });
+    };
+    approve.addEventListener("click", async () => {
+      try {
+        let r = await once($("confirm")?.value);
+        // An export to an unregistered key needs a second, separate passkey approval.
+        if (r.result === "second") {
+          say("Approve once more to confirm the unregistered key.");
+          r = await once();
+        }
+        say("Approved. You can close this page; the command continues in your terminal.");
+        approve.disabled = true;
+      } catch (e) {
+        say(e.message === "wrong_suffix" ? "Those are not the key's last 8 characters." : `Not approved: ${e.message}`);
+      }
+    });
+    $("deny").addEventListener("click", async () => {
+      try {
+        await post(`${base}/deny`);
+        say("Denied.");
+        approve.disabled = true;
+      } catch (e) {
+        say(e.message);
+      }
+    });
+  },
   recover: () => {
     $("recover-form").addEventListener("submit", async (event) => {
       event.preventDefault();

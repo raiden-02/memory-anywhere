@@ -354,7 +354,7 @@ JSON over HTTPS, `Authorization: Bearer`, `Content-Type: application/json`, requ
 | `POST /v1/import/estimate` | read | `{source_type, file_sha256, turns, chars, item_count, since?, until?}` (counts only) | `{estimate_usd, input_tokens, output_tokens, cache_hits, import_budget_remaining_usd}` |
 | `POST /v1/admin/stepup` | write (PC grant only) | `{command: AdminCommand, args: object}`; `args` is the command's canonical arguments (≤ 4 KiB, schema per command in `packages/contracts/schema/v1/admin/`). There is no client-written summary: the approval page shows text the server renders from `args` (auth-and-security.md §6.2) | `{request_id, user_code, approve_url, expires_in: 300}` |
 | `GET /v1/admin/stepup/{request_id}` | write (same grant) | — | `{status: "pending"\|"approved"\|"denied"\|"expired", token?: string, token_expires_in?: 600 (3,600 for import), import_batch_id?: string}` |
-| `POST /v1/admin/{command}` | admin (step-up token for that command; the body must hash to the approved `args`, except `import`, whose batches must carry the approved `batch_id`) | command-specific (config-and-cli.md §4.2) | command-specific |
+| `POST /v1/admin/{command}` | admin (the PC grant as bearer plus the step-up token for that command in header `MA-Step-Up`; the body must hash to the approved `args`, except `import`, whose batches must carry the approved `batch_id`; spec-issues #69) | command-specific (config-and-cli.md §4.2) | command-specific |
 
 `Entry`:
 

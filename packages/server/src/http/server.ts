@@ -20,6 +20,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { toWebRequest, type NodeIncomingMessageLike } from "@modelcontextprotocol/node";
 import type { App } from "../app.ts";
 import { localTokenAuth, type Authenticate, type Grant } from "../api/grant.ts";
+import { STEP_UP_HEADER, type StepUps } from "../auth/stepup.ts";
 import { mcpHandler, type McpRequestExtra } from "../api/mcp.ts";
 import { isRefusal, localDoor, type Arrival, type FrontDoor, type Surface } from "./front.ts";
 import { ipPrefix, Logger, type LogLine } from "./log.ts";
@@ -45,6 +46,8 @@ export interface HttpOptions {
   readonly door: FrontDoor;
   readonly authenticate: Authenticate;
   readonly mounts?: Partial<Record<Surface, Mount>>;
+  /** aws mode: owner commands need a passkey-approved step-up (auth-and-security.md §6); local mode has none. */
+  readonly stepUps?: StepUps;
   readonly logger?: Logger;
   readonly now?: () => number;
 }
@@ -64,7 +67,10 @@ export const ROUTES = [
   "POST /v1/admin/project-track",
   "POST /v1/admin/project-add",
   "POST /v1/admin/review",
+  "POST /v1/admin/stepup",
 ] as const;
+
+const STEPUP_POLL = /^\/v1\/admin\/stepup\/(stp_[0-9A-HJKMNP-TV-Z]{26})$/u;
 
 export function send(res: ServerResponse, status: number, body: unknown, headers: Record<string, string> = {}): void {
   if (body === undefined) {
@@ -129,8 +135,9 @@ export function createHttpServer(o: HttpOptions): Server {
     // `Origin: null` is not a page on another site (M0 conformance test 16), so it counts as absent.
     const origin = req.headers.origin === "null" ? undefined : req.headers.origin;
     if (origin !== undefined && (door.mode === "aws" || !arrival.allowedOrigins.has(origin))) return reply(apiError("FORBIDDEN", "origin not allowed"));
-    const isAdmin = url.pathname.startsWith("/v1/admin/") && req.method === "POST";
-    if (!routes.has(route) && !isAdmin) return reply(apiError("NOT_FOUND", "no such route"));
+    const isAdmin = req.method === "POST" && /^\/v1\/admin\/[a-z][a-z-]{0,31}$/u.test(url.pathname);
+    const poll = req.method === "GET" ? STEPUP_POLL.exec(url.pathname)?.[1] : undefined;
+    if (!routes.has(route) && !isAdmin && !poll) return reply(apiError("NOT_FOUND", "no such route"));
     if (route === "GET /v1/health") return reply(health(app));
 
     void (async () => {
@@ -150,7 +157,17 @@ export function createHttpServer(o: HttpOptions): Server {
 
       if (url.pathname === "/mcp") return serveMcp(req, res, grant);
       try {
+        if (o.stepUps && (poll || route === "POST /v1/admin/stepup")) return reply(await stepUpRoute(o.stepUps, grant, poll, poll ? {} : await readJson(req, V1_BODY_MAX)));
         const body = await readJson(req, V1_BODY_MAX);
+        if (isAdmin && o.stepUps) {
+          // aws mode: the PC grant alone never runs an owner command; the approved step-up token does, once, for exactly these arguments.
+          const token = req.headers[STEP_UP_HEADER];
+          if (!o.stepUps.consume(grant.clientId, typeof token === "string" ? token : undefined, url.pathname.slice("/v1/admin/".length), body)) {
+            return reply(apiError("FORBIDDEN", "this command needs your approval: run it again and approve it in the browser"));
+          }
+          return reply(await dispatch(app, { ...grant, admin: true, scopes: { ...grant.scopes, admin: true } }, route, url, body));
+        }
+        if (poll || route === "POST /v1/admin/stepup") return reply(apiError("NOT_FOUND", "no such route"));
         return reply(await dispatch(app, grant, route, url, body));
       } catch (e) {
         if (e instanceof BodyTooLarge) return reply({ status: 413, body: { code: "INVALID_INPUT", message: "request body too large" }, outcome: "too_large" });
@@ -184,6 +201,19 @@ export function createHttpServer(o: HttpOptions): Server {
       });
     }
   });
+}
+
+/** POST /v1/admin/stepup and its poll (mcp-interface.md §7): PC grants with write scope only. */
+async function stepUpRoute(stepUps: StepUps, grant: Grant, poll: string | undefined, body: unknown): Promise<V1Response> {
+  if (grant.clientClass !== "coding" || !grant.scopes.write) return apiError("FORBIDDEN", "owner commands are started from your computer's mema");
+  if (poll) {
+    const s = stepUps.status(grant.clientId, poll);
+    return s ? { status: 200, body: s, op: "admin.stepup_poll", outcome: s.status } : apiError("NOT_FOUND", "no such request");
+  }
+  const b = (body ?? {}) as { command?: unknown; args?: unknown };
+  const r = stepUps.create(grant.clientId, b.command, b.args);
+  if (!r.ok) return apiError(r.code, r.message);
+  return { status: 200, body: { request_id: r.id, user_code: r.userCode, approve_url: stepUps.approveUrl(r.id), expires_in: 300 }, op: "admin.stepup", outcome: "pending" };
 }
 
 /** Local mode: 127.0.0.1:<port>, authenticated by the local token. */

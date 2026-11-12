@@ -12,6 +12,7 @@ POST    /v1/recall
 GET     /v1/status
 POST    /v1/repos/check
 POST    /v1/admin/:command
+GET     /v1/admin/stepup/:stepup
 GET     /.well-known/oauth-protected-resource/mcp
 
 # Discovery: both paths routed by the host app to the provider (issuer https://{host})

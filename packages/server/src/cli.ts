@@ -148,7 +148,7 @@ async function start(l: Layout, target: ListenTarget, ephemeral: boolean, rateLi
     const auth = createAuth({ app, door, logger });
     auth.owner.issueFirstSetupToken();
     hourly.push(() => auth.owner.hourly());
-    server = createHttpServer({ app, door, authenticate: auth.authenticate, mounts: auth.mounts, logger });
+    server = createHttpServer({ app, door, authenticate: auth.authenticate, mounts: auth.mounts, stepUps: auth.stepUps, logger });
   } else {
     server = createHttpServer({ app, door: localDoor(target.kind === "tcp" ? target.port : 0), authenticate: localTokenAuth(localToken(l.tokenFile)), logger });
   }
