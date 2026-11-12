@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 // mema / memory-anywhere (config-and-cli.md §4). One entry point for the CLI, the stdio proxy
-// (`mcp`) and the hooks (`hook`). Exit codes: 0 ok, 1 error, 2 usage, 3 store unreachable,
-// 4 refused by the store, 5 not authorized, 6 client too old.
+// (`mcp`) and the hooks (`hook`). Exit codes (config-and-cli.md §4, spec-issues #71): 0 ok;
+// 1 usage or other error; 2 store unavailable; 3 refused by the store (validation, policy, client
+// too old); 4 conflict; 5 not authorized (no PC grant, step-up denied or expired); 6 doctor failed.
 
+import { spawn } from "node:child_process";
 import { createInterface } from "node:readline/promises";
 import { parseArgs } from "node:util";
 import { currentPaths } from "@memory-anywhere/contracts/paths";
@@ -12,6 +14,7 @@ import { defaultFileDeps, deployAws, destroyAws, type Deps } from "./deploy/aws.
 import { DeployError, runProcess } from "./deploy/process.ts";
 import { hookEvent, readHookInput, runHook, type HookTool } from "./hooks.ts";
 import { hostTool, runProxy, type ProxyTool } from "./proxy.ts";
+import { StepUpError } from "./stepup.ts";
 import { StoreClient, StoreError } from "./store-client.ts";
 
 const USAGE = `usage: mema <command> [flags]
@@ -21,14 +24,15 @@ const USAGE = `usage: mema <command> [flags]
   enable [--capture|--no-capture] [--track|--no-track] | disable
   project track [--name <n>] [--repo-url <u>] | project add <name> [--alias <a>]… [--status <s>] [--goal "<g>"]
   review [--approve <id>…] [--reject <id>…]
-  init [--local --from-workspace <path>] [--clients <list>] [--dry-run] [--yes] [--print-custom-instruction]
-  connect <url>
+  export --out <file> [--section projects --format json] [--include-auth] [--recipient <age1…>]
+  connect <url> | login [--no-browser] | logout | ui
+  init [--local] --from-workspace <path> [--clients <list>] [--dry-run] [--yes] [--print-custom-instruction]
   mcp --tool <claude-code|codex|cursor|generic>
   hook <claude-code|codex|cursor> <event>
   deploy aws --stage <prod|spike|eval-<id>> [--region <r>] [--profile <p>] [--update] [--release-file <tarball>] [--yes] [--dns manual] [--alert-email <address>]
   destroy aws --stage <stage> [--region <r>] [--profile <p>]`;
 
-export const EXIT = { ok: 0, error: 1, usage: 2, offline: 3, rejected: 4, unauthorized: 5, tooOld: 6 } as const;
+export const EXIT = { ok: 0, usage: 1, error: 1, offline: 2, rejected: 3, conflict: 4, unauthorized: 5, doctorFailed: 6 } as const;
 
 async function ask(question: string, fallback: string): Promise<string> {
   if (!process.stdin.isTTY) return fallback;
@@ -39,6 +43,25 @@ async function ask(question: string, fallback: string): Promise<string> {
     rl.close();
   }
 }
+
+/** Opens `url` in the default browser without a shell, so no character in it is interpreted. */
+export async function openBrowser(url: string): Promise<boolean> {
+  if (!/^https?:\/\//u.test(url)) return false;
+  const [command, args] =
+    process.platform === "win32" ? ["rundll32.exe", ["url.dll,FileProtocolHandler", url]]
+    : process.platform === "darwin" ? ["open", [url]]
+    : ["xdg-open", [url]];
+  return new Promise((resolve) => {
+    const child = spawn(command, args as string[], { detached: true, stdio: "ignore", windowsHide: true });
+    child.once("error", () => resolve(false));
+    child.once("spawn", () => {
+      child.unref();
+      resolve(true);
+    });
+  });
+}
+
+const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
 async function confirm(question: string): Promise<boolean> {
   return /^y(es)?$/iu.test(await ask(`${question} [y/N]`, "n"));
@@ -81,6 +104,8 @@ export async function main(argv: string[]): Promise<number> {
       stage: { type: "string" }, region: { type: "string" }, profile: { type: "string", default: "memory-anywhere-deploy" }, update: { type: "boolean", default: false },
       release: { type: "string" }, "release-file": { type: "string" }, yes: { type: "boolean", default: false }, dns: { type: "string", default: "manual" },
       "alert-email": { type: "string" }, help: { type: "boolean", short: "h", default: false },
+      "no-browser": { type: "boolean", default: false }, out: { type: "string" }, format: { type: "string" }, "include-auth": { type: "boolean", default: false },
+      recipient: { type: "string" },
     },
   });
   if (values.help || !command) {
@@ -92,7 +117,7 @@ export async function main(argv: string[]): Promise<number> {
 
   const { config } = loadClientConfig(paths);
   const store = StoreClient.from(config, paths);
-  const deps: cmd.CommandDeps = { paths, config, store, cwd: process.cwd(), out: (l) => console.log(l), ask, now: Date.now };
+  const deps: cmd.CommandDeps = { paths, config, store, cwd: process.cwd(), out: (l) => console.log(l), ask, now: Date.now, sleep, openBrowser };
 
   if (command === "mcp") {
     const tool = values.tool ?? "generic";
@@ -122,11 +147,21 @@ export async function main(argv: string[]): Promise<number> {
         break;
       }
       case "review": await cmd.review(deps, values.approve ?? [], values.reject ?? []); break;
+      case "export": {
+        if (!values.out) return usage("export needs --out <file>");
+        const projects = values.section === "projects";
+        if ((values.section !== undefined && !projects) || (values.format !== undefined && (values.format !== "json" || !projects))) return usage("export takes --section projects --format json, or neither");
+        await cmd.exportStore(deps, { out: values.out, projects, includeAuth: values["include-auth"], recipient: values.recipient });
+        break;
+      }
       case "connect": {
         if (!positionals[0]) return usage("connect needs a URL");
         await cmd.connect(deps, positionals[0]);
         break;
       }
+      case "login": await cmd.login(deps, !values["no-browser"]); break;
+      case "logout": await cmd.logout(deps); break;
+      case "ui": await cmd.ui(deps); break;
       case "init": {
         if (values["print-custom-instruction"]) {
           cmd.printCustomInstruction(deps);
@@ -138,16 +173,22 @@ export async function main(argv: string[]): Promise<number> {
       }
       case "doctor": {
         const { doctor } = await import("./doctor.ts");
-        return (await doctor(deps)) ? EXIT.ok : EXIT.error;
+        return (await doctor(deps)) ? EXIT.ok : EXIT.doctorFailed;
       }
       default:
         return usage(`unknown command ${command}`);
     }
     return EXIT.ok;
   } catch (e) {
+    if (e instanceof StepUpError) {
+      console.error(`mema ${command}: ${e.message}`);
+      return EXIT.unauthorized;
+    }
     if (e instanceof StoreError) {
       console.error(`mema ${command}: ${e.message}`);
-      return e.kind === "offline" ? EXIT.offline : e.kind === "unauthorized" ? EXIT.unauthorized : e.kind === "too_old" ? EXIT.tooOld : EXIT.rejected;
+      if (e.kind === "offline") return EXIT.offline;
+      if (e.kind === "unauthorized") return EXIT.unauthorized;
+      return e.status === 409 ? EXIT.conflict : EXIT.rejected;
     }
     console.error(`mema ${command}: ${(e as Error).message}`);
     return EXIT.error;

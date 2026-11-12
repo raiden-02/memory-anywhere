@@ -224,6 +224,17 @@ describe("step-up for the CLI's owner commands (§6.2)", () => {
     expect((await v1(issuer, pc.access, "POST", "/v1/admin/project-add", args, header)).status).toBe(403); // single use
   }, 90_000);
 
+  test("the PC lists pending review ids without a step-up, but resolving one needs it", async () => {
+    const issuer = await issuerWith();
+    const owner = await ownerSetup(issuer);
+    const pc = await grant(issuer, owner, { vendor: "pc", method: "static", machineName: "desk" }, "http://127.0.0.1:50123/callback");
+    const listed = await v1(issuer, pc.access, "POST", "/v1/admin/review", { approve: [], reject: [] });
+    expect(listed.status).toBe(200);
+    expect(listed.data).toEqual({ resolved: 0, pending: [] });
+    expect((await v1(issuer, pc.access, "POST", "/v1/admin/review", { approve: ["rev_01JC9Z3N4V8Q2W5X7Y9Z0A1B2C"], reject: [] })).status).toBe(403);
+    expect((await v1(issuer, pc.access, "POST", "/v1/admin/review", { approve: [], reject: [], extra: 1 })).status).toBe(403);
+  }, 60_000);
+
   test("chat apps cannot start owner commands", async () => {
     const issuer = await issuerWith();
     const owner = await ownerSetup(issuer);

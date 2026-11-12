@@ -56,14 +56,14 @@ export function storeUrl(config: ClientConfigT, env: NodeJS.ProcessEnv = process
   return url ? url.replace(/\/+$/u, "") : undefined;
 }
 
-/** client.toml text for a fresh local-mode install. */
-export function localClientToml(denyRemotes: readonly string[] = []): string {
+/** client.toml text for a fresh install: local mode, or a remote store at `url`. */
+export function clientToml(mode: "local" | "remote", url: string, denyRemotes: readonly string[] = []): string {
   return [
     "schema = 1",
     "",
     "[store]",
-    'mode = "local"',
-    `url = "${LOCAL_URL}"`,
+    `mode = "${mode}"`,
+    `url = ${JSON.stringify(url)}`,
     "",
     "[repos]",
     `deny_remotes = ${JSON.stringify(denyRemotes)}`,

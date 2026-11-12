@@ -163,6 +163,10 @@ export function createHttpServer(o: HttpOptions): Server {
         if (o.stepUps && (poll || route === "POST /v1/admin/stepup")) return reply(await stepUpRoute(o.stepUps, grant, poll, poll ? {} : await readJson(req, V1_BODY_MAX)));
         const body = await readJson(req, V1_BODY_MAX);
         if (isAdmin && o.stepUps) {
+          // `mema review` without ids lists pending ids, kinds and ages with the PC grant alone (config-and-cli.md §4.2).
+          if (url.pathname === "/v1/admin/review" && grant.clientClass === "coding" && grant.scopes.write && isReviewListing(body)) {
+            return reply(await dispatch(app, { ...grant, admin: true, scopes: { ...grant.scopes, admin: true } }, route, url, body));
+          }
           // aws mode: the PC grant alone never runs an owner command; the approved step-up token does, once, for exactly these arguments.
           const token = req.headers[STEP_UP_HEADER];
           const approved = o.stepUps.consume(grant.clientId, typeof token === "string" ? token : undefined, url.pathname.slice("/v1/admin/".length), body);
@@ -205,6 +209,13 @@ export function createHttpServer(o: HttpOptions): Server {
       });
     }
   });
+}
+
+/** A review call that resolves nothing: exactly `{approve: [], reject: []}`. */
+function isReviewListing(body: unknown): boolean {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) return false;
+  const b = body as Record<string, unknown>;
+  return Object.keys(b).sort().join(",") === "approve,reject" && Array.isArray(b["approve"]) && b["approve"].length === 0 && Array.isArray(b["reject"]) && b["reject"].length === 0;
 }
 
 /** POST /v1/admin/stepup and its poll (mcp-interface.md §7): PC grants with write scope only. */

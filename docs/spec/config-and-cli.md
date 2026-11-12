@@ -42,14 +42,14 @@ One source: `packages/contracts/src/paths.ts`. Never build paths from `%USERPROF
 
 ## 4. CLI
 
-`mema` and `memory-anywhere` are the same binary. Global flags: `--json` (machine output), `--config <file>`, `--verbose`. Exit codes: 0 ok; 1 usage error; 2 store unavailable; 3 validation or policy rejection; 4 conflict; 5 step-up denied, expired or not approved; 6 doctor found a failing check.
+`mema` and `memory-anywhere` are the same binary. Global flags: `--json` (machine output), `--config <file>`, `--verbose`. Exit codes: 0 ok; 1 usage error; 2 store unavailable; 3 validation or policy rejection; 4 conflict; 5 step-up denied, expired or not approved; 6 doctor found a failing check. A missing or refused PC grant also exits 5, a client too old for the store exits 3, and an unexpected error exits 1 (spec-issues #71).
 
 ### 4.1 Client commands (PC grant)
 
 | Command | Flags | Does |
 | --- | --- | --- |
 | `mema init` | `--clients <list>` (default: all detected of `claude-code,codex,cursor`), `--dry-run`, `--local`, `--from-workspace <path>`, `--upgrade` (local mode: replace the server build and run `migrate`), `--schedule-sync`, `--print-custom-instruction`, `--claude-ai-skill` | clients.md §6. `--local` sets up local mode: with `--from-workspace <path>` it runs the server built in that repository checkout (`pnpm build` output; used in M1, before release tarballs exist), otherwise it installs the server release tarball; then it downloads the model and starts the server. `--claude-ai-skill` writes `memory-anywhere-skill.zip` and prints upload steps (claude.ai skills need code execution on and are uploaded by hand; [claude.ai skills](https://support.claude.com/en/articles/12512180)) |
-| `mema connect <url>` | | Sets `store.url`, checks `/v1/health` |
+| `mema connect <url>` | | Sets `store.url` and `store.mode`, checks `/v1/health`. A remote store must be `https`. Connecting a local-mode PC to a remote store leaves local mode: the start at logon is removed and the local server stopped; its store is kept (spec-issues #72) |
 | `mema login` | `--no-browser` | PC grant (auth-and-security.md §5.6) |
 | `mema logout` | | Revokes and deletes the PC grant |
 | `mema status` | | Calls `/v1/status`; prints store, health, policy version, spool count |

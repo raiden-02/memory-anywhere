@@ -1,23 +1,24 @@
-// `mema init --local --from-workspace <path>` (config-and-cli.md §4.1; clients.md §6): sets up
-// local mode on this PC from a checkout of the repository.
+// `mema init [--local] --from-workspace <path>` (config-and-cli.md §4.1; clients.md §6): sets up
+// this PC from a checkout of the repository, for the local server or for a remote store.
 //
-//   1 build the checkout (client bundle, plugin dist/)        6 install each detected coding tool
-//   2 client.toml and server.toml (backed up, diffed)         7 the standalone skill
-//   3 the server's init: store and model (Gemma terms shown)   8 the repo deny-list
-//   4 the logon task, server started now                      9 next steps, then doctor
-//   5 wait for /v1/health
+//   1 build the checkout (client bundle, plugin dist/)        local mode            remote store
+//   2 client.toml (+ server.toml), backed up and diffed       3 the server's init   3 leave local mode, if on
+//   6 install each detected coding tool                       4 the logon task      4 check /v1/health
+//   7 the standalone skill                                    5 wait for health     5 mema login (PC grant)
+//   8 the repo deny-list; 9 next steps, then doctor
 //
-// `--dry-run` prints every diff and command and changes nothing. Remote mode (an AWS store and the
-// PC grant) arrives in M2.
+// `--dry-run` prints every diff and command and changes nothing.
 
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { currentToolPaths } from "@memory-anywhere/contracts/paths";
 import { ensurePrivateDir } from "@memory-anywhere/contracts/secure-fs";
+import os from "node:os";
 import type { CommandDeps } from "./commands.ts";
-import { printCustomInstruction } from "./commands.ts";
-import { LOCAL_URL, localClientToml } from "./config.ts";
+import { leaveLocalMode, printCustomInstruction } from "./commands.ts";
+import { login as pcLogin, readTokens } from "./auth.ts";
+import { clientToml, LOCAL_URL } from "./config.ts";
 import { doctor } from "./doctor.ts";
 import { applyPlan, describePlan, INSTALL_TOOLS, planClaudeCode, planCodex, planCursor, planSkill, type InstallPlan, type InstallTool } from "./install.ts";
 import { registerAndStart, serverArgv, serverInit, serverToml, waitHealthy, workspaceServerCli } from "./local-server.ts";
@@ -48,8 +49,15 @@ function selectTools(clients: string | undefined, home: string): InstallTool[] {
   return (wanted as InstallTool[]).filter((t) => detected[t]);
 }
 
+/** The remote store's URL: client.toml's, else asked for. Must be https. */
+async function remoteUrl(d: CommandDeps): Promise<string> {
+  const configured = d.config.store.mode === "remote" ? d.config.store.url : "";
+  const url = (configured || (await d.ask("Your store's URL (for example https://memory.example.com):", ""))).replace(/\/+$/u, "");
+  if (!/^https:\/\/[^/]+$/u.test(url)) throw new Error(`a remote store needs an https origin, not "${url}"`);
+  return url;
+}
+
 export async function init(d: CommandDeps, o: InitOptions): Promise<void> {
-  if (!o.local) throw new Error("only local mode can be set up so far: mema init --local --from-workspace <path to the memory-anywhere checkout>");
   if (!o.fromWorkspace) throw new Error("--from-workspace <path> is required until release builds exist");
   const workspace = path.resolve(o.fromWorkspace);
   const serverCli = workspaceServerCli(workspace);
@@ -57,10 +65,12 @@ export async function init(d: CommandDeps, o: InitOptions): Promise<void> {
   const toolPaths = currentToolPaths();
   const home = path.dirname(path.dirname(toolPaths.claudeSettingsFile));
   const tools = selectTools(o.clients, home);
+  const storeUrl = o.local ? LOCAL_URL : await remoteUrl(d);
 
-  d.out(`memory-anywhere local mode, from ${workspace}`);
+  d.out(o.local ? `memory-anywhere local mode, from ${workspace}` : `memory-anywhere with your store at ${storeUrl}, from ${workspace}`);
   d.out(`coding tools found: ${tools.join(", ") || "none"}`);
-  d.out("Everything stays on this PC: the store, the model, and a token readable only by you.");
+  d.out(o.local ? "Everything stays on this PC: the store, the model, and a token readable only by you."
+    : "Your memories live in your store. This PC keeps a sign-in token readable only by you, caches and a spool.");
   if (!o.dryRun && !o.yes && !/^y(es)?$/iu.test(await d.ask("Continue? [y/N]", "n"))) throw new Error("cancelled");
 
   // 1. Build: the client bundle and each plugin's dist/.
@@ -77,31 +87,45 @@ export async function init(d: CommandDeps, o: InitOptions): Promise<void> {
   const denyRemotes = o.dryRun || o.yes ? d.config.repos.deny_remotes : await askDenyList(d);
   const configPlan: InstallPlan = {
     tool: "skill",
-    files: [...fileChange(d.paths.clientConfigFile, localClientToml(denyRemotes)), ...fileChange(d.paths.localServerConfigFile, serverToml(d.paths))],
+    files: [
+      ...fileChange(d.paths.clientConfigFile, clientToml(o.local ? "local" : "remote", storeUrl, denyRemotes)),
+      ...(o.local ? fileChange(d.paths.localServerConfigFile, serverToml(d.paths)) : []),
+    ],
     folders: [], commands: [], notes: [],
   };
   const claudeServers = tools.includes("claude-code") ? (runTool("claude", ["mcp", "list"], 30_000).stdout.split("\n").map((l) => l.split(":")[0]?.trim() ?? "").filter(Boolean)) : [];
   const inputs = { paths: d.paths, tools: toolPaths, pluginsDir, claudeServers };
   const plans: InstallPlan[] = [
-    { ...configPlan, tool: "skill" },
+    configPlan,
     ...tools.map((t) => (t === "claude-code" ? planClaudeCode(inputs) : t === "codex" ? planCodex(inputs, bundle) : planCursor(inputs))),
     planSkill(toolPaths),
   ];
   for (const p of plans) d.out(describePlan(p));
   if (o.dryRun) {
-    d.out(`dry run: would run the server's init, register the logon task and start ${serverArgv(serverCli, d.paths.localServerConfigFile).join(" ")}`);
+    d.out(o.local ? `dry run: would run the server's init, register the logon task and start ${serverArgv(serverCli, d.paths.localServerConfigFile).join(" ")}`
+      : `dry run: would ${d.config.store.mode === "local" ? "leave local mode, " : ""}check ${storeUrl}/v1/health and sign this PC in`);
     return;
   }
 
   ensurePrivateDir(d.paths.dataDir);
   ensurePrivateDir(path.dirname(d.paths.clientConfigFile));
-  const problems = applyPlan(plans[0] as InstallPlan, { run: (c, a) => runTool(c, a), now: d.now });
+  const problems = applyPlan(configPlan, { run: (c, a) => runTool(c, a), now: d.now });
 
-  // 3–5. Server: store and model, logon task, health.
-  await serverInit(serverCli, d.paths.localServerConfigFile);
-  registerAndStart(serverArgv(serverCli, d.paths.localServerConfigFile), path.join(d.paths.localServerDataDir, "start-hidden.js"));
-  if (!(await waitHealthy(LOCAL_URL, 60_000))) throw new Error("the local server did not become healthy within 60 s; see `mema doctor`");
-  d.out(`server running at ${LOCAL_URL}`);
+  if (o.local) {
+    // 3–5. Server: store and model, logon task, health.
+    await serverInit(serverCli, d.paths.localServerConfigFile);
+    registerAndStart(serverArgv(serverCli, d.paths.localServerConfigFile), path.join(d.paths.localServerDataDir, "start-hidden.js"));
+    if (!(await waitHealthy(LOCAL_URL, 60_000))) throw new Error("the local server did not become healthy within 60 s; see `mema doctor`");
+    d.out(`server running at ${LOCAL_URL}`);
+  } else {
+    // 3–5. Leave local mode, check the store, sign in (unless already signed in to it).
+    if (d.config.store.mode === "local") leaveLocalMode(d);
+    if (!(await waitHealthy(storeUrl, 10_000))) throw new Error(`${storeUrl} does not answer /v1/health; check the URL and \`mema deploy\``);
+    if (readTokens(d.paths)?.issuer !== storeUrl) {
+      await pcLogin(storeUrl, { paths: d.paths, fetch, now: d.now, sleep: d.sleep }, { out: d.out, openBrowser: d.openBrowser, machineName: os.hostname() });
+    }
+    d.out(`signed in to ${storeUrl}`);
+  }
 
   // 6–7. Coding tools and the skill.
   for (const p of plans.slice(1)) problems.push(...applyPlan(p, { run: (c, a) => runTool(c, a), now: d.now }));

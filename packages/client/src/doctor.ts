@@ -6,6 +6,7 @@ import os from "node:os";
 import path from "node:path";
 import { parse as parseToml } from "smol-toml";
 import { currentToolPaths, type ToolPaths } from "@memory-anywhere/contracts/paths";
+import { accessToken } from "./auth.ts";
 import { readProfile, readRepos } from "./cache.ts";
 import { CLIENT_VERSION, loadClientConfig } from "./config.ts";
 import type { CommandDeps } from "./commands.ts";
@@ -57,6 +58,14 @@ async function storeChecks(d: CommandDeps): Promise<Check[]> {
   }
   if (d.config.store.mode === "local") {
     out.push(existsSync(d.paths.localTokenFile) ? pass("local.token", "present") : fail("local.token", "missing", "start the local server once; it writes the token"));
+  } else if (d.store.url) {
+    // A forced refresh proves the grant still works, not just that tokens.json exists.
+    try {
+      await accessToken(d.store.url, { paths: d.paths, fetch, now: d.now, sleep: d.sleep }, true);
+      out.push(pass("auth.pc-grant", "token refresh works"));
+    } catch (e) {
+      out.push(fail("auth.pc-grant", (e as Error).message, "run `mema login`"));
+    }
   }
   return out;
 }

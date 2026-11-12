@@ -11,7 +11,7 @@
 // Every command is run with an argv array; paths with spaces are never re-quoted by a shell.
 
 import { spawn, spawnSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import type { Paths } from "@memory-anywhere/contracts/paths";
@@ -150,6 +150,37 @@ export function registerAndStart(
     const r = runner("systemctl", args);
     if (r.status !== 0) throw new Error(`systemctl ${args.join(" ")} failed: ${r.stderr.trim()}`);
   }
+}
+
+/** A PowerShell single-quoted literal: quotes doubled, nothing else expands. */
+const psLiteral = (s: string): string => `'${s.replaceAll("'", "''")}'`;
+
+/**
+ * Leaving local mode (`mema connect` to a remote store): removes the start at logon and stops the
+ * running server. On Windows the launcher goes first, since it restarts a server that exits with an
+ * error. The local store stays on disk as a backup; nothing here deletes it.
+ */
+export function unregisterAndStop(launcherFile: string, configFile: string, runner: Runner = run, platform: NodeJS.Platform = process.platform, home = os.homedir()): void {
+  if (platform === "win32") {
+    runner("reg.exe", ["delete", RUN_KEY, "/v", TASK_NAME, "/f"]);
+    const match = (needle: string) => `$_.CommandLine.Contains(${psLiteral(needle)})`;
+    const script = [
+      "$all = Get-CimInstance Win32_Process | Where-Object { $_.CommandLine };",
+      `$all | Where-Object { ${match(launcherFile)} } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue };`,
+      `$all | Where-Object { ${match(configFile)} -and $_.CommandLine.Contains(' start ') } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`,
+    ].join(" ");
+    const r = runner("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", script]);
+    if (r.status !== 0) throw new Error(`could not stop the local server: ${r.stderr.trim() || r.stdout.trim()}`);
+    return;
+  }
+  if (platform === "darwin") {
+    const file = path.join(home, "Library", "LaunchAgents", `${LAUNCH_LABEL}.plist`);
+    runner("launchctl", ["unload", "-w", file]);
+    rmSync(file, { force: true });
+    return;
+  }
+  runner("systemctl", ["--user", "disable", "--now", "memory-anywhere.service"]);
+  rmSync(path.join(home, ".config", "systemd", "user", "memory-anywhere.service"), { force: true });
 }
 
 /** Runs the server's own `init` (store, meta keys, model download), streaming its progress. */

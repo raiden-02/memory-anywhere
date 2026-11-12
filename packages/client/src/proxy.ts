@@ -81,7 +81,8 @@ export interface ProxyDeps {
 type Failure = { kind: "offline" } | { kind: "too_old" } | { kind: "unauthorized" };
 
 function classify(e: unknown): Failure {
-  const status = (e as { status?: number }).status;
+  // A StoreError thrown by the store client's fetch (no PC grant) may arrive wrapped by the transport.
+  const status = (e as { status?: number }).status ?? (e as { cause?: { status?: number } }).cause?.status;
   if (status === 426) return { kind: "too_old" };
   if (status === 401) return { kind: "unauthorized" };
   return { kind: "offline" };
@@ -136,7 +137,8 @@ export class Proxy {
     if (!store.url) throw Object.assign(new Error("no store configured"), { status: 0 });
     const client = new Client({ name: "memory-anywhere-proxy", version: CLIENT_VERSION });
     const headers = store.headers({ tool, repoKey: this.#repoKey, session: this.#session });
-    await client.connect(new StreamableHTTPClientTransport(new URL(`${store.url}/mcp`), { requestInit: { headers } }), { timeout: this.#deps.config.network.call_timeout_ms });
+    // The store client's fetch adds the bearer (refreshing the PC grant when needed).
+    await client.connect(new StreamableHTTPClientTransport(new URL(`${store.url}/mcp`), { requestInit: { headers }, fetch: store.fetch }), { timeout: this.#deps.config.network.call_timeout_ms });
     this.#remote = client;
     return client;
   }
