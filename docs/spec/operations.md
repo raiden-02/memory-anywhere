@@ -47,7 +47,7 @@ All limits are enforced in the server process (in-memory token buckets keyed by 
 | --- | --- | --- |
 | `/oauth/token` | IP | 10/min |
 | `/oauth/reg` | IP | 10/min (and only inside a pairing window) |
-| `/oauth/auth`, `/oauth/interaction/*`, `/pair/*`, `/consent/*` | IP | 20/min |
+| `/oauth/auth`, `/oauth/auth/:uid`, `/pair/*`, `/consent/*` | IP | 20/min |
 | Admin login (WebAuthn assertion) | IP | 5/min |
 | `/recover` | IP | 5/hour; 10/day global |
 | `/mcp`, `/v1/*` | grant | 120/min |

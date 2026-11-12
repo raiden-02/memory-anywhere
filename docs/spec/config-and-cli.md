@@ -80,7 +80,7 @@ The CLI has exactly these seven admin commands. Every other owner action (save, 
 
 | Command | Where | Flags | Profile |
 | --- | --- | --- | --- |
-| `mema deploy aws` | PC | `--stage <prod\|eval-<id>\|spike>`, `--region`, `--profile` (default `memory-anywhere-deploy`), `--update`, `--release <version>`, `--release-file <tarball>` (non-prod only, dev-signed), `--yes` (non-prod only), `--dns manual|route53` (default `manual`: prints the records to add and waits for them), `--hosted-zone-id <id>` (route53 only). Host from `MA_DOMAIN`. Runs `aws sso logout` on exit for `prod`; keeps the sign-in for non-prod stages (spec-issues.md #11) | deploy |
+| `mema deploy aws` | PC | `--stage <prod\|eval-<id>\|spike>`, `--region`, `--profile` (default `memory-anywhere-deploy`), `--update`, `--release <version>`, `--release-file <tarball>` (non-prod only, dev-signed), `--yes` (non-prod only), `--dns manual|route53` (default `manual`: prints the records to add and waits for them), `--hosted-zone-id <id>` (route53 only), `--alert-email <address>` (default `MA_ALERT_EMAIL`; the SNS subscription, passed as the `AlertEmail` parameter and never committed; spec-issues #10). Host from `MA_DOMAIN`. Runs `aws sso logout` on exit for `prod`; keeps the sign-in for non-prod stages (spec-issues.md #11) | deploy |
 | `mema destroy aws` | PC | `--stage` (required) | deploy |
 | `./ma-operator.sh setup-link \| set-llm-key \| restore \| reset-owner [--cancel] \| acme-account \| import-export \| delete-data` | AWS CloudShell only | per deployment-aws.md §3.2 | operator Identity Center user |
 

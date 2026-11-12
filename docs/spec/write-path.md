@@ -170,6 +170,9 @@ All model calls run on the server through `packages/server/src/llm/adapter.ts`. 
 - Spend is estimated from token counts with the per-model prices in `packages/server/src/llm/prices.json` (updated with each model pin) and recorded in `llm_spend`. When the day's `live` spend reaches `daily_usd_cap`, the adapter behaves as `provider = none` until 00:00 UTC and raises alert `llm_cap`. Import spend has its own cap (§10.5).
 - Bedrock is not supported in v1, because the server process holds no AWS credentials (ADR-0010).
 - No-LLM mode is a supported configuration and an eval row: free text stays unslotted unless a pattern matches; capture uses §10.3's no-LLM rule; section names use TF-IDF.
+- **A proposed slot never supersedes** (spec-issues #53). The resolution is recomputed once with the proposed attribute (entity type, section) before the table resumes at D14. If the slot already holds a different current value, store rules 4 and 4a do not update it: the two values become a contested pair, as rule 5 does. Only an attribute from steps 1–2 (hint or pattern) can update a slot.
+- **Calls on in M2** (spec-issues #54): `slot_proposal` and `sensitive_check`. `judge` stays off until suite P shows gain; `section_name` is not called (TF-IDF names); `extract` arrives in M3, so capture keeps §10.3's no-LLM rule whatever the provider.
+- **No key** (spec-issues #63): with `provider = anthropic` and no `MA_LLM_API_KEY`, the adapter behaves as `none` and `memory_status` reports `degraded_reasons: ["llm_unavailable"]`. When a key appears, `reslot` jobs are queued for the free-text saves stored unslotted while it was missing (at most 30 days back).
 
 ## 7. Screens (summary)
 
