@@ -152,19 +152,22 @@ export class StepUps {
     return { status: "approved", token, token_expires_in: ttl / 1000, ...(r.import_batch_id ? { import_batch_id: r.import_batch_id } : {}) };
   }
 
-  /** `/v1/admin/<command>`: the step-up token must be this client's, for this command, unexpired, unused, and for exactly these arguments. */
-  consume(clientId: string, token: string | undefined, command: string, args: unknown): boolean {
-    if (!token) return false;
+  /**
+   * `/v1/admin/<command>`: the step-up token must be this client's, for this command, unexpired,
+   * unused, and for exactly these arguments. Returns the approved request's id, or undefined.
+   */
+  consume(clientId: string, token: string | undefined, command: string, args: unknown): string | undefined {
+    if (!token) return undefined;
     const cmd = AdminCommand.safeParse(command);
-    if (!cmd.success) return false;
+    if (!cmd.success) return undefined;
     const parsed = ADMIN_ARGS[cmd.data].safeParse(args);
-    if (!parsed.success) return false;
+    if (!parsed.success) return undefined;
     const r = prepared(this.#ctx.db, "SELECT id, args_sha256, uses, token_expires_at FROM stepup_request WHERE token_hash = ? AND client_id = ? AND command = ?")
       .get(sha256Hex(token), clientId, cmd.data) as { id: string; args_sha256: string; uses: number; token_expires_at: string } | undefined;
-    if (!r || r.token_expires_at <= iso(this.#now())) return false;
-    if (cmd.data !== "import" && (r.uses > 0 || r.args_sha256 !== sha256Hex(canonicalJson(parsed.data)))) return false;
+    if (!r || r.token_expires_at <= iso(this.#now())) return undefined;
+    if (cmd.data !== "import" && (r.uses > 0 || r.args_sha256 !== sha256Hex(canonicalJson(parsed.data)))) return undefined;
     prepared(this.#ctx.db, "UPDATE stepup_request SET uses = uses + 1 WHERE id = ?").run(r.id);
-    return true;
+    return r.id;
   }
 
   #checkUnexpected(): void {

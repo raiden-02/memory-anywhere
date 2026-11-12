@@ -3,6 +3,7 @@
 // one grant per vendor with Replace, and what each grant may do at /mcp.
 
 import { afterEach, describe, expect, test } from "vitest";
+import { Decrypter, generateIdentity, identityToRecipient } from "age-encryption";
 import { SERVER_VERSION } from "../../src/app.ts";
 import { SoftAuthenticator } from "./authenticator.ts";
 import { authorize, authUrl, Browser, callMcp, openWindow, ownerSetup, pkce, startIssuer, token, type Issuer } from "./issuer.ts";
@@ -234,7 +235,8 @@ describe("step-up for the CLI's owner commands (§6.2)", () => {
     const issuer = await issuerWith();
     const owner = await ownerSetup(issuer);
     const pc = await grant(issuer, owner, { vendor: "pc", method: "static", machineName: "desk" }, "http://127.0.0.1:50123/callback");
-    const recipient = `age1${"q".repeat(58)}`;
+    const identity = await generateIdentity();
+    const recipient = await identityToRecipient(identity);
     const r = await v1(issuer, pc.access, "POST", "/v1/admin/stepup", { command: "export", args: { include_auth: false, recipient } });
     const id = String(r.data["request_id"]);
     const page = await (await owner.fetch(`${issuer.adminOrigin}/approve/${id}`)).text();
@@ -243,6 +245,18 @@ describe("step-up for the CLI's owner commands (§6.2)", () => {
     expect((await approve(issuer, owner, id, "00000000")).data).toEqual({ error: "wrong_suffix" });
     expect((await approve(issuer, owner, id, suffix)).data).toEqual({ result: "second" });
     expect((await approve(issuer, owner, id)).data).toEqual({ result: "approved" });
+
+    // The approved export runs once and comes back encrypted to that key.
+    const stepUp = String((await v1(issuer, pc.access, "GET", `/v1/admin/stepup/${id}`)).data["token"]);
+    const res = await fetch(`${issuer.origin}/v1/admin/export`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${pc.access}`, "content-type": "application/json", "ma-client-version": SERVER_VERSION, "ma-step-up": stepUp },
+      body: JSON.stringify({ include_auth: false, recipient }),
+    });
+    const d = new Decrypter();
+    d.addIdentity(identity);
+    expect(JSON.parse(await d.decrypt(new Uint8Array(await res.arrayBuffer()), "text"))).toMatchObject({ format: "memory-anywhere-store", kind: "full" });
+    expect(issuer.db.prepare("SELECT stepup_request_id FROM export_log").get()).toEqual({ stepup_request_id: id });
   }, 90_000);
 
   test("three denied requests in an hour raise stepup_unexpected", async () => {

@@ -117,7 +117,10 @@ export function createHttpServer(o: HttpOptions): Server {
       logger.log({ ...line, ...extra, level: status >= 500 ? "error" : status >= 400 ? "warn" : "info", status, latency_ms: now() - started } as LogLine);
     };
     const reply = (r: V1Response, headers: Record<string, string> = {}): void => {
-      send(res, r.status, r.body, headers);
+      if (r.raw) {
+        res.writeHead(r.status, { "content-type": r.raw.contentType, "cache-control": "no-store", "content-length": String(r.raw.bytes.length), ...headers });
+        res.end(r.raw.bytes);
+      } else send(res, r.status, r.body, headers);
       finish(r.status, { ...(r.op ? { op: r.op } : {}), ...(r.outcome ? { outcome: r.outcome } : {}), ...(r.status >= 400 ? { error_code: r.outcome ?? "" } : {}) });
       if (r.after) res.once("finish", () => runAfter(logger, reqId, r.after));
     };
@@ -162,10 +165,11 @@ export function createHttpServer(o: HttpOptions): Server {
         if (isAdmin && o.stepUps) {
           // aws mode: the PC grant alone never runs an owner command; the approved step-up token does, once, for exactly these arguments.
           const token = req.headers[STEP_UP_HEADER];
-          if (!o.stepUps.consume(grant.clientId, typeof token === "string" ? token : undefined, url.pathname.slice("/v1/admin/".length), body)) {
+          const approved = o.stepUps.consume(grant.clientId, typeof token === "string" ? token : undefined, url.pathname.slice("/v1/admin/".length), body);
+          if (!approved) {
             return reply(apiError("FORBIDDEN", "this command needs your approval: run it again and approve it in the browser"));
           }
-          return reply(await dispatch(app, { ...grant, admin: true, scopes: { ...grant.scopes, admin: true } }, route, url, body));
+          return reply(await dispatch(app, { ...grant, admin: true, scopes: { ...grant.scopes, admin: true } }, route, url, body, approved));
         }
         if (poll || route === "POST /v1/admin/stepup") return reply(apiError("NOT_FOUND", "no such route"));
         return reply(await dispatch(app, grant, route, url, body));
@@ -227,7 +231,7 @@ function wwwAuthenticate(door: FrontDoor): string {
   return `Bearer resource_metadata="${door.baseUrl}/.well-known/oauth-protected-resource/mcp", scope="memory.read memory.write"`;
 }
 
-async function dispatch(app: App, grant: Grant, route: string, url: URL, body: unknown): Promise<V1Response> {
+async function dispatch(app: App, grant: Grant, route: string, url: URL, body: unknown, stepupRequestId?: string): Promise<V1Response> {
   switch (route) {
     case "POST /v1/session-start": return sessionStart(app, grant, body, []);
     case "GET /v1/projection": return projection(app, grant, url.searchParams);
@@ -235,7 +239,7 @@ async function dispatch(app: App, grant: Grant, route: string, url: URL, body: u
     case "POST /v1/recall": return recallRoute(app, grant, body);
     case "GET /v1/status": return statusRoute(app, grant);
     case "POST /v1/repos/check": return reposCheck(app, grant, body);
-    default: return admin(app, grant, url.pathname.slice("/v1/admin/".length), body);
+    default: return admin(app, grant, url.pathname.slice("/v1/admin/".length), body, stepupRequestId);
   }
 }
 

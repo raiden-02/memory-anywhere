@@ -10,6 +10,8 @@ import {
   ADMIN_ARGS, ForgetPayload, PromptPayload, SavePayload, ReposCheckRequest, RecallRequest, SessionStartRequest, WritesRequest, type EntryT, type WriteResultT,
 } from "@memory-anywhere/contracts/schemas/v1";
 import { projectAdd, projectTrack, repoDisable, repoEnable, review } from "../admin/commands.ts";
+import { fingerprint } from "../auth/stepup.ts";
+import { encryptTo, logExport, projectsExport, storeExport } from "../ops/export.ts";
 import { MIN_CLIENT_VERSION, SCHEMA_VERSION, SERVER_VERSION, type App } from "../app.ts";
 import { POLICY_VERSION } from "../policy/generated.ts";
 import { buildProfile } from "../recall/profile.ts";
@@ -31,6 +33,8 @@ export interface V1Response {
   /** Codes for the log line. */
   readonly op?: string;
   readonly outcome?: string;
+  /** A binary body (an encrypted export) instead of JSON. */
+  readonly raw?: { readonly contentType: string; readonly bytes: Uint8Array };
 }
 
 const HTTP_STATUS: Record<ErrorCodeT, number> = {
@@ -175,16 +179,20 @@ async function writeEntry(app: App, grant: Grant, entry: EntryT): Promise<WriteR
   }
 }
 
-type LocalCommand = "repo-enable" | "repo-disable" | "project-track" | "project-add" | "review";
-const LOCAL_COMMANDS: readonly LocalCommand[] = ["repo-enable", "repo-disable", "project-track", "project-add", "review"];
+type OwnerCommand = "repo-enable" | "repo-disable" | "project-track" | "project-add" | "review" | "export";
+const OWNER_COMMANDS: readonly OwnerCommand[] = ["repo-enable", "repo-disable", "project-track", "project-add", "review", "export"];
 
-/** `/v1/admin/<command>` with the local token (owner, T0). Export and import arrive with M2/M3. */
-export async function admin(app: App, grant: Grant, command: string, body: unknown): Promise<V1Response> {
+/**
+ * `/v1/admin/<command>`: the owner's CLI commands, run as the owner (T0). The grant carries admin
+ * scope only with the local token (local mode) or an approved step-up (aws mode). Import is M3.
+ */
+export async function admin(app: App, grant: Grant, command: string, body: unknown, stepupRequestId?: string): Promise<V1Response> {
   if (!grant.scopes.admin) return apiError("FORBIDDEN", "owner commands need the owner credential");
-  if (!(LOCAL_COMMANDS as readonly string[]).includes(command)) return apiError("NOT_FOUND", `no admin command ${command}`);
-  const cmd = command as LocalCommand;
+  if (!(OWNER_COMMANDS as readonly string[]).includes(command)) return apiError("NOT_FOUND", `no admin command ${command}`);
+  const cmd = command as OwnerCommand;
   const parsed = ADMIN_ARGS[cmd].safeParse(body);
   if (!parsed.success) return invalid(parsed.error);
+  if (cmd === "export") return exportCommand(app, grant, parsed.data as z.infer<(typeof ADMIN_ARGS)["export"]>, stepupRequestId);
   const args = parsed.data as never;
   try {
     const result =
@@ -197,4 +205,23 @@ export async function admin(app: App, grant: Grant, command: string, body: unkno
   } catch (e) {
     return fromWriteError(e);
   }
+}
+
+/**
+ * `export` (data-model.md §10–§11): the project catalog as plain JSON, or the store encrypted to an
+ * age recipient (the one given, else the first registered key) and returned as binary age.
+ */
+async function exportCommand(app: App, grant: Grant, a: z.infer<(typeof ADMIN_ARGS)["export"]>, stepupRequestId: string | undefined): Promise<V1Response> {
+  if (a.section === "projects") {
+    const catalog = projectsExport(app.ctx);
+    logExport(app.ctx, { kind: "projects", fingerprint: undefined, stepupRequestId, clientId: grant.clientId });
+    return { status: 200, body: catalog, op: "admin.export", outcome: "projects" };
+  }
+  const recipient = a.recipient
+    ?? (prepared(app.ctx.db, "SELECT recipient FROM export_recipient WHERE revoked_at IS NULL ORDER BY created_at LIMIT 1").get() as { recipient: string } | undefined)?.recipient;
+  if (!recipient) return apiError("INVALID_INPUT", "no export key is registered: add one in the admin UI, or pass --recipient", { field: "recipient" });
+  const kind = a.include_auth ? "full_auth" : "full";
+  const bytes = await encryptTo(recipient, new TextEncoder().encode(JSON.stringify(storeExport(app.ctx, a.include_auth))));
+  logExport(app.ctx, { kind, fingerprint: fingerprint(recipient), stepupRequestId, clientId: grant.clientId });
+  return { status: 200, body: undefined, raw: { contentType: "application/octet-stream", bytes }, op: "admin.export", outcome: kind };
 }

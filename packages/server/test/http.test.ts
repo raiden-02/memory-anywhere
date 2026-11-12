@@ -6,6 +6,8 @@ import { createServer as createNetServer, type AddressInfo } from "node:net";
 import { request, type Server } from "node:http";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import { newId } from "@memory-anywhere/contracts/ids";
+import { ProjectsExport } from "@memory-anywhere/contracts/schemas/export";
+import { Decrypter, generateIdentity, identityToRecipient } from "age-encryption";
 import { afterEach, describe, expect, it } from "vitest";
 import { App, SCHEMA_VERSION, SERVER_VERSION } from "../src/app.ts";
 import { defaultConfig } from "../src/config/schema.ts";
@@ -187,7 +189,30 @@ describe("/v1", () => {
     expect(String(ctx.body["context"])).toContain("## Project");
     expect((await call(r, "POST", "/v1/admin/review", { approve: [], reject: [] })).body).toMatchObject({ resolved: 0 });
     expect((await call(r, "POST", "/v1/admin/repo-disable", { repo_key: key })).body).toEqual({ repo_key: key, enabled: false });
-    expect((await call(r, "POST", "/v1/admin/export", {})).status).toBe(404);
+    expect((await call(r, "POST", "/v1/admin/import", { source: "x" })).status).toBe(404); // import is M3
+  });
+
+  it("exports the store encrypted to an age key, and the project catalog as plain JSON (data-model.md §10–§11)", async () => {
+    const r = await boot();
+    await call(r, "POST", "/v1/admin/project-add", { name: "Atlas", aliases: ["atlas app"], status: "active", goal: "Ship the atlas" });
+    // No key registered and none given.
+    expect((await call(r, "POST", "/v1/admin/export", { include_auth: false })).body).toMatchObject({ code: "INVALID_INPUT", field: "recipient" });
+
+    const identity = await generateIdentity();
+    const recipient = await identityToRecipient(identity);
+    const res = await fetch(`${r.base}/v1/admin/export`, { method: "POST", headers: headers(), body: JSON.stringify({ include_auth: false, recipient }) });
+    expect(res.headers.get("content-type")).toBe("application/octet-stream");
+    const d = new Decrypter();
+    d.addIdentity(identity);
+    const doc = JSON.parse(await d.decrypt(new Uint8Array(await res.arrayBuffer()), "text")) as { kind: string; meta: Record<string, string>; tables: Record<string, unknown[]> };
+    expect(doc.kind).toBe("full");
+    expect(Object.keys(doc.tables)).toContain("memory_version");
+    for (const never of ["audit", "read_ledger", "write_request", "session_prompt", "client_policy", "passkey", "embedding"]) expect(Object.keys(doc.tables)).not.toContain(never);
+    expect(Object.keys(doc.meta)).not.toContain("cookie_secret");
+
+    const projects = await call(r, "POST", "/v1/admin/export", { include_auth: false, section: "projects", format: "json" });
+    expect(ProjectsExport.parse(projects.body).projects.map((p) => [p.name, p.status, p.goal])).toEqual([["Atlas", "active", "Ship the atlas"]]);
+    expect(r.s.db.prepare("SELECT kind FROM export_log ORDER BY at").all()).toEqual([{ kind: "full" }, { kind: "projects" }]);
   });
 });
 
