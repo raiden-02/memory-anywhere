@@ -12,6 +12,8 @@ export const ULID_PATTERN = "[0-9A-HJKMNP-TV-Z]{26}";
 
 export const ID_PREFIXES = [
   "ent", "mem", "ver", "src", "msr", "obs", "omn", "sec", "att", "evt", "rev", "imb", "sup", "job", "cli", "grt", "alr", "pel", "spr", "aud",
+  // Owner credentials and admin requests (M2): passkey, recovery code, step-up request, export recipient, owner reset.
+  "pky", "rcv", "stp", "exr", "ors",
   // Request keys: spool entry, proxy save, admin request, proxy instance.
   "spl", "pxs", "adm", "pxy",
 ] as const;

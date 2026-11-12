@@ -1,6 +1,6 @@
-// OAuth conformance tests 1–20 (m0-spike.md §5) against a local issuer. Each test names the rule it
-// checks in auth-and-security.md. Tests share one issuer and run in order: a pairing window is
-// server-wide state, exactly as in production.
+// OAuth conformance tests 1–20 (m0-spike.md §5) against the product server on loopback (issuer.ts).
+// Each test names the rule it checks in auth-and-security.md. Tests share one issuer and run in
+// order: a pairing window is server-wide state, exactly as in production.
 
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
@@ -50,7 +50,7 @@ beforeAll(async () => {
   privateTarget = `http://127.0.0.1:${(docServer.address() as AddressInfo).port}/client.json`;
   issuer = await startIssuer({ fetch: network as never });
   owner = await ownerSetup(issuer);
-});
+}, 60_000); // owner setup hashes 10 recovery codes with argon2id (64 MiB each)
 
 afterAll(async () => {
   await issuer?.stop();
@@ -253,7 +253,7 @@ describe("clients", () => {
   test("8c. CIMD: the vendor's document works inside its window only, with its exact redirect", async () => {
     documents.set(CHATGPT_CIMD, cimdDoc(CHATGPT_CIMD, [CHATGPT_REDIRECT]));
     await expectErrorPage(await owner.fetch(authUrl(issuer, { client_id: CHATGPT_CIMD, redirect_uri: CHATGPT_REDIRECT, ...S256() }))); // no window
-    await openWindow(issuer, owner, { vendor: "claude", method: "cimd" });
+    await openWindow(issuer, owner, { vendor: "claude_code_direct", method: "cimd" });
     await expectErrorPage(await owner.fetch(authUrl(issuer, { client_id: CHATGPT_CIMD, redirect_uri: CHATGPT_REDIRECT, ...S256() }))); // another vendor's window
     expect(fetched).not.toContain(CHATGPT_CIMD);
 
@@ -273,7 +273,7 @@ describe("clients", () => {
 
   test("8d. Claude Code (direct): CIMD with a loopback redirect on any port", async () => {
     documents.set(CLAUDE_CODE_CIMD, cimdDoc(CLAUDE_CODE_CIMD, ["http://localhost/callback"], { application_type: "native", client_name: "Claude Code" }));
-    await openWindow(issuer, owner, { vendor: "claude-code", method: "cimd" });
+    await openWindow(issuer, owner, { vendor: "claude_code_direct", method: "cimd" });
     const back = await authorize(issuer, owner, { client_id: CLAUDE_CODE_CIMD, redirect_uri: "http://localhost:49152/callback", ...S256() });
     expect(back.searchParams.get("code")).toBeTruthy();
   });
@@ -325,9 +325,17 @@ describe("clients", () => {
     expect((await callMcp(issuer, String(r.data["access_token"]))).status).toBe(200);
   });
 
-  test("11b. a `fixed` client policy keeps the refresh token (Gemini static, §5.3)", async () => {
-    const g = await staticGrant("claude", { rotation: "fixed" });
-    const auth = { id: g.id, secret: g.secret };
+  test("11b. Gemini: its per-user redirect is matched by rule and pinned, and its refresh token is fixed (§4.5, §5.3)", async () => {
+    // The redirect embeds the owner's Google id and this server's host (ADR-0107).
+    const geminiRedirect = `https://oauth-redirect.googleusercontent.com/r/user_bound_custom-mcp-118234-${new URL(issuer.origin).hostname.replaceAll(".", "_")}`;
+    const s = await staticWindow("gemini");
+    await expectErrorPage(await owner.fetch(authUrl(issuer, { client_id: s.id, redirect_uri: "https://oauth-redirect.googleusercontent.com/r/user_bound_custom-mcp-118234-elsewhere_example", ...S256() })));
+    const p = pkce();
+    const back = await authorize(issuer, owner, { client_id: s.id, redirect_uri: geminiRedirect, code_challenge: p.challenge, code_challenge_method: "S256" });
+    const auth = { id: s.id, secret: s.secret };
+    const t0 = await token(issuer, { grant_type: "authorization_code", code: back.searchParams.get("code") ?? "", redirect_uri: geminiRedirect, code_verifier: p.verifier }, auth);
+    expect(t0.status).toBe(200);
+    const g = { refresh: String(t0.data["refresh_token"]) };
     const a = await token(issuer, { grant_type: "refresh_token", refresh_token: g.refresh }, auth);
     issuer.clock.advance(60_000);
     const b = await token(issuer, { grant_type: "refresh_token", refresh_token: g.refresh }, auth);
@@ -391,8 +399,14 @@ describe("clients", () => {
 // ---- 15–20: surfaces and owner binding ----
 
 describe("surfaces", () => {
-  test("15. route inventory: nothing outside routes.allow.txt answers", async () => {
-    const { unlisted, silent } = await routeInventory(issuer.origin);
+  test("15. route inventory: nothing outside routes.allow.txt answers on {host}", async () => {
+    const { unlisted, silent } = await routeInventory(issuer.origin, "mcp");
+    expect(unlisted).toEqual([]);
+    expect(silent).toEqual([]);
+  }, 60_000);
+
+  test("15b. route inventory: nothing outside routes.admin.allow.txt answers on admin.{host}", async () => {
+    const { unlisted, silent } = await routeInventory(issuer.adminOrigin, "admin");
     expect(unlisted).toEqual([]);
     expect(silent).toEqual([]);
   }, 60_000);
@@ -459,7 +473,7 @@ describe("surfaces", () => {
     const consentPath = start.headers.get("location") ?? "";
     expect(consentPath).toMatch(/^\/consent\//);
     const page = await (await phone.fetch(consentPath)).text();
-    expect(page).toContain("Enter the code shown in your admin UI");
+    expect(page).toContain("Pairing code");
     expect(page).not.toContain("Approve");
     expect((await phone.postJson(`${consentPath}/options`)).status).toBe(403);
     expect((await phone.postJson(`${consentPath}/approve`, issuer.authenticator.get({ challenge: "x" }))).status).toBe(403);
@@ -474,11 +488,12 @@ describe("surfaces", () => {
     const start2 = await owner.fetch(authUrl(issuer, { client_id: w2.id, redirect_uri: w2.redirect, ...S256() }));
     const path2 = start2.headers.get("location") ?? "";
     const cross = await owner.fetch(`${path2}/options`, { method: "POST", body: "{}", headers: { "content-type": "application/json", origin: "https://evil.example", "sec-fetch-site": "cross-site" } });
-    expect(cross.status).toBe(400);
+    expect(cross.status).toBe(403);
     // Five wrong codes close the window.
     const w3 = await staticWindow();
     const other = new Browser(issuer.origin);
     const path3 = (await other.fetch(authUrl(issuer, { client_id: w3.id, redirect_uri: w3.redirect, ...S256() }))).headers.get("location") ?? "";
+    await other.fetch(path3); // the code form, and its CSRF token
     for (let i = 0; i < 5; i++) await other.postJson(`${path3}/code`, { code: "BBBBBBBB" });
     expect(issuer.pairing.get(w3.w.window_id)?.close_reason).toBe("code_attempts");
   }, 20_000); // several round trips; slow on Windows runners

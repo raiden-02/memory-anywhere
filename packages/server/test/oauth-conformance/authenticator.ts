@@ -30,30 +30,38 @@ function cbor(v: Cbor): Buffer {
 
 const FLAG_UP = 0x01;
 const FLAG_UV = 0x04;
+const FLAG_BE = 0x08; // backup eligible: a synced passkey
+const FLAG_BS = 0x10; // backed up
 const FLAG_AT = 0x40;
 
 export class SoftAuthenticator {
   private readonly origin: string;
   private credentialId: Buffer | undefined;
   private privateKey: KeyObject | undefined;
-  private counter = 0;
+  /** The signature counter; a test can rewind it to act as a cloned copy of the key. */
+  counter = 0;
+  private readonly synced: boolean;
 
-  constructor(origin: string) {
+  /** `synced`: like a passkey synced by a provider: BE and BS flags set, and a counter that stays 0. */
+  constructor(origin: string, opts: { synced?: boolean } = {}) {
     this.origin = origin;
+    this.synced = opts.synced === true;
   }
 
-  private clientData(type: "webauthn.create" | "webauthn.get", challenge: string): Buffer {
-    return Buffer.from(JSON.stringify({ type, challenge, origin: this.origin, crossOrigin: false }));
+  /** The page's origin goes into clientDataJSON; ceremonies run on either surface (admin.{host} or {host}). */
+  private clientData(type: "webauthn.create" | "webauthn.get", challenge: string, origin: string): Buffer {
+    return Buffer.from(JSON.stringify({ type, challenge, origin, crossOrigin: false }));
   }
 
-  private authData(rpId: string, flags: number, attested?: Buffer): Buffer {
+  private authData(rpId: string, base: number, attested?: Buffer): Buffer {
+    const flags = base | (this.synced ? FLAG_BE | FLAG_BS : 0);
     const count = Buffer.alloc(4);
-    count.writeUInt32BE(++this.counter);
+    count.writeUInt32BE(this.synced ? 0 : ++this.counter);
     return Buffer.concat([sha256(rpId), Buffer.from([flags]), count, ...(attested ? [attested] : [])]);
   }
 
   /** navigator.credentials.create() for PublicKeyCredentialCreationOptionsJSON. */
-  create(options: { challenge: string; rp: { id?: string } }): Record<string, unknown> {
+  create(options: { challenge: string; rp: { id?: string } }, origin = this.origin): Record<string, unknown> {
     const rpId = options.rp.id ?? new URL(this.origin).hostname;
     const { privateKey, publicKey } = generateKeyPairSync("ec", { namedCurve: "P-256" });
     const jwk = publicKey.export({ format: "jwk" });
@@ -83,17 +91,17 @@ export class SoftAuthenticator {
       id,
       rawId: id,
       type: "public-key",
-      response: { clientDataJSON: b64u(this.clientData("webauthn.create", options.challenge)), attestationObject: b64u(attestationObject), transports: ["internal"] },
+      response: { clientDataJSON: b64u(this.clientData("webauthn.create", options.challenge, origin)), attestationObject: b64u(attestationObject), transports: ["internal"] },
       clientExtensionResults: {},
       authenticatorAttachment: "platform",
     };
   }
 
   /** navigator.credentials.get() for PublicKeyCredentialRequestOptionsJSON. */
-  get(options: { challenge: string; rpId?: string }): Record<string, unknown> {
+  get(options: { challenge: string; rpId?: string }, origin = this.origin): Record<string, unknown> {
     if (!this.credentialId || !this.privateKey) throw new Error("no credential enrolled");
     const rpId = options.rpId ?? new URL(this.origin).hostname;
-    const clientDataJSON = this.clientData("webauthn.get", options.challenge);
+    const clientDataJSON = this.clientData("webauthn.get", options.challenge, origin);
     const authenticatorData = this.authData(rpId, FLAG_UP | FLAG_UV);
     const signature = sign("sha256", Buffer.concat([authenticatorData, sha256(clientDataJSON)]), this.privateKey);
     const id = b64u(this.credentialId);

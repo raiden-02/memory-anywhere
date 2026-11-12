@@ -13,4 +13,14 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
     },
   },
+  {
+    // The server's page script runs in the browser (auth-and-security.md §8).
+    files: ["packages/server/src/web/assets/**/*.js"],
+    languageOptions: {
+      globals: {
+        document: "readonly", location: "readonly", history: "readonly", navigator: "readonly", fetch: "readonly",
+        setTimeout: "readonly", PublicKeyCredential: "readonly",
+      },
+    },
+  },
 );

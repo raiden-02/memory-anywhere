@@ -34,6 +34,7 @@ Delivered to: the admin UI banner and alert list (always); SNS email (aws mode, 
 | `disk_low` | Free disk < 20% | immediate |
 | `llm_cap` | Daily LLM cap reached | digest |
 | `job_failed` | A job reaches `dropped` | digest |
+| `recovery_used` | A recovery code was used (auth-and-security.md §3.3; spec-issues #64) | digest |
 | `update_failed` | Updater rolled back | immediate |
 | `manifest_mismatch` | From M4: daily manifest check finds a chain break | immediate |
 | `kms_or_bucket_change` | CloudTrail EventBridge rules (deployment-aws.md §2) | immediate (SNS directly) |

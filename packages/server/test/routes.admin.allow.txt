@@ -1,0 +1,22 @@
+# Every route https://admin.{host} answers (auth-and-security.md §2, §3, §8). Conformance test 15
+# fails if any other METHOD + path answers with anything but 404. `:name` matches one segment.
+
+# Setup and recovery (§3.1, §3.3): the setup token or recovery code is the credential
+GET     /setup
+POST    /setup/options
+POST    /setup/verify
+POST    /setup/confirm
+GET     /recover
+POST    /recover
+
+# Sign-in, step-up and pairing (§3.4, §4.1): the admin session
+POST    /api/login/options
+POST    /api/login/verify
+POST    /api/stepup/options
+POST    /api/stepup/verify
+POST    /api/windows
+POST    /api/logout
+
+# The pages' script and stylesheet (§8)
+GET     /assets/app.js
+GET     /assets/app.css

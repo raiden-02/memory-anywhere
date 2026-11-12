@@ -11,7 +11,11 @@
     "@memory-anywhere/contracts": "workspace:*",
     "@modelcontextprotocol/node": "2.1.2",
     "@modelcontextprotocol/server": "2.4.0",
+    "@simplewebauthn/server": "14.1.0",
+    "argon2": "0.45.2",
     "chrono-node": "2.10.3",
+    "eta": "4.6.0",
+    "oidc-provider": "9.13.3",
     "onnxruntime-node": "1.31.1",
     "smol-toml": "1.9.1",
     "ulid": "3.0.2",
@@ -19,6 +23,7 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
-    "@modelcontextprotocol/client": "2.4.0"
+    "@modelcontextprotocol/client": "2.4.0",
+    "@types/oidc-provider": "9.13.1"
   }
 }

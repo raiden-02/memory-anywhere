@@ -78,12 +78,15 @@ interface JobRow {
 export class JobWorker {
   readonly #app: App;
   readonly #storeFile: string | undefined;
+  /** Work that runs with each hourly prune (the owner-reset schedule). */
+  readonly #hourly: readonly (() => void)[];
   #timer: NodeJS.Timeout | undefined;
   #running = false;
 
-  constructor(app: App, storeFile: string | undefined) {
+  constructor(app: App, storeFile: string | undefined, hourly: readonly (() => void)[] = []) {
     this.#app = app;
     this.#storeFile = storeFile;
+    this.#hourly = hourly;
   }
 
   start(intervalMs = 1000): void {
@@ -166,6 +169,7 @@ export class JobWorker {
       case "prune":
         prune(app.ctx, app.config, this.#storeFile);
         if (this.#storeFile) checkDisk(app, path.dirname(this.#storeFile));
+        for (const run of this.#hourly) run();
         return;
       case "digest":
         app.alerts.sendDigest();

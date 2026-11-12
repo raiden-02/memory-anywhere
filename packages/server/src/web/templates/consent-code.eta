@@ -1,0 +1,8 @@
+<% layout("./layout") %>
+<h1>Pairing code</h1>
+<form id="code-form">
+  <label for="code">The 8 characters shown where you opened this connection</label>
+  <input id="code" name="code" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="8" required>
+  <button type="submit">Continue</button>
+</form>
+<p id="msg" role="status"></p>

@@ -126,7 +126,8 @@ export function createHttpServer(o: HttpOptions): Server {
 
     // Resource routes are called by apps and tools, never by a page: a browser Origin is refused
     // in aws mode (auth-and-security.md §5.5); local mode allows its own loopback origin.
-    const origin = req.headers.origin;
+    // `Origin: null` is not a page on another site (M0 conformance test 16), so it counts as absent.
+    const origin = req.headers.origin === "null" ? undefined : req.headers.origin;
     if (origin !== undefined && (door.mode === "aws" || !arrival.allowedOrigins.has(origin))) return reply(apiError("FORBIDDEN", "origin not allowed"));
     const isAdmin = url.pathname.startsWith("/v1/admin/") && req.method === "POST";
     if (!routes.has(route) && !isAdmin) return reply(apiError("NOT_FOUND", "no such route"));

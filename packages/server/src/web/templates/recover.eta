@@ -1,0 +1,9 @@
+<% layout("./layout") %>
+<h1>Recover access</h1>
+<p>A recovery code removes every passkey and signed-in browser, then lets you add two new passkeys. Connected apps keep working.</p>
+<form id="recover-form">
+  <label for="code">Recovery code</label>
+  <input id="code" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
+  <button type="submit">Recover</button>
+</form>
+<p id="msg" role="status"></p>

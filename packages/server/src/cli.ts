@@ -20,7 +20,10 @@ import { idSource } from "@memory-anywhere/contracts/ids";
 import { currentPaths } from "@memory-anywhere/contracts/paths";
 import { ensurePrivateDir, writeFileAtomic } from "@memory-anywhere/contracts/secure-fs";
 import { App, SCHEMA_VERSION, SERVER_VERSION } from "./app.ts";
-import { localTokenAuth, NO_AUTH } from "./api/grant.ts";
+import { localTokenAuth } from "./api/grant.ts";
+import { createAuth } from "./auth/index.ts";
+import { OwnerCredentials } from "./auth/owner.ts";
+import { Alerts } from "./ops/alerts.ts";
 import { defaultConfig, listenTarget, parseConfig, type ListenTarget, type ServerConfigT } from "./config/schema.ts";
 import { activeModel, downloadModel, modelDir, type PinnedModel } from "./embed/manifest.ts";
 import { OnnxEmbedder } from "./embed/onnx.ts";
@@ -138,10 +141,18 @@ async function start(l: Layout, target: ListenTarget, ephemeral: boolean, rateLi
 
   // Local mode runs hidden, so its log also goes to {data}\server\server.log; aws mode logs to the journal.
   const logger = new Logger(mode === "aws" || ephemeral ? stdoutSink : teeSink(stdoutSink, fileSink(path.join(l.dataDir, "server.log"))));
-  const server = mode === "aws"
-    ? createHttpServer({ app, door: awsDoor(l.config.server.public_url), authenticate: NO_AUTH, logger })
-    : createHttpServer({ app, door: localDoor(target.kind === "tcp" ? target.port : 0), authenticate: localTokenAuth(localToken(l.tokenFile)), logger });
-  const worker = new JobWorker(app, ephemeral ? undefined : l.storeFile);
+  let server: Server;
+  const hourly: (() => void)[] = [];
+  if (mode === "aws") {
+    const door = awsDoor(l.config.server.public_url);
+    const auth = createAuth({ app, door, logger });
+    auth.owner.issueFirstSetupToken();
+    hourly.push(() => auth.owner.hourly());
+    server = createHttpServer({ app, door, authenticate: auth.authenticate, mounts: auth.mounts, logger });
+  } else {
+    server = createHttpServer({ app, door: localDoor(target.kind === "tcp" ? target.port : 0), authenticate: localTokenAuth(localToken(l.tokenFile)), logger });
+  }
+  const worker = new JobWorker(app, ephemeral ? undefined : l.storeFile, hourly);
   const where = await listen(server, target);
   worker.start();
   logger.log({ level: "info", op: "start", outcome: `listening ${where}`, reason: ephemeral ? "ephemeral" : mode });
@@ -160,6 +171,16 @@ async function start(l: Layout, target: ListenTarget, ephemeral: boolean, rateLi
   process.once("SIGTERM", stop);
 }
 
+/** The owner commands run beside a live aws server: the store, its outbox and alerts, without an App. */
+function ownerTools(l: Layout): { owner: OwnerCredentials; close: () => void } {
+  const target = listenTarget(l.config);
+  if (l.config.server.mode !== "aws" || target.kind !== "unix") throw new Error("this command is for an aws-mode server");
+  const db = openStore(l.storeFile, { mode: "aws" });
+  const ctx = { db, clock: systemClock, ids: idSource() };
+  const outbox = new FileOutbox(outboxDirFor(target.path));
+  return { owner: new OwnerCredentials(ctx, outbox, new Alerts(ctx, outbox)), close: () => db.close() };
+}
+
 async function main(argv: readonly string[]): Promise<void> {
   const [command, ...rest] = argv;
   const { values } = parseArgs({
@@ -167,7 +188,7 @@ async function main(argv: readonly string[]): Promise<void> {
     options: {
       config: { type: "string" }, local: { type: "boolean" }, port: { type: "string" }, ephemeral: { type: "boolean" },
       "dry-run": { type: "boolean" }, "no-rate-limits": { type: "boolean" }, canonical: { type: "boolean" }, content: { type: "boolean" }, out: { type: "string" },
-      compact: { type: "boolean" },
+      compact: { type: "boolean" }, renew: { type: "boolean" }, schedule: { type: "boolean" }, cancel: { type: "boolean" },
     },
     allowPositionals: false,
   });
@@ -217,11 +238,34 @@ async function main(argv: readonly string[]): Promise<void> {
       process.stdout.write(`${JSON.stringify({ ok: true, ...compactStore(l.storeFile) })}\n`);
       return;
     }
+    case "setup-token": {
+      // Run by ma-operator.sh setup-link through SSM Run Command, beside the running server (auth-and-security.md §3.1 step 6).
+      if (!values.renew) throw new Error("setup-token needs --renew");
+      const { owner, close } = ownerTools(l);
+      try {
+        owner.renewSetupToken();
+        process.stdout.write(`${JSON.stringify({ ok: true, expires_in_s: 1800 })}\n`);
+      } finally {
+        close();
+      }
+      return;
+    }
+    case "reset-owner": {
+      // Break-glass (§3.3): --schedule takes effect in 24 hours; --cancel stops it.
+      if (values.schedule === values.cancel) throw new Error("reset-owner needs --schedule or --cancel");
+      const { owner, close } = ownerTools(l);
+      try {
+        process.stdout.write(`${JSON.stringify(values.schedule ? { ok: true, reset: owner.scheduleReset() } : { ok: owner.cancelReset() })}\n`);
+      } finally {
+        close();
+      }
+      return;
+    }
     case "version":
       process.stdout.write(`${JSON.stringify({ server: SERVER_VERSION, schema: SCHEMA_VERSION, policy: POLICY_VERSION })}\n`);
       return;
     default:
-      throw new Error(`usage: memory-anywhere-server <start|init|migrate|dump|backup|maint|version> [flags]`);
+      throw new Error(`usage: memory-anywhere-server <start|init|migrate|dump|backup|maint|setup-token|reset-owner|version> [flags]`);
   }
 }
 

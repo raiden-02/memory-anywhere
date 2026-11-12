@@ -15,7 +15,8 @@
     "./schemas/tools": "./src/schemas/tools.ts",
     "./schemas/v1": "./src/schemas/v1.ts",
     "./schemas/export": "./src/schemas/export.ts",
-    "./policy-data": "./src/generated/policy-data.ts"
+    "./policy-data": "./src/generated/policy-data.ts",
+    "./login-code": "./src/login-code.ts"
   },
   "dependencies": {
     "ulid": "3.0.2",

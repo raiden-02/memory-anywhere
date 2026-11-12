@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title><%= it.title %></title>
+<link rel="stylesheet" href="/assets/app.css">
+<script type="module" src="/assets/app.js"></script>
+</head>
+<body data-page="<%= it.page %>" data-csrf="<%= it.csrf ?? '' %>" data-base="<%= it.base ?? '' %>">
+<main>
+<%~ it.body %>
+</main>
+</body>
+</html>

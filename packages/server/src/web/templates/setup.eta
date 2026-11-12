@@ -1,0 +1,20 @@
+<% layout("./layout") %>
+<h1>Set up memory-anywhere</h1>
+<section id="step-1">
+  <p>Add a passkey: your phone, a password manager, Windows Hello or a security key.</p>
+  <button id="add-1" type="button">Add first passkey</button>
+</section>
+<section id="step-2" hidden>
+  <p>Add a second passkey kept somewhere else, so losing one never locks you out. A security key or this computer's Windows Hello works; a second synced passkey must come from another provider.</p>
+  <p class="muted">Do not keep both in the Google account you use for Gemini.</p>
+  <label><input id="different" type="checkbox"> The two passkeys are with different providers</label>
+  <button id="add-2" type="button">Add second passkey</button>
+</section>
+<section id="step-3" hidden>
+  <p>Recovery codes. Save them now: they are shown once.</p>
+  <ol id="codes" class="code"></ol>
+  <label for="confirm-code">Type one of them</label>
+  <input id="confirm-code" autocomplete="off" autocapitalize="characters" spellcheck="false">
+  <button id="confirm" type="button">Finish</button>
+</section>
+<p id="msg" role="status"></p>

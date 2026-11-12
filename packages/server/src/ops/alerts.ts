@@ -34,7 +34,11 @@ export const ALERT_DELIVERY = {
   disk_low: "immediate",
   llm_cap: "digest",
   job_failed: "digest",
+  recovery_used: "digest", // a recovery code was used (auth-and-security.md §3.3; spec-issues #64)
 } as const satisfies Record<string, Delivery>;
+
+/** How often an open immediate alert is emailed again; one hour unless listed (operations.md §2). */
+const RENOTIFY_MS: Partial<Record<keyof typeof ALERT_DELIVERY, number>> = { owner_reset_requested: 6 * HOUR_MS };
 // Not raised here: dns_mismatch and update_failed (the updater writes them to the outbox), backup_lag
 // (a CloudWatch metric filter), kms_or_bucket_change and cost (EventBridge and Budgets publish to SNS).
 
@@ -58,7 +62,6 @@ interface RaiseOptions {
   readonly immediate?: boolean;
 }
 
-const RENOTIFY_MS = HOUR_MS;
 /** An id, code or number: no spaces, so no sentence from a memory can ride along. */
 const SAFE_VALUE = /^[\w.:@-]{0,80}$/u;
 
@@ -100,7 +103,7 @@ export class Alerts {
     }
     const delivery: Delivery = ALERT_DELIVERY[kind];
     const immediate = o.immediate === true || delivery !== "digest";
-    if (immediate && (notifiedAt === null || Date.parse(notifiedAt) + RENOTIFY_MS <= now)) {
+    if (immediate && (notifiedAt === null || Date.parse(notifiedAt) + (RENOTIFY_MS[kind] ?? HOUR_MS) <= now)) {
       const sent = this.#outbox.send(`alert-${kind}.json`, JSON.stringify({ id: kind, subject, count, at: iso(now), details }));
       if (sent) prepared(db, "UPDATE alert SET notified_at = ? WHERE id = ?").run(iso(now), id);
     }

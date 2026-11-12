@@ -115,7 +115,7 @@ Passkey only, with recovery codes. No password, no email, no sign-up.
 3. Immediately after, the setup page requires a **second passkey**. The two must differ in authenticator AAGUID (different provider, for example a hardware key and Windows Hello, or iCloud Keychain and Google Password Manager), or at least one must have the backup-eligible flag clear (device-bound). An all-zero AAGUID means "provider unknown": two passkeys that both report it, or report the same AAGUID, pass only if one is device-bound or the owner confirms on the page that they are kept by different providers (spec-issues #55). The page tells the owner not to keep both passkeys in the Google account used for Gemini, because a takeover of that account would then also unlock the admin UI. Pairing stays disabled until two passkeys exist.
 4. The page shows 10 recovery codes once (§3.3) and requires the owner to type one back.
 5. The setup token row is marked used and the SSM parameter is deleted (outbox `setup-token.delete`).
-6. **Renewal.** The first token often expires before the owner can use it (DNS records, the certificate and the CloudShell sign-in all come first). `./ma-operator.sh setup-link` therefore checks the token's expiry and, if it is missing or expired, runs `memory-anywhere-server setup-token --renew` on the instance through SSM Run Command, which invalidates any old token and issues a fresh 30-minute one. `--renew` works only while the store has no owner (first setup) or after an executed owner reset; otherwise it refuses. A server restart does not create a token.
+6. **Renewal.** (Step 1's token is issued only when a store with no owner has never issued one, spec-issues #65.) The first token often expires before the owner can use it (DNS records, the certificate and the CloudShell sign-in all come first). `./ma-operator.sh setup-link` therefore checks the token's expiry and, if it is missing or expired, runs `memory-anywhere-server setup-token --renew` on the instance through SSM Run Command, which invalidates any old token and issues a fresh 30-minute one. `--renew` works only while the store has no owner (first setup) or after an executed owner reset; otherwise it refuses. A server restart does not create a token.
 
 ### 3.2 WebAuthn parameters
 
@@ -352,8 +352,8 @@ Permissions-Policy: publickey-credentials-get=(self), publickey-credentials-crea
 ```
 
 - No third-party resources (fonts, scripts, images, analytics) on any page.
-- Cookies: admin `__Host-ma_admin` (`SameSite=Strict`); AS interaction `__Host-ma_as` (`SameSite=Lax`, needed for the vendor redirect back). Both `Secure`, `HttpOnly`.
-- Every state-changing request (POST, PUT, DELETE) checks a synchronizer CSRF token and requires `Sec-Fetch-Site: same-origin` (or, if absent, an `Origin` equal to the page's origin).
+- Cookies: admin `__Host-ma_admin` (`SameSite=Strict`); AS interaction `__Secure-ma_as`, `__Secure-ma_as_resume` and `__Secure-ma_as_session` (`SameSite=Lax`, needed for the vendor redirect back; the library scopes them to their paths, so they cannot be `__Host-`, spec-issues #68). All `Secure`, `HttpOnly`.
+- Every state-changing request (POST, PUT, DELETE) checks a synchronizer CSRF token and requires `Sec-Fetch-Site: same-origin` (or, if absent, an `Origin` equal to the page's origin). The token is an HMAC of its subject (the admin session, or the consent interaction) with `meta.cookie_secret`; setup and recovery carry their own secret instead (spec-issues #67).
 - The admin JSON API under `admin.{host}/api/*` requires the session cookie and the CSRF header `X-MA-CSRF`; it has no CORS.
 - The admin UI is mobile-first and works on the phone browser.
 
