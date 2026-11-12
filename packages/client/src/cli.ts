@@ -29,7 +29,7 @@ const USAGE = `usage: mema <command> [flags]
   init [--local] --from-workspace <path> [--clients <list>] [--dry-run] [--yes] [--print-custom-instruction]
   mcp --tool <claude-code|codex|cursor|generic>
   hook <claude-code|codex|cursor> <event>
-  deploy aws --stage <prod|spike|eval-<id>> [--region <r>] [--profile <p>] [--update] [--release-file <tarball>] [--yes] [--dns manual] [--alert-email <address>]
+  deploy aws --stage <prod|spike|eval-<id>> [--region <r>] [--profile <p>] [--update] [--release <version> | --release-file <tarball>] [--allow-replace] [--yes] [--dns manual] [--alert-email <address>]
   destroy aws --stage <stage> [--region <r>] [--profile <p>]`;
 
 export const EXIT = { ok: 0, usage: 1, error: 1, offline: 2, rejected: 3, conflict: 4, unauthorized: 5, doctorFailed: 6 } as const;
@@ -102,7 +102,7 @@ export async function main(argv: string[]): Promise<number> {
       local: { type: "boolean", default: false }, "from-workspace": { type: "string" }, clients: { type: "string" }, "dry-run": { type: "boolean", default: false },
       "print-custom-instruction": { type: "boolean", default: false },
       stage: { type: "string" }, region: { type: "string" }, profile: { type: "string", default: "memory-anywhere-deploy" }, update: { type: "boolean", default: false },
-      release: { type: "string" }, "release-file": { type: "string" }, yes: { type: "boolean", default: false }, dns: { type: "string", default: "manual" },
+      release: { type: "string" }, "release-file": { type: "string" }, "allow-replace": { type: "boolean", default: false }, yes: { type: "boolean", default: false }, dns: { type: "string", default: "manual" },
       "alert-email": { type: "string" }, help: { type: "boolean", short: "h", default: false },
       "no-browser": { type: "boolean", default: false }, out: { type: "string" }, format: { type: "string" }, "include-auth": { type: "boolean", default: false },
       recipient: { type: "string" },
@@ -232,6 +232,7 @@ async function deployCommand(command: "deploy" | "destroy", positionals: string[
           yes: values["yes"] === true,
           dns: values["dns"] as string,
           ...(values["release-file"] ? { releaseFile: values["release-file"] as string } : {}),
+          allowReplace: values["allow-replace"] === true,
           ...(values["release"] ? { release: values["release"] as string } : {}),
           ...(values["alert-email"] ? { alertEmail: values["alert-email"] as string } : {}),
         },

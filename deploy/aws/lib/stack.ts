@@ -477,21 +477,25 @@ export class MemoryAnywhereStack extends Stack {
         },
       ],
     });
-    const monitor = new ce.CfnAnomalyMonitor(this, "AnomalyMonitor", {
-      monitorName: names.anomalyMonitor(stage),
-      monitorType: "DIMENSIONAL",
-      monitorDimension: "SERVICE",
-    });
-    new ce.CfnAnomalySubscription(this, "AnomalySubscription", {
-      subscriptionName: names.anomalyMonitor(stage),
-      // SNS subscribers require IMMEDIATE (Cost Anomaly Detection API); spec-issues.md #7.
-      frequency: "IMMEDIATE",
-      monitorArnList: [monitor.attrMonitorArn],
-      subscribers: [{ type: "SNS", address: topic.topicArn }],
-      thresholdExpression: JSON.stringify({
-        Dimensions: { Key: "ANOMALY_TOTAL_IMPACT_ABSOLUTE", MatchOptions: ["GREATER_THAN_OR_EQUAL"], Values: ["5"] },
-      }),
-    });
+    // An account holds one AWS-services anomaly monitor, so only prod creates it; it watches the
+    // whole account, eval and spike stacks included (spec-issues #7, #56).
+    if (isProd) {
+      const monitor = new ce.CfnAnomalyMonitor(this, "AnomalyMonitor", {
+        monitorName: names.anomalyMonitor(stage),
+        monitorType: "DIMENSIONAL",
+        monitorDimension: "SERVICE",
+      });
+      new ce.CfnAnomalySubscription(this, "AnomalySubscription", {
+        subscriptionName: names.anomalyMonitor(stage),
+        // SNS subscribers require IMMEDIATE (Cost Anomaly Detection API); spec-issues.md #7.
+        frequency: "IMMEDIATE",
+        monitorArnList: [monitor.attrMonitorArn],
+        subscribers: [{ type: "SNS", address: topic.topicArn }],
+        thresholdExpression: JSON.stringify({
+          Dimensions: { Key: "ANOMALY_TOTAL_IMPACT_ABSOLUTE", MatchOptions: ["GREATER_THAN_OR_EQUAL"], Values: ["5"] },
+        }),
+      });
+    }
 
     // ---- Topic policy: who may publish ----
     topic.addToResourcePolicy(
@@ -517,14 +521,16 @@ export class MemoryAnywhereStack extends Stack {
     );
     // Cost Anomaly Detection validates the topic against AWS's documented policy,
     // which has no source condition; a mismatch would roll back the whole stack.
-    topic.addToResourcePolicy(
-      new iam.PolicyStatement({
-        sid: "CostAnomalyDetection",
-        principals: [new iam.ServicePrincipal("costalerts.amazonaws.com")],
-        actions: ["sns:Publish"],
-        resources: [topic.topicArn],
-      }),
-    );
+    if (isProd) {
+      topic.addToResourcePolicy(
+        new iam.PolicyStatement({
+          sid: "CostAnomalyDetection",
+          principals: [new iam.ServicePrincipal("costalerts.amazonaws.com")],
+          actions: ["sns:Publish"],
+          resources: [topic.topicArn],
+        }),
+      );
+    }
 
     // ---- CloudTrail and EventBridge (§2) ----
     const trail = new cloudtrail.Trail(this, "Trail", {

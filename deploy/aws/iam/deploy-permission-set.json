@@ -51,6 +51,34 @@
       ]
     },
     {
+      "Sid": "DecryptEvalParameters",
+      "Effect": "Allow",
+      "Action": "kms:Decrypt",
+      "Resource": "arn:aws:kms:*:${ACCOUNT_ID}:key/*",
+      "Condition": {
+        "StringLike": {
+          "kms:ViaService": "ssm.*.amazonaws.com",
+          "kms:EncryptionContext:PARAMETER_ARN": "arn:aws:ssm:*:${ACCOUNT_ID}:parameter/memory-anywhere-eval-*/*"
+        }
+      }
+    },
+    {
+      "Sid": "DeleteNonProdParametersOnDestroy",
+      "Effect": "Allow",
+      "Action": ["ssm:GetParametersByPath", "ssm:DeleteParameter", "ssm:DeleteParameters"],
+      "Resource": [
+        "arn:aws:ssm:*:${ACCOUNT_ID}:parameter/memory-anywhere-spike", "arn:aws:ssm:*:${ACCOUNT_ID}:parameter/memory-anywhere-spike/*",
+        "arn:aws:ssm:*:${ACCOUNT_ID}:parameter/memory-anywhere-eval-*", "arn:aws:ssm:*:${ACCOUNT_ID}:parameter/memory-anywhere-eval-*/*"
+      ]
+    },
+    {
+      "Sid": "DeleteNonProdSnapshotsOnDestroy",
+      "Effect": "Allow",
+      "Action": "ec2:DeleteSnapshot",
+      "Resource": "arn:aws:ec2:*::snapshot/*",
+      "Condition": { "StringLike": { "aws:ResourceTag/memory-anywhere:stage": ["spike", "eval-*"] } }
+    },
+    {
       "Sid": "ReadOnly",
       "Effect": "Allow",
       "Action": ["ec2:Describe*", "ec2:GetInstanceMetadataDefaults", "cloudformation:Describe*", "budgets:ViewBudget"],
@@ -81,10 +109,24 @@
       ]
     },
     {
-      "Sid": "DenyKeyUseAndKeyDestruction",
+      "Sid": "DenyKeyDestruction",
       "Effect": "Deny",
-      "Action": ["kms:Decrypt", "kms:ScheduleKeyDeletion", "kms:DisableKey", "kms:PutKeyPolicy"],
+      "Action": ["kms:ScheduleKeyDeletion", "kms:DisableKey", "kms:PutKeyPolicy"],
       "Resource": "*"
+    },
+    {
+      "Sid": "DenyDecryptOutsideSsm",
+      "Effect": "Deny",
+      "Action": "kms:Decrypt",
+      "Resource": "*",
+      "Condition": { "StringNotLike": { "kms:ViaService": "ssm.*.amazonaws.com" } }
+    },
+    {
+      "Sid": "DenyDecryptOutsideEvalParameters",
+      "Effect": "Deny",
+      "Action": "kms:Decrypt",
+      "Resource": "*",
+      "Condition": { "StringNotLike": { "kms:EncryptionContext:PARAMETER_ARN": "arn:aws:ssm:*:${ACCOUNT_ID}:parameter/memory-anywhere-eval-*/*" } }
     },
     {
       "Sid": "DenyIdentityOrgAndShell",

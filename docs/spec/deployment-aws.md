@@ -366,7 +366,7 @@ With `--dns route53 --hosted-zone-id <id>`, the stack creates the A and CAA reco
 
 ### 7.2 Updates (`mema deploy aws --update [--release <version> | --release-file <tarball>]`)
 
-Infrastructure changes run `cdk deploy`. Application releases are pulled by the instance (no `ssm:SendCommand` needed by the deploy profile). `mema deploy` always signs out of the SSO session on exit.
+Infrastructure changes run `cdk deploy`. Application releases are pulled by the instance (no `ssm:SendCommand` needed by the deploy profile). `--release <version>` downloads `memory-anywhere-server-<version>.tar.gz` and its `.minisig` from the GitHub release `v<version>`, verifies them with `deploy/aws/release-keys/release.pub` on the PC, then uploads them unchanged; the spike, which trusts only the dev key, refuses it. A prod update whose `cdk diff` replaces the instance stops unless `--allow-replace` is given (the store then comes back from the backup, §5.5). Every deploy warns when `{host}` has no CAA record naming only Let's Encrypt (§6.2). `mema deploy` always signs out of the SSO session on exit.
 
 ### 7.3 Updater (`ma-updater.service`, root, every 2 minutes)
 

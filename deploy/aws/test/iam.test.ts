@@ -109,6 +109,24 @@ describe("deploy permission set (§3.4)", () => {
     }
   });
 
+  it("decrypts only eval-stage parameters, and only through SSM (spec-issues #12, #56)", () => {
+    const evalParams = "arn:aws:ssm:*:${ACCOUNT_ID}:parameter/memory-anywhere-eval-*/*";
+    const allow = d.Statement.find((x) => x.Sid === "DecryptEvalParameters");
+    expect(allow?.Condition).toEqual({ StringLike: { "kms:ViaService": "ssm.*.amazonaws.com", "kms:EncryptionContext:PARAMETER_ARN": evalParams } });
+    // Two separate denies, so missing either condition key (a direct KMS call, an S3 object, a prod parameter) is denied.
+    expect(d.Statement.find((x) => x.Sid === "DenyDecryptOutsideSsm")?.Condition).toEqual({ StringNotLike: { "kms:ViaService": "ssm.*.amazonaws.com" } });
+    expect(d.Statement.find((x) => x.Sid === "DenyDecryptOutsideEvalParameters")?.Condition).toEqual({ StringNotLike: { "kms:EncryptionContext:PARAMETER_ARN": evalParams } });
+    const kmsAllows = d.Statement.filter((x) => x.Effect === "Allow" && list(x.Action).some((a) => a.startsWith("kms:")));
+    expect(kmsAllows.map((x) => x.Sid)).toEqual(["DecryptEvalParameters"]);
+  });
+
+  it("cleans up a destroyed non-prod stage's parameters and snapshots, never prod's (spec-issues #21)", () => {
+    const params = d.Statement.find((x) => x.Sid === "DeleteNonProdParametersOnDestroy");
+    for (const r of list(params?.Resource)) expect(r).toMatch(/parameter\/memory-anywhere-(spike|eval-\*)(\/\*)?$/);
+    const snaps = d.Statement.find((x) => x.Sid === "DeleteNonProdSnapshotsOnDestroy");
+    expect(snaps?.Condition).toEqual({ StringLike: { "aws:ResourceTag/memory-anywhere:stage": ["spike", "eval-*"] } });
+  });
+
   it("can delete objects only in spike and eval buckets", () => {
     const s = d.Statement.find((x) => x.Sid === "EmptyNonProdBucketsOnDestroy");
     for (const r of list(s?.Resource)) expect(r).toMatch(/-(spike|eval-\*)(\/\*)?$/);

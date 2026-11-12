@@ -194,14 +194,14 @@ describe("spike stack", () => {
     spike.hasResourceProperties("AWS::SNS::Topic", { TopicName: "memory-anywhere-alerts-spike" });
   });
 
-  it("alerts on cost: $25 forecast, $30 actual, anomalies of $5 or more", () => {
+  it("alerts on cost: $25 forecast, $30 actual; anomalies of $5 or more from prod's account-wide monitor", () => {
     spike.hasResourceProperties("AWS::Budgets::Budget", {
       NotificationsWithSubscribers: [
         Match.objectLike({ Notification: Match.objectLike({ NotificationType: "FORECASTED", Threshold: 25, ThresholdType: "ABSOLUTE_VALUE" }) }),
         Match.objectLike({ Notification: Match.objectLike({ NotificationType: "ACTUAL", Threshold: 30, ThresholdType: "ABSOLUTE_VALUE" }) }),
       ],
     });
-    spike.hasResourceProperties("AWS::CE::AnomalySubscription", { Frequency: "IMMEDIATE", Subscribers: [Match.objectLike({ Type: "SNS" })] });
+    synth("prod").hasResourceProperties("AWS::CE::AnomalySubscription", { Frequency: "IMMEDIATE", Subscribers: [Match.objectLike({ Type: "SNS" })] });
   });
 
   it("snapshots the tagged root volume daily at 05:00 UTC and keeps 7", () => {
@@ -237,6 +237,18 @@ describe("spike stack", () => {
     expect(text).not.toContain("release-keys/release.pub");
     expect(text).toContain("MA_HOST=memory.example.com\n");
     expect(text.trimEnd().endsWith("exec /usr/local/sbin/ma-firstboot")).toBe(true);
+  });
+});
+
+describe("cost anomaly monitor (spec-issues #56)", () => {
+  it("exists in prod only, since an account holds one", () => {
+    synth("prod").resourceCountIs("AWS::CE::AnomalyMonitor", 1);
+    for (const stage of ["spike", "eval-a1"] as const) {
+      const t = synth(stage);
+      t.resourceCountIs("AWS::CE::AnomalyMonitor", 0);
+      t.resourceCountIs("AWS::CE::AnomalySubscription", 0);
+      expect(JSON.stringify(t.toJSON())).not.toContain("costalerts.amazonaws.com");
+    }
   });
 });
 

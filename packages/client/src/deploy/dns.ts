@@ -59,6 +59,20 @@ export async function resolveA(fetchFn: Fetch, name: string, doh = DEFAULT_DOH):
   return (body.Answer ?? []).filter((a) => a.type === 1).map((a) => a.data).sort();
 }
 
+/** The CAA records of `name` (type 257), as "<flags> <tag> <value>" strings. */
+export async function resolveCaa(fetchFn: Fetch, name: string, doh = DEFAULT_DOH): Promise<string[]> {
+  const res = await fetchFn(`${doh}?name=${encodeURIComponent(name)}&type=CAA`, { headers: { accept: "application/dns-json" }, signal: AbortSignal.timeout(10_000) });
+  if (!res.ok) throw new Error(`DoH CAA lookup of ${name} failed: HTTP ${res.status}`);
+  const body = (await res.json()) as { Status?: number; Answer?: { type: number; data: string }[] };
+  return (body.Answer ?? []).filter((a) => a.type === 257).map((a) => a.data);
+}
+
+/** Whether the CAA records allow only Let's Encrypt to issue for the name, as §6.2 asks. */
+export function caaAllowsOnlyLetsEncrypt(records: readonly string[]): boolean {
+  const issuers = records.map((r) => /^\d+\s+issue(wild)?\s+"?([^";\s]*)/iu.exec(r)?.[2]?.toLowerCase()).filter((v): v is string => v !== undefined);
+  return issuers.length > 0 && issuers.every((v) => v === "letsencrypt.org");
+}
+
 export type NameState = { kind: "ready" } | { kind: "missing" } | { kind: "proxied"; ips: string[] } | { kind: "wrong"; ips: string[] };
 
 export function classifyName(ips: string[], elasticIp: string): NameState {

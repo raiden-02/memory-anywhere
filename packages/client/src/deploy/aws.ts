@@ -20,7 +20,7 @@ import {
   stageHostnames,
   type Stage,
 } from "@memory-anywhere/deploy-aws/names";
-import { classifyName, resolveA, type Fetch } from "./dns.ts";
+import { caaAllowsOnlyLetsEncrypt, classifyName, resolveA, resolveCaa, type Fetch } from "./dns.ts";
 import { DeployError, must, systemTar, type Runner } from "./process.ts";
 
 export interface Deps {
@@ -38,6 +38,10 @@ export interface Deps {
   sha256File: (path: string) => Promise<string>;
   /** Writes text to a new private temporary file, passes its path to use, then deletes it. */
   withTempFile: <T>(text: string, use: (path: string) => Promise<T>) => Promise<T>;
+  /** Passes a new private temporary directory to use, then deletes it. */
+  withTempDir: <T>(use: (dir: string) => Promise<T>) => Promise<T>;
+  /** Downloads `url` (https only) to `file`; throws on any HTTP error. */
+  download: (url: string, file: string) => Promise<void>;
 }
 
 export const defaultFileDeps = {
@@ -51,6 +55,20 @@ export const defaultFileDeps = {
         .on("error", reject)
         .on("end", () => resolve(h.digest("hex")));
     }),
+  withTempDir: async <T>(use: (dir: string) => Promise<T>): Promise<T> => {
+    const dir = await mkdtemp(join(tmpdir(), "mema-"));
+    try {
+      return await use(dir);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  },
+  download: async (url: string, file: string): Promise<void> => {
+    if (!url.startsWith("https://")) throw new DeployError(`refusing to download over plain HTTP: ${url}`);
+    const res = await fetch(url, { signal: AbortSignal.timeout(300_000) });
+    if (!res.ok) throw new DeployError(`download of ${url} failed: HTTP ${res.status}`);
+    await writeFile(file, new Uint8Array(await res.arrayBuffer()));
+  },
   withTempFile: async <T>(text: string, use: (path: string) => Promise<T>): Promise<T> => {
     const dir = await mkdtemp(join(tmpdir(), "mema-"));
     try {
@@ -76,7 +94,16 @@ export interface DeployOptions extends CommonOptions {
   yes: boolean;
   dns: string;
   alertEmail?: string;
+  /** Lets an update replace prod's instance (its disk and store are rebuilt from the backup). */
+  allowReplace?: boolean;
 }
+
+/** Where CI publishes signed server releases (deployment-aws.md §7.4). */
+export const RELEASE_REPO = "raiden-02/memory-anywhere";
+export const releaseAsset = (version: string): string => `memory-anywhere-server-${version}.tar.gz`;
+export const releaseUrl = (version: string, asset: string): string => `https://github.com/${RELEASE_REPO}/releases/download/v${version}/${asset}`;
+/** The CI release key's public half, trusted by prod and eval stacks. */
+export const RELEASE_PUB = join(DEPLOY_AWS_DIR, "release-keys", "release.pub");
 
 const HOST = /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -200,13 +227,41 @@ function requireOutput(outputs: Record<string, string>, key: string): string {
 
 // ---------------------------------------------------------------- release
 
-async function uploadRelease(ctx: Context, opts: DeployOptions, outputs: Record<string, string>, deps: Deps): Promise<string> {
-  const file = opts.releaseFile;
-  if (!file) throw new DeployError("internal: no release file");
+async function releaseVersion(file: string, deps: Deps): Promise<string> {
   const version = (await must(deps.run, "reading VERSION from the release", systemTar(), ["-xOf", file, "VERSION"])).trim();
   if (!VERSION.test(version)) throw new DeployError(`the release's VERSION file is not a version: ${JSON.stringify(version)}`);
+  return version;
+}
+
+/** `--release-file`: a local build, signed here with the dev key (spike and eval stages only). */
+async function uploadDevRelease(ctx: Context, file: string, outputs: Record<string, string>, deps: Deps): Promise<string> {
+  const version = await releaseVersion(file, deps);
   const sha256 = await deps.sha256File(file);
   await must(deps.run, "signing the release with the dev key", "minisign", ["-S", "-s", deps.devKeyFile, "-m", file, "-x", `${file}.minisig`, "-t", `memory-anywhere ${version} sha256 ${sha256}`]);
+  return publishRelease(ctx, file, version, sha256, outputs, deps);
+}
+
+/**
+ * `--release <version>`: the CI-signed GitHub release. Its signature is checked here against the
+ * committed release key before anything is uploaded; the instance checks it again (§7.3).
+ */
+async function uploadCiRelease(ctx: Context, version: string, outputs: Record<string, string>, deps: Deps): Promise<string> {
+  if (!VERSION.test(version)) throw new DeployError(`--release takes a version such as 0.2.0, not ${JSON.stringify(version)}`);
+  const pub = await deps.readText(RELEASE_PUB).catch(() => undefined);
+  if (!pub) throw new DeployError(`${RELEASE_PUB} is missing: create the release key first (deployment-aws.md §7.4)`);
+  return deps.withTempDir(async (dir) => {
+    const file = join(dir, releaseAsset(version));
+    await deps.download(releaseUrl(version, releaseAsset(version)), file);
+    await deps.download(releaseUrl(version, `${releaseAsset(version)}.minisig`), `${file}.minisig`);
+    await must(deps.run, "verifying the release signature with release.pub", "minisign", ["-V", "-q", "-p", RELEASE_PUB, "-m", file, "-x", `${file}.minisig`]);
+    const inside = await releaseVersion(file, deps);
+    if (inside !== version) throw new DeployError(`the release tagged ${version} says it is ${inside}`);
+    return publishRelease(ctx, file, version, await deps.sha256File(file), outputs, deps);
+  });
+}
+
+/** Uploads a signed tarball and its signature, then names it as the stage's desired release. */
+async function publishRelease(ctx: Context, file: string, version: string, sha256: string, outputs: Record<string, string>, deps: Deps): Promise<string> {
   const bucket = requireOutput(outputs, "ReleasesBucket");
   await ctx.aws("uploading the release", ["s3", "cp", "--only-show-errors", file, `s3://${bucket}/releases/${version}.tar.gz`]);
   await ctx.aws("uploading the signature", ["s3", "cp", "--only-show-errors", `${file}.minisig`, `s3://${bucket}/releases/${version}.tar.gz.minisig`]);
@@ -226,6 +281,38 @@ async function uploadRelease(ctx: Context, opts: DeployOptions, outputs: Record<
 }
 
 // ---------------------------------------------------------------- DNS and health
+
+/** §6.2: a CAA record that names only Let's Encrypt; missing or different is a warning, not a stop. */
+async function checkCaa(ctx: Context, deps: Deps): Promise<void> {
+  let records: string[];
+  try {
+    records = await resolveCaa(deps.fetch, ctx.host);
+  } catch (e) {
+    deps.log(`Warning: could not check the CAA record of ${ctx.host} (${(e as Error).message}).`);
+    return;
+  }
+  if (!caaAllowsOnlyLetsEncrypt(records)) {
+    deps.log(`Warning: ${ctx.host} has ${records.length === 0 ? "no CAA record" : `CAA ${records.join("; ")}`}. Add CAA 0 issue "letsencrypt.org", so no other CA may issue for it.`);
+  }
+}
+
+/**
+ * Whether a `cdk diff` replaces the EC2 instance: the resource is removed, marked for replacement,
+ * or one of its changed properties requires (or may cause) replacement.
+ */
+export function replacesInstance(diff: string): boolean {
+  let inInstance = false;
+  for (const line of diff.split(/\r?\n/u)) {
+    const resource = /^\[([-+~])\]\s+(\S+)/u.exec(line);
+    if (resource) {
+      inInstance = resource[2] === "AWS::EC2::Instance";
+      if (inInstance && (resource[1] === "-" || /\breplace\b/iu.test(line))) return true;
+      continue;
+    }
+    if (inInstance && /(requires|may cause) replacement/iu.test(line)) return true;
+  }
+  return false;
+}
 
 function printRecords(ctx: Context, elasticIp: string, deps: Deps, verb: "Add" | "Delete"): void {
   const names = stageHostnames(ctx.stage, ctx.host);
@@ -300,6 +387,29 @@ const DELETE_BATCH = 1000;
 /** Deletes every object version and delete marker in a non-prod bucket. The key list goes
  * through a temporary file (`--delete file://…`): inline JSON for 1,000 keys overflows the
  * Windows command-line limit of 32,767 characters. */
+/**
+ * What a destroyed non-prod stack leaves behind, because CloudFormation never owned it (spec-issues
+ * #21): the stage's SSM parameters, written at run time, and the DLM snapshots of its root volume.
+ */
+async function removeLeftovers(ctx: Context, deps: Deps): Promise<{ parameters: number; snapshots: number }> {
+  if (ctx.stage === "prod") throw new DeployError("internal: prod's parameters and snapshots are never removed");
+  const prefix = parameterPrefix(ctx.stage);
+  const names = JSON.parse(
+    (await ctx.aws("listing the stage's parameters", ["ssm", "get-parameters-by-path", "--path", prefix, "--recursive", "--query", "Parameters[].Name", "--output", "json"])) || "[]",
+  ) as string[];
+  for (let i = 0; i < names.length; i += 10) {
+    await ctx.aws("deleting the stage's parameters", ["ssm", "delete-parameters", "--names", ...names.slice(i, i + 10)]);
+  }
+  const snapshots = JSON.parse(
+    (await ctx.aws("listing the stage's snapshots", [
+      "ec2", "describe-snapshots", "--owner-ids", "self", "--filters", `Name=tag:memory-anywhere:stage,Values=${ctx.stage}`, "--query", "Snapshots[].SnapshotId", "--output", "json",
+    ])) || "[]",
+  ) as string[];
+  for (const id of snapshots) await ctx.aws(`deleting snapshot ${id}`, ["ec2", "delete-snapshot", "--snapshot-id", id]);
+  deps.log(`removed ${names.length} parameter(s) under ${prefix} and ${snapshots.length} snapshot(s) of the stage's volume`);
+  return { parameters: names.length, snapshots: snapshots.length };
+}
+
 async function emptyBucket(ctx: Context, bucket: string, deps: Deps): Promise<number> {
   let deleted = 0;
   for (;;) {
@@ -351,7 +461,8 @@ export async function deployAws(opts: DeployOptions, deps: Deps): Promise<void> 
     if (opts.dns !== "manual") throw new DeployError("only --dns manual is implemented (Route 53 is for other self-hosters)");
     if (opts.yes && !nonProd) throw new DeployError("--yes is only allowed for non-prod stages");
     if (opts.releaseFile && !nonProd) throw new DeployError("--release-file (dev-signed) is only allowed for spike and eval stages; prod takes CI-signed releases");
-    if (opts.release) throw new DeployError("--release <version> (CI-signed GitHub releases) arrives in M2");
+    if (opts.release && opts.releaseFile) throw new DeployError("give --release or --release-file, not both");
+    if (opts.release && ctx.stage === "spike") throw new DeployError("the spike trusts only the dev key: use --release-file");
     const alertEmail = (opts.alertEmail ?? deps.env["MA_ALERT_EMAIL"] ?? "").trim();
     if (!EMAIL.test(alertEmail)) throw new DeployError("an alert email is required: --alert-email <address> or MA_ALERT_EMAIL");
 
@@ -363,7 +474,14 @@ export async function deployAws(opts: DeployOptions, deps: Deps): Promise<void> 
 
     const cdk = (args: string[]) => must(deps.run, `cdk ${args[0]}`, process.execPath, [CDK_CLI, ...args], { cwd: DEPLOY_AWS_DIR, inherit: true });
     const params = ["--parameters", `Host=${ctx.host}`, "--parameters", `AlertEmail=${alertEmail}`];
-    await cdk(["diff", stackName(ctx.stage), ...cdkArgs(opts, ctx.stage), ...params]);
+    // The diff is captured, shown, and checked: replacing prod's instance rebuilds its disk from the
+    // backup, so it needs --allow-replace.
+    const diff = await deps.run(process.execPath, [CDK_CLI, "diff", stackName(ctx.stage), ...cdkArgs(opts, ctx.stage), ...params, "--no-color"], { cwd: DEPLOY_AWS_DIR });
+    for (const line of `${diff.stdout}\n${diff.stderr}`.trim().split(/\r?\n/u)) deps.log(line);
+    if (diff.code !== 0 && diff.code !== 1) throw new DeployError(`cdk diff failed (exit ${diff.code})`);
+    if (!nonProd && existing && replacesInstance(`${diff.stdout}\n${diff.stderr}`) && !opts.allowReplace) {
+      throw new DeployError("this change replaces prod's instance; nothing deployed. Rerun with --allow-replace only if that is intended (the store is restored from the backup, deployment-aws.md §5.5)");
+    }
     if (!(opts.yes && nonProd) && !(await deps.confirm(`Deploy ${stackName(ctx.stage)} with the changes above?`))) {
       throw new DeployError("not confirmed; nothing deployed");
     }
@@ -372,9 +490,12 @@ export async function deployAws(opts: DeployOptions, deps: Deps): Promise<void> 
     const outputs = await stackOutputs(ctx);
     if (!outputs) throw new DeployError("the stack deployed but its outputs could not be read");
     const elasticIp = requireOutput(outputs, "ElasticIp");
-    const version = opts.releaseFile ? await uploadRelease(ctx, opts, outputs, deps) : undefined;
+    const version = opts.releaseFile ? await uploadDevRelease(ctx, opts.releaseFile, outputs, deps)
+      : opts.release ? await uploadCiRelease(ctx, opts.release, outputs, deps)
+      : undefined;
 
     printRecords(ctx, elasticIp, deps, "Add");
+    await checkCaa(ctx, deps);
     await waitForDns(ctx, elasticIp, deps);
     if (version) await waitForHealth(ctx, version, deps);
 
@@ -415,6 +536,7 @@ export async function destroyAws(opts: CommonOptions, deps: Deps): Promise<void>
       if (attempt === 3) throw new DeployError("cdk destroy failed three times; see the output above");
       deps.log(`cdk destroy failed (attempt ${attempt}); emptying the buckets again and retrying ...`);
     }
+    if (ctx.stage !== "prod") await removeLeftovers(ctx, deps);
     deps.log(`${stackName(ctx.stage)} destroyed; its Elastic IP is released${ctx.stage === "prod" ? "" : " and its key is scheduled for deletion (30 days)"}.`);
     deps.log(`Check in Cloudflare that the record(s) are gone: ${stageHostnames(ctx.stage, ctx.host).join(", ")}. Keep the CAA record on ${ctx.host}.`);
   });
