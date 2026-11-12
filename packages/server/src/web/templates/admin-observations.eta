@@ -1,0 +1,13 @@
+<% layout("./admin") %>
+<h1>Observations</h1>
+<p class="muted">Things an app noticed once. They become memories when they come up again in another session, or when you promote them.</p>
+<ul class="list">
+<% for (const o of it.rows) { %>
+  <li><%= o.content %> <span class="muted"><%= o.section %> · <%= o.client %> · seen <%= o.mention_count %>× · until <%= o.expires_at %></span>
+    <div class="actions">
+      <form class="act inline" data-action="observation.promote"><input type="hidden" name="id" value="<%= o.id %>"><button type="submit">Promote</button></form>
+      <form class="act inline" data-action="observation.forget"><input type="hidden" name="id" value="<%= o.id %>"><button type="submit" class="secondary">Forget</button></form>
+    </div></li>
+<% } %>
+</ul>
+<% if (it.rows.length === 0) { %><p class="muted">None open.</p><% } %>

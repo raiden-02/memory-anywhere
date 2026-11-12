@@ -27,6 +27,7 @@ import { activeClientFor, createStaticClient } from "./clients.ts";
 import { ADMIN_COOKIE, STEP_UP_MS, type OwnerCredentials } from "./owner.ts";
 import type { Pairing } from "./pairing.ts";
 import type { StepUps } from "./stepup.ts";
+import { adminUi } from "../admin/ui.ts";
 import { secondPasskeyOk, type Passkeys } from "./passkeys.ts";
 import { isVendor, VENDORS, type Method } from "./vendors.ts";
 import { sha256Hex } from "./adapter.ts";
@@ -62,6 +63,7 @@ export function adminRoutes(o: AdminRoutesOptions): Mount {
 
   const sessionCookie = (value: string): string => `${ADMIN_COOKIE}=${value}; Path=/; Secure; HttpOnly; SameSite=Strict`;
   const csrfOf = (idHash: string): string => csrfFor(secret, `admin:${idHash}`);
+  const ui = adminUi({ app, owner, origin, secret, csrfOf });
   const sameOrigin = (req: IncomingMessage): boolean => {
     const site = req.headers["sec-fetch-site"];
     return site === undefined ? req.headers.origin === origin : site === "same-origin";
@@ -249,7 +251,14 @@ export function adminRoutes(o: AdminRoutesOptions): Mount {
         });
         return true;
       }
-      return false;
+      // The admin UI's pages and actions (admin/ui.ts).
+      const served = ui(req, res);
+      if (served === undefined) return false;
+      Promise.resolve(served).then((status) => finish(status, "admin_ui"), () => {
+        if (!res.headersSent) sendJson(res, 500, { error: "server_error" });
+        finish(500, "admin_ui");
+      });
+      return true;
     },
   };
 }

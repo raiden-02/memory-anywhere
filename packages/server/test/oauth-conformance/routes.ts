@@ -10,6 +10,8 @@ import { join } from "node:path";
 
 const SAMPLE = "abcdefghijklmnop"; // fills `:name` segments; also a valid pairing-window id shape
 const STEPUP_SAMPLE = "stp_01JC9Z3N4V8Q2W5X7Y9Z0A1B2C"; // a step-up request id (`:stepup`)
+const MEMORY_SAMPLE = "mem_01JC9Z3N4V8Q2W5X7Y9Z0A1B2C"; // a memory id (`:memory`)
+const ACTION_SAMPLE = "memory.pin"; // an admin UI action (`:action`)
 const METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"];
 /** Paths that must not answer on {host}: other frameworks' and the library's routes this server disables. */
 const ABSENT_MCP = [
@@ -54,8 +56,9 @@ export function allowedRoutes(surface: Surface = "mcp"): AllowedRoute[] {
 export async function routeInventory(origin: string, surface: Surface = "mcp"): Promise<{ unlisted: string[]; silent: string[] }> {
   const allowed = allowedRoutes(surface);
   const ABSENT = surface === "mcp" ? ABSENT_MCP : ABSENT_ADMIN;
-  // `:stepup` needs an id of the right shape to reach its route; every other segment takes SAMPLE.
-  const sample = (a: AllowedRoute) => a.path.replace(/:stepup\b/g, STEPUP_SAMPLE).replace(/:[a-z_]+/g, SAMPLE);
+  // Some segments need a value of the right shape to reach their route; every other one takes SAMPLE.
+  const sample = (a: AllowedRoute) =>
+    a.path.replace(/:stepup\b/g, STEPUP_SAMPLE).replace(/:memory\b/g, MEMORY_SAMPLE).replace(/:action\b/g, ACTION_SAMPLE).replace(/:[a-z_]+/g, SAMPLE);
   const answered = new Set<string>();
   const unlisted: string[] = [];
   for (const path of [...new Set([...ABSENT, ...allowed.map(sample)])]) {

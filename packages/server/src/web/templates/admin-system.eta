@@ -1,0 +1,10 @@
+<% layout("./admin") %>
+<h1>LLM spend</h1>
+<p class="muted">Capped at $<%= it.cap.toFixed(2) %> a day; past it the server works without the LLM until midnight UTC.</p>
+<table class="table"><thead><tr><th>Day</th><th>Use</th><th>USD</th><th>Tokens in / out</th></tr></thead><tbody>
+<% for (const s of it.spend) { %><tr><td><%= s.day %></td><td><%= s.purpose %></td><td><%= s.usd.toFixed(4) %></td><td><%= s.tokens_in %> / <%= s.tokens_out %></td></tr><% } %>
+</tbody></table>
+<h1>Alerts</h1>
+<p class="muted">The daily digest goes out at <%= it.digestHour %>:00 your time (server.toml <span class="code">alerts.digest_hour_local</span>).</p>
+<ul class="list"><% for (const a of it.alerts) { %><li><strong><%= a.kind %></strong> <span class="muted"><%= a.subject %> ×<%= a.count %> · <%= a.last_at %></span></li><% } %></ul>
+<% if (it.alerts.length === 0) { %><p class="muted">No open alerts.</p><% } %>

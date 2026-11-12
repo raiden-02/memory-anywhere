@@ -1,0 +1,17 @@
+<% layout("./admin") %>
+<form class="filters" method="get" action="/memories">
+  <input name="q" value="<%= it.filters.text ?? '' %>" placeholder="Search" aria-label="Search">
+  <select name="section" aria-label="Section"><option value="">All sections</option><% for (const s of it.sections) { %><option value="<%= s.id %>"<% if (s.id === it.filters.section) { %> selected<% } %>><%= s.name %></option><% } %></select>
+  <select name="status" aria-label="Status">
+    <% for (const s of ["", "active", "contested", "pending_review", "forgotten", "superseded"]) { %><option value="<%= s %>"<% if (s === (it.filters.status ?? '')) { %> selected<% } %>><%= s || "Current" %></option><% } %>
+  </select>
+  <button type="submit">Go</button>
+</form>
+<ul class="list">
+<% for (const m of it.rows) { %>
+  <li><a href="/memories/<%= m.id %>"><%= m.content %></a>
+    <span class="muted"><%= m.section %> · <%= m.entity %><% if (m.attribute) { %> · <%= m.attribute %><% } %> · T<%= m.tier %> · <%= m.status %><% if (m.pinned) { %> · pinned<% } %></span></li>
+<% } %>
+</ul>
+<% if (it.rows.length === 0) { %><p class="muted">Nothing found.</p><% } %>
+<% if (it.rows.length === 50) { %><a href="?q=<%= encodeURIComponent(it.filters.text ?? '') %>&amp;section=<%= it.filters.section ?? '' %>&amp;status=<%= it.filters.status ?? '' %>&amp;page=<%= it.filters.page + 1 %>">More</a><% } %>

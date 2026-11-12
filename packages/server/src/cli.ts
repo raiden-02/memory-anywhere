@@ -21,9 +21,7 @@ import { currentPaths } from "@memory-anywhere/contracts/paths";
 import { ensurePrivateDir, writeFileAtomic } from "@memory-anywhere/contracts/secure-fs";
 import { App, SCHEMA_VERSION, SERVER_VERSION } from "./app.ts";
 import { localTokenAuth } from "./api/grant.ts";
-import { createAuth } from "./auth/index.ts";
-import { OwnerCredentials } from "./auth/owner.ts";
-import { Alerts } from "./ops/alerts.ts";
+import type { OwnerCredentials } from "./auth/owner.ts";
 import { defaultConfig, listenTarget, parseConfig, type ListenTarget, type ServerConfigT } from "./config/schema.ts";
 import { activeModel, downloadModel, modelDir, type PinnedModel } from "./embed/manifest.ts";
 import { OnnxEmbedder } from "./embed/onnx.ts";
@@ -145,6 +143,8 @@ async function start(l: Layout, target: ListenTarget, ephemeral: boolean, rateLi
   const hourly: (() => void)[] = [];
   if (mode === "aws") {
     const door = awsDoor(l.config.server.public_url);
+    // The OAuth, passkey and page code loads only for aws mode, so local commands start fast.
+    const { createAuth } = await import("./auth/index.ts");
     const auth = createAuth({ app, door, logger });
     auth.owner.issueFirstSetupToken();
     hourly.push(() => auth.owner.hourly());
@@ -172,7 +172,8 @@ async function start(l: Layout, target: ListenTarget, ephemeral: boolean, rateLi
 }
 
 /** The owner commands run beside a live aws server: the store, its outbox and alerts, without an App. */
-function ownerTools(l: Layout): { owner: OwnerCredentials; close: () => void } {
+async function ownerTools(l: Layout): Promise<{ owner: OwnerCredentials; close: () => void }> {
+  const [{ OwnerCredentials }, { Alerts }] = await Promise.all([import("./auth/owner.ts"), import("./ops/alerts.ts")]);
   const target = listenTarget(l.config);
   if (l.config.server.mode !== "aws" || target.kind !== "unix") throw new Error("this command is for an aws-mode server");
   const db = openStore(l.storeFile, { mode: "aws" });
@@ -241,7 +242,7 @@ async function main(argv: readonly string[]): Promise<void> {
     case "setup-token": {
       // Run by ma-operator.sh setup-link through SSM Run Command, beside the running server (auth-and-security.md §3.1 step 6).
       if (!values.renew) throw new Error("setup-token needs --renew");
-      const { owner, close } = ownerTools(l);
+      const { owner, close } = await ownerTools(l);
       try {
         owner.renewSetupToken();
         process.stdout.write(`${JSON.stringify({ ok: true, expires_in_s: 1800 })}\n`);
@@ -253,7 +254,7 @@ async function main(argv: readonly string[]): Promise<void> {
     case "reset-owner": {
       // Break-glass (§3.3): --schedule takes effect in 24 hours; --cancel stops it.
       if (values.schedule === values.cancel) throw new Error("reset-owner needs --schedule or --cancel");
-      const { owner, close } = ownerTools(l);
+      const { owner, close } = await ownerTools(l);
       try {
         process.stdout.write(`${JSON.stringify(values.schedule ? { ok: true, reset: owner.scheduleReset() } : { ok: owner.cancelReset() })}\n`);
       } finally {

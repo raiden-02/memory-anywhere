@@ -1,0 +1,15 @@
+<% layout("./admin") %>
+<h1>Export keys</h1>
+<p class="muted">Exports are encrypted to one of these age keys. Keep the private key offline.</p>
+<ul class="list">
+<% for (const r of it.recipients) { %><li><strong><%= r.label %></strong> <span class="code"><%= r.fingerprint.replace(/(.{4})(?=.)/g, "$1 ") %></span>
+  <form class="act inline" data-action="recipient.revoke" data-confirm="Remove this key?"><input type="hidden" name="id" value="<%= r.id %>"><button type="submit" class="secondary">Remove</button></form></li><% } %>
+</ul>
+<form class="act stack" data-action="recipient.add">
+  <label>Public key <input name="recipient" placeholder="age1…" required spellcheck="false"></label>
+  <label>Label <input name="label" maxlength="64" required></label>
+  <button type="submit">Add key</button>
+</form>
+<h1>Exports made</h1>
+<ul class="list"><% for (const l of it.log) { %><li><%= l.kind %> <span class="muted"><%= l.at %> · <%= l.client %><% if (l.recipient_fingerprint) { %> · <%= l.recipient_fingerprint %><% } %></span></li><% } %></ul>
+<% if (it.log.length === 0) { %><p class="muted">None yet. Run <span class="code">mema export</span> on your computer.</p><% } %>

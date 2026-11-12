@@ -1,0 +1,41 @@
+<% layout("./admin") %>
+<% if (it.approvals.length > 0) { %>
+<h1>Waiting for your approval</h1>
+<ul class="list"><% for (const a of it.approvals) { %><li><a href="/approve/<%= a.id %>"><%= a.command %></a> <span class="muted"><%= a.client %> · code <%= a.user_code %></span></li><% } %></ul>
+<% } %>
+<h1>Connect an app</h1>
+<form id="pair-form" class="stack">
+  <label for="vendor">App</label>
+  <select id="vendor" name="vendor"><% for (const v of it.vendors) { %><option value="<%= v.id %>"><%= v.label %></option><% } %></select>
+  <label for="method">How it registers</label>
+  <select id="method" name="method"><option value="static">Client id and secret</option><option value="dcr">The app registers itself</option><option value="cimd">The app's published client</option></select>
+  <label for="machineName">Computer name (PC only)</label><input id="machineName" name="machineName" maxlength="40">
+  <label for="otherHost">Its redirect host (Other only)</label><input id="otherHost" name="otherHost" placeholder="app.example.com">
+  <label for="redirectUri">Its redirect URL (Other, with client id and secret)</label><input id="redirectUri" name="redirectUri">
+  <label><input type="checkbox" name="write" checked data-type="bool"> Can save memories</label>
+  <label><input type="checkbox" name="replace" data-type="bool"> Replace its current connection</label>
+  <button type="submit">Open a 10-minute pairing window</button>
+</form>
+<dl id="pair-result" class="result" hidden></dl>
+<h1>Connected apps</h1>
+<% for (const c of it.rows) { %>
+<section class="card">
+  <h2><%= c.display_name %> <span class="muted"><%= c.class %></span></h2>
+  <p class="muted"><%= c.grants %> connection<%= c.grants === 1 ? "" : "s" %><% if (c.lastUsed) { %> · last used <%= c.lastUsed %><% } %> · read <%= c.reads24 %> of <%= c.read_budget_24h %> today · <%= c.saves14 %> saves in 14 days, <%= c.badRate %>% undone by you</p>
+  <form class="act stack" data-action="client.policy">
+    <input type="hidden" name="client_id" value="<%= c.client_id %>">
+    <label><input type="checkbox" name="write" data-type="bool"<% if (c.write) { %> checked<% } %>> Can save</label>
+    <select name="sections" aria-label="Sections"><option value="all"<% if (!c.restricted) { %> selected<% } %>>Reads every section</option><option value="restricted"<% if (c.restricted) { %> selected<% } %>>Reads Profile, Preferences, Interests, Tools</option></select>
+    <select name="save_floor" aria-label="Saves"><option value="none"<% if (c.save_floor === "none") { %> selected<% } %>>Saves become memories</option><option value="observation"<% if (c.save_floor === "observation") { %> selected<% } %>>Saves start as observations</option></select>
+    <select name="elicitation" aria-label="Confirm saves"><option value="none"<% if (c.elicitation === "none") { %> selected<% } %>>No confirmation question</option><option value="verified"<% if (c.elicitation === "verified") { %> selected<% } %>>Confirm saves with a question (Claude)</option></select>
+    <button type="submit" class="secondary">Save policy</button>
+  </form>
+  <form class="act stack" data-action="client.revert" data-confirm="Undo everything this app did in that window?">
+    <input type="hidden" name="client_id" value="<%= c.client_id %>">
+    <label>Undo what it did from <input type="datetime-local" name="since" data-type="datetime" required></label>
+    <label>to <input type="datetime-local" name="until" data-type="datetime" required></label>
+    <button type="submit" class="secondary">Revert</button>
+  </form>
+  <form class="act" data-action="client.revoke" data-confirm="Disconnect this app?"><input type="hidden" name="client_id" value="<%= c.client_id %>"><button type="submit" class="danger-button">Disconnect</button></form>
+</section>
+<% } %>

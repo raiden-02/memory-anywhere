@@ -26,3 +26,18 @@ POST    /approve/:stepup/deny
 # The pages' script and stylesheet (§8)
 GET     /assets/app.js
 GET     /assets/app.css
+
+# The admin UI (§8.1): pages, one action endpoint, and cancelling an owner reset
+GET     /
+GET     /memories
+GET     /memories/:memory
+GET     /reviews
+GET     /observations
+GET     /changes
+GET     /apps
+GET     /sections
+GET     /repos
+GET     /exports
+GET     /system
+POST    /api/act/:action
+POST    /api/reset/cancel

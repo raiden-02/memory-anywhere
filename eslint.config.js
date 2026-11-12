@@ -18,7 +18,7 @@ export default tseslint.config(
     files: ["packages/server/src/web/assets/**/*.js"],
     languageOptions: {
       globals: {
-        document: "readonly", location: "readonly", history: "readonly", navigator: "readonly", fetch: "readonly",
+        window: "readonly", document: "readonly", location: "readonly", history: "readonly", navigator: "readonly", fetch: "readonly",
         setTimeout: "readonly", PublicKeyCredential: "readonly",
       },
     },

@@ -1,0 +1,12 @@
+<% layout("./admin") %>
+<h1>Review</h1>
+<ul class="list">
+<% for (const r of it.rows) { %>
+  <li><span class="muted"><%= r.kind %> · <%= r.client %> · <%= r.created_at %></span><br><%= r.content %>
+    <div class="actions">
+      <form class="act inline" data-action="review.decide"><input type="hidden" name="id" value="<%= r.id %>"><input type="hidden" name="approve" value="true" data-type="bool"><button type="submit">Approve</button></form>
+      <form class="act inline" data-action="review.decide"><input type="hidden" name="id" value="<%= r.id %>"><input type="hidden" name="approve" value="false" data-type="bool"><button type="submit" class="secondary">Reject</button></form>
+    </div></li>
+<% } %>
+</ul>
+<% if (it.rows.length === 0) { %><p class="muted">Nothing waiting.</p><% } %>

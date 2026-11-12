@@ -1,0 +1,6 @@
+<% layout("./layout") %>
+<nav class="nav" aria-label="Admin">
+<% for (const n of it.nav) { %><a href="<%= n.path %>"<% if (n.path === it.active) { %> aria-current="page"<% } %>><%= n.label %></a><% } %>
+</nav>
+<%~ it.body %>
+<p id="msg" role="status"></p>

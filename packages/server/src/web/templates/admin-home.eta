@@ -1,0 +1,24 @@
+<% layout("./admin") %>
+<% if (it.reset) { %>
+<section class="banner">
+  <h1 class="danger">An owner reset is scheduled</h1>
+  <p>At <%= it.reset.effective_at %> every passkey, recovery code and app connection will be removed. If you did not ask for this, cancel it now.</p>
+  <button type="button" id="cancel-reset">Cancel the reset</button>
+</section>
+<% } %>
+<% for (const a of it.alerts) { %>
+<form class="act alert" data-action="alert.ack">
+  <input type="hidden" name="id" value="<%= a.id %>">
+  <span><strong><%= a.kind %></strong><% if (a.subject) { %> · <%= a.subject %><% } %><% if (a.count > 1) { %> · ×<%= a.count %><% } %> <span class="muted"><%= a.last_at %></span></span>
+  <button type="submit" class="secondary">Dismiss</button>
+</form>
+<% } %>
+<div class="tiles">
+  <a class="tile" href="/memories"><span class="n"><%= it.counts.memories %></span>memories</a>
+  <a class="tile" href="/memories?status=contested"><span class="n"><%= it.counts.contested %></span>contested</a>
+  <a class="tile" href="/reviews"><span class="n"><%= it.counts.reviews %></span>to review</a>
+  <a class="tile" href="/observations"><span class="n"><%= it.counts.observations %></span>observations</a>
+  <a class="tile" href="/apps"><span class="n"><%= it.counts.approvals %></span>approvals waiting</a>
+  <a class="tile" href="/system"><span class="n">$<%= it.llmToday.toFixed(2) %></span>LLM today of $<%= it.llmCap.toFixed(2) %></a>
+</div>
+<p class="muted">Store <%= it.healthy ? "healthy" : "not writable" %><% if (it.counts.jobsFailing > 0) { %> · <span class="danger"><%= it.counts.jobsFailing %> failed jobs</span><% } %></p>

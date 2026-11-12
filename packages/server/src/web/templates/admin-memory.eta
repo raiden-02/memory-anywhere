@@ -1,0 +1,43 @@
+<% layout("./admin") %>
+<% const m = it.memory; %>
+<p class="lead"><%= m.content %></p>
+<p class="muted"><%= m.kind %> · <%= m.section %> · <%= m.entity %><% if (m.attribute) { %> · <%= m.attribute %><% } %> · T<%= m.tier %> · <%= m.status %> · <span class="code"><%= m.id %></span></p>
+<div class="actions">
+<% if (m.status === "forgotten") { %>
+  <form class="act" data-action="memory.undo"><input type="hidden" name="id" value="<%= m.id %>"><button type="submit">Restore</button></form>
+<% } else if (m.status !== "purged") { %>
+  <form class="act" data-action="memory.pin"><input type="hidden" name="id" value="<%= m.id %>"><input type="hidden" name="pinned" value="<%= m.pinned ? 'false' : 'true' %>" data-type="bool"><button type="submit" class="secondary"><%= m.pinned ? "Unpin" : "Pin" %></button></form>
+  <form class="act" data-action="memory.forget"><input type="hidden" name="id" value="<%= m.id %>"><button type="submit" class="secondary">Forget</button></form>
+<% } %>
+<% if (m.status !== "purged") { %>
+  <form class="act" data-action="memory.purge" data-confirm="Purge deletes every copy of this text for good. Continue?"><input type="hidden" name="id" value="<%= m.id %>"><button type="submit" class="danger-button">Purge</button></form>
+<% } %>
+</div>
+<% if (m.status === "active" || m.status === "contested") { %>
+<form class="act stack" data-action="memory.edit">
+  <input type="hidden" name="id" value="<%= m.id %>">
+  <label for="content">Edit</label>
+  <textarea id="content" name="content" maxlength="400" rows="3"><%= m.content %></textarea>
+  <select name="change" aria-label="Kind of change"><option value="update">It changed (keeps the old value as history)</option><option value="correction">It was wrong (replaces it)</option></select>
+  <button type="submit">Save</button>
+</form>
+<% } %>
+<% if (it.contested.length > 0) { %>
+<h2>Contested with</h2>
+<ul class="list">
+  <li><%= m.content %> <form class="act inline" data-action="memory.resolve"><input type="hidden" name="keep" value="<%= m.id %>"><button type="submit">Keep this</button></form></li>
+<% for (const c of it.contested) { %>
+  <li><%= c.content %> <span class="muted">T<%= c.tier %></span> <form class="act inline" data-action="memory.resolve"><input type="hidden" name="keep" value="<%= c.id %>"><button type="submit">Keep this</button></form></li>
+<% } %>
+</ul>
+<% } %>
+<h2>History</h2>
+<ol class="list">
+<% for (const v of it.versions) { %>
+  <li><%= v.content ?? "(purged)" %> <span class="muted"><%= v.change_kind %> · T<%= v.tier %> · <%= v.client_id %> · recorded <%= v.recorded_at %><% if (v.valid_from) { %> · from <%= v.valid_from %><% } %><% if (v.valid_to) { %> to <%= v.valid_to %><% } %><% if (v.expired_at) { %> · replaced <%= v.expired_at %><% } %></span></li>
+<% } %>
+</ol>
+<h2>Sources</h2>
+<ul class="list">
+<% for (const s of it.sources) { %><li><%= s.client %> <span class="muted"><%= s.observed_at %></span><% if (s.user_words) { %><br><q><%= s.user_words %></q><% } %></li><% } %>
+</ul>
