@@ -2,6 +2,21 @@
 
 Every failed attempt, wrong assumption and overturned result, with where it is recorded. Newest milestone first.
 
+## M1
+
+| Date | Area | What failed or was overturned | Outcome | Record |
+| --- | --- | --- | --- | --- |
+| 2026-11-09 | Write path | Property tests ran for minutes: every owner-channel save waited the 1.5 s `user_words` re-check against `session_prompt`, which only coding-tool saves should face | The prompt check applies only to coding clients' tool and spool saves in enabled repos | [spec-issues #34](spec-issues.md) |
+| 2026-11-10 | Suite R | The first full pipeline scored 0.597 nDCG@10 on dev, far below BM25. Two causes: the render-time sensitivity check withheld rounds that mention health or money (0.686 → 0.597), and a date in the query was a hard filter that dropped facts dated by when they were said, not when they happened (−0.07); weekday-only phrases also became whole-year ranges | Owner: dates boost and never filter; R runs with the sensitive lexicons off and P gates policy; weekdays name no period. Test split then run once: hybrid beats both baselines | [spec-issues #46, #47](spec-issues.md), [R result](2026-11-10-R-memory-anywhere.json) |
+| 2026-11-10 | Suite W | Early conversions of the public datasets labelled update/new by heuristics and mislabelled items | Labels come from a mechanical subject/relation/object parse of FactConsolidation, with no hand-written label | [w/build.ts](../../evals/datasets/w/build.ts) |
+| 2026-11-10 | Suite W | Without an LLM, 99 of 116 true updates were not recognised as updates: 84 stored beside the old value, 15 merged into it as near duplicates (the conflicting value is lost from the text) | Reported, not gated (0 wrong supersedes holds). M2's extractor handles updates | [M1.md §2](M1.md) |
+| 2026-11-10 | Suite C | The first latency run was cut off by the server's own 60 recalls/hour limit | `--no-rate-limits`, accepted only together with `--ephemeral` | [cli.ts](../../packages/server/src/cli.ts) |
+| 2026-11-10 | Fault tests | The kill-during-drain test hung: it attached the child's `exit` listener after the child had already exited | The exit promise is captured right after spawn | [fault.test.ts](../../packages/client/test/fault.test.ts) |
+| 2026-11-10 | Repo keys | The test that refuses the home folder as a repo failed on Windows and macOS CI: the runner's home and temp paths reach the same folder by different spellings (8.3 names, `/private` symlink) | Both sides are compared as real paths | commit `9a26d69` |
+| 2026-11-10 | Local autostart | A per-user Task Scheduler logon task (spec-issues #22) cannot be registered without admin rights; the probe that "succeeded" ran in a sandbox that virtualises the Task Scheduler. `conhost --headless` (spec-issues #45) exits at once when not started from a console | The HKCU Run key starts a hidden WSH launcher that runs node and retries a crash 3 times; no admin rights | [spec-issues #48](spec-issues.md) |
+| 2026-11-10 | Cursor | Cursor runs one plugin MCP process for all windows, with no workspace, so the proxy's repo key was "none". `${workspaceFolder}` in the plugin's `mcp.json` did not help; the hooks' `cursor-active.json` works in a probe but Cursor's saves still acted for "none" | M1 claims Cursor context and capture only; re-test in M2 after a full Cursor restart | [ADR-0114](../decisions/ADR-0114-cursor-tools-repo.md) |
+| 2026-11-10 | MCP errors | Cursor checks an error result's `structuredContent` against the output schema, so every error became an unreadable schema failure | Errors carry the Error object in `_meta["memory-anywhere/error"]` and no `structuredContent` | [spec-issues #50](spec-issues.md) |
+
 ## M0
 
 | Date | Question | What failed or was overturned | Outcome | Record |
