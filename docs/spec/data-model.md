@@ -294,7 +294,7 @@ CREATE TABLE review_item (
 
 CREATE TABLE job (
   id          TEXT PRIMARY KEY,
-  kind        TEXT NOT NULL CHECK (kind IN ('extract','reslot','embed','reembed','section_cluster','purge','expire','digest','vacuum','manifest','prune')),
+  kind        TEXT NOT NULL CHECK (kind IN ('extract','reslot','embed','reembed','section_cluster','purge','expire','digest','vacuum','manifest','prune','hmac_rotate')),
   payload_json TEXT NOT NULL,                       -- ids only
   attempts    INTEGER NOT NULL DEFAULT 0,
   next_at     TEXT NOT NULL,

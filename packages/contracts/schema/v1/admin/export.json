@@ -1,0 +1,24 @@
+{
+  "type": "object",
+  "properties": {
+    "section": {
+      "type": "string",
+      "const": "projects"
+    },
+    "format": {
+      "type": "string",
+      "const": "json"
+    },
+    "include_auth": {
+      "type": "boolean"
+    },
+    "recipient": {
+      "type": "string",
+      "pattern": "^age1[0-9a-z]{58}$"
+    }
+  },
+  "required": [
+    "include_auth"
+  ],
+  "additionalProperties": false
+}

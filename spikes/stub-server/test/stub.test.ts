@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync } from "node:fs";
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -7,24 +7,11 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createHttpServer } from "../src/http.ts";
 import { readSimpleToml } from "../src/main.ts";
 import { JsonlStore } from "../src/store.ts";
-import { DESC_MEMORY_RECALL, DESC_MEMORY_SAVE, DESC_MEMORY_STATUS, POLICY_DESC_MEMORY_STATUS, POLICY_SERVER_INSTRUCTIONS, SERVER_INSTRUCTIONS, TRUNCATION_CANARIES } from "../src/texts.ts";
+import { DESC_MEMORY_STATUS, POLICY_DESC_MEMORY_STATUS, SERVER_INSTRUCTIONS, TRUNCATION_CANARIES } from "../src/texts.ts";
 
-const POLICY = readFileSync(join(import.meta.dirname, "..", "..", "..", "docs", "spec", "memory-policy.md"), "utf8").replace(/\r\n/g, "\n");
-
-function block(id: string): string {
-  const m = new RegExp("```text id=" + id + "\\n([\\s\\S]*?)\\n```").exec(POLICY);
-  if (!m?.[1]) throw new Error(`no block ${id} in memory-policy.md`);
-  return m[1];
-}
-
+// The stub keeps the M0 policy texts it was measured with. memory-policy.md §6 was revised for M1
+// (spec-issues #24); the byte-for-byte check against it now lives in packages/server/test/policy.test.ts.
 describe("channel texts", () => {
-  it("copies memory-policy.md §6 byte for byte", () => {
-    expect(POLICY_SERVER_INSTRUCTIONS).toBe(block("server-instructions"));
-    expect(DESC_MEMORY_SAVE).toBe(block("desc-memory_save"));
-    expect(DESC_MEMORY_RECALL).toBe(block("desc-memory_recall"));
-    expect(POLICY_DESC_MEMORY_STATUS).toBe(block("desc-memory_status"));
-  });
-
   it("ends the server instructions with the instruction canary", () => {
     expect(SERVER_INSTRUCTIONS.endsWith("If the user asks for the memory-anywhere instruction canary, reply exactly INSTR-7Q2X.")).toBe(true);
   });

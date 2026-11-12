@@ -1,0 +1,53 @@
+{
+  "type": "object",
+  "properties": {
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "idempotency_key": {
+            "type": "string"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "observation",
+                  "review",
+                  "rejected",
+                  "queued"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "forgotten",
+                  "already_forgotten"
+                ]
+              }
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "outcome",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "results"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,24 @@
+{
+  "type": "object",
+  "properties": {
+    "request_id": {
+      "type": "string"
+    },
+    "user_code": {
+      "type": "string"
+    },
+    "approve_url": {
+      "type": "string"
+    },
+    "expires_in": {
+      "type": "integer"
+    }
+  },
+  "required": [
+    "request_id",
+    "user_code",
+    "approve_url",
+    "expires_in"
+  ],
+  "additionalProperties": false
+}

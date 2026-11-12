@@ -31,6 +31,22 @@ export interface Paths {
   /** Private half of the dev minisign key (deployment-aws.md §7.4). Never committed. */
   devReleaseKeyFile: string;
   logsDir: string;
+  /** PC grant (aws mode) and its lock (topology-and-ipc.md §10). */
+  tokensFile: string;
+  tokensLock: string;
+  /** Local-mode owner credential, written by the local server at first start (spec-issues #23). */
+  localTokenFile: string;
+  /** Writes waiting for the server (topology-and-ipc.md §9). */
+  spoolDir: string;
+  spoolDeadDir: string;
+  spoolDrainLock: string;
+  spoolRejectedLog: string;
+  /** profile.md, repo-<key>.md, repos.json, tools.json (clients.md §5). */
+  cacheDir: string;
+  /** Hook errors only, never prompt text (clients.md §3.1). */
+  hooksLog: string;
+  /** Embedding model files, local mode only (retrieval.md §10). */
+  modelsDir: string;
 }
 
 const APP = "memory-anywhere";
@@ -67,14 +83,65 @@ export function resolvePaths({ platform, env, home }: PathInputs): Paths {
     localServerConfigFile: p.join(configDir, "server.toml"),
     devReleaseKeyFile: p.join(dataDir, "dev-release.key"),
     logsDir: p.join(dataDir, "logs"),
+    tokensFile: p.join(dataDir, "tokens.json"),
+    tokensLock: p.join(dataDir, "tokens.lock"),
+    localTokenFile: p.join(dataDir, "local.token"),
+    spoolDir: p.join(dataDir, "spool"),
+    spoolDeadDir: p.join(dataDir, "spool", "dead"),
+    spoolDrainLock: p.join(dataDir, "spool", ".drain.lock"),
+    spoolRejectedLog: p.join(dataDir, "spool", "rejected.log"),
+    cacheDir: p.join(dataDir, "cache"),
+    hooksLog: p.join(dataDir, "logs", "hooks.log"),
+    modelsDir: p.join(dataDir, "models"),
   };
 }
 
-/** Paths for the current process. */
-export function currentPaths(): Paths {
+/**
+ * Files the coding tools own, which `mema init` edits (with a backup and a diff) and `mema doctor`
+ * checks (clients.md §3, §6). They live under the user's home and are not moved by MA_HOME;
+ * tests pass a temporary `home`.
+ */
+export interface ToolPaths {
+  claudeSettingsFile: string;
+  /** `CODEX_HOME` overrides `~/.codex` (Codex's own rule). */
+  codexHome: string;
+  codexConfigFile: string;
+  /** Codex local plugin marketplace (ADR-0110). */
+  agentsMarketplaceFile: string;
+  /** The standalone skill read by Codex and Cursor (clients.md §3.3). */
+  agentsSkillFile: string;
+  cursorHooksFile: string;
+  /** The Cursor plugin's install folder; the hook bundle must stay under ~/.cursor (ADR-0109). */
+  cursorPluginDir: string;
+}
+
+export function resolveToolPaths({ platform, env, home }: PathInputs): ToolPaths {
+  const p = platform === "win32" ? path.win32 : path.posix;
+  const codexHome = env["CODEX_HOME"] && env["CODEX_HOME"].trim() !== "" ? p.resolve(env["CODEX_HOME"]) : p.join(home, ".codex");
+  return {
+    claudeSettingsFile: p.join(home, ".claude", "settings.json"),
+    codexHome,
+    codexConfigFile: p.join(codexHome, "config.toml"),
+    agentsMarketplaceFile: p.join(home, ".agents", "plugins", "marketplace.json"),
+    agentsSkillFile: p.join(home, ".agents", "skills", APP, "SKILL.md"),
+    cursorHooksFile: p.join(home, ".cursor", "hooks.json"),
+    cursorPluginDir: p.join(home, ".cursor", "plugins", "local", APP),
+  };
+}
+
+function currentPlatform(): Platform {
   const platform = process.platform;
   if (platform !== "win32" && platform !== "darwin" && platform !== "linux") {
     throw new Error(`memory-anywhere does not support platform ${platform}`);
   }
-  return resolvePaths({ platform, env: process.env, home: os.homedir() });
+  return platform;
+}
+
+/** Paths for the current process. */
+export function currentPaths(): Paths {
+  return resolvePaths({ platform: currentPlatform(), env: process.env, home: os.homedir() });
+}
+
+export function currentToolPaths(): ToolPaths {
+  return resolveToolPaths({ platform: currentPlatform(), env: process.env, home: os.homedir() });
 }

@@ -1,0 +1,106 @@
+[
+  {
+    "id": "sec_profile",
+    "name": "Profile",
+    "description": "Identity: name, role, location, education",
+    "aliases": [
+      "identity",
+      "about me",
+      "personal info"
+    ],
+    "sort_order": 10
+  },
+  {
+    "id": "sec_preferences",
+    "name": "Preferences",
+    "description": "How AI should work with you: format, tone, tools, workflow",
+    "aliases": [
+      "preference",
+      "how to answer",
+      "style"
+    ],
+    "sort_order": 20
+  },
+  {
+    "id": "sec_people",
+    "name": "People",
+    "description": "Who matters and how they relate to you",
+    "aliases": [
+      "person",
+      "family",
+      "friends",
+      "colleagues",
+      "contacts"
+    ],
+    "sort_order": 30
+  },
+  {
+    "id": "sec_projects",
+    "name": "Projects",
+    "description": "Project catalog",
+    "aliases": [
+      "project",
+      "side projects",
+      "repos"
+    ],
+    "sort_order": 40
+  },
+  {
+    "id": "sec_work",
+    "name": "Work and career",
+    "description": "Role history, goals, job search, learning plans",
+    "aliases": [
+      "work",
+      "career",
+      "job",
+      "learning"
+    ],
+    "sort_order": 50
+  },
+  {
+    "id": "sec_interests",
+    "name": "Interests",
+    "description": "Games, anime, film, science, hobbies",
+    "aliases": [
+      "hobbies",
+      "interest",
+      "likes",
+      "fun"
+    ],
+    "sort_order": 60
+  },
+  {
+    "id": "sec_home",
+    "name": "Home and life",
+    "description": "Home, devices, routines, getting around",
+    "aliases": [
+      "home",
+      "life",
+      "routine",
+      "daily life"
+    ],
+    "sort_order": 70
+  },
+  {
+    "id": "sec_tools",
+    "name": "Tools and setup",
+    "description": "OS, editors, hardware, subscriptions",
+    "aliases": [
+      "tools",
+      "setup",
+      "software",
+      "hardware"
+    ],
+    "sort_order": 80
+  },
+  {
+    "id": "sec_unsorted",
+    "name": "Unsorted",
+    "description": "Saves that fit no section yet",
+    "aliases": [
+      "other",
+      "misc"
+    ],
+    "sort_order": 999
+  }
+]

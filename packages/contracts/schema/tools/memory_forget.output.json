@@ -1,0 +1,30 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^mem_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "forgotten",
+        "review",
+        "already_forgotten"
+      ]
+    },
+    "message": {
+      "type": "string"
+    },
+    "undo_until": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "id",
+    "outcome",
+    "message"
+  ],
+  "additionalProperties": false
+}

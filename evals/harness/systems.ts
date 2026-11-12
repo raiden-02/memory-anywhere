@@ -13,6 +13,9 @@ import { docVectors, rrf, topByDot } from "../../spikes/embed-bench/src/bench.ts
 import { Embedder } from "../../spikes/embed-bench/src/embedder.ts";
 import { modelDir } from "../../spikes/embed-bench/src/fetch-models.ts";
 import { CANDIDATES, type Candidate } from "../../spikes/embed-bench/src/models.ts";
+import { lmeDate, memoryAnywhereRank } from "../adapters/memory-anywhere.ts";
+import { activeModel } from "../../packages/server/src/embed/manifest.ts";
+import { OnnxEmbedder } from "../../packages/server/src/embed/onnx.ts";
 import type { RetrievalItem } from "./lme.ts";
 import type { RankingSystem } from "./suite-r.ts";
 
@@ -57,6 +60,31 @@ export async function systemsFromRegistry(requested: string | undefined): Promis
     systems.push({ name: `hybrid:${c.id}`, rank: async (docs, q, item) => rrf([bm25Rank(docs, q), await vectorTop(need(item))]) });
   }
   return systems;
+}
+
+/**
+ * The full system: the server's ranking over a store seeded with each haystack (spec-issues #26).
+ * Document vectors are the pinned model's cached ones; queries go through the server's embedder.
+ */
+export function memoryAnywhereSystem(): RankingSystem | undefined {
+  const c = CANDIDATES.find((x) => x.id === activeModel().name);
+  if (!c || !modelPresent(c)) {
+    process.stderr.write("skipping memory-anywhere: the pinned model is not fetched (node spikes/embed-bench/src/fetch-models.ts)\n");
+    return undefined;
+  }
+  let corpus: Promise<Embedder> | undefined;
+  let query: Promise<OnnxEmbedder> | undefined;
+  return {
+    name: "memory-anywhere",
+    rank: async (_docs, q, item) => {
+      if (!item) throw new Error("memory-anywhere needs the question item");
+      corpus ??= Embedder.load(c, { device: process.platform === "win32" ? "dml" : "cpu" });
+      query ??= OnnxEmbedder.load(modelDir(c), activeModel());
+      const vectors = await docVectors(await corpus, item);
+      const seeded = item.docs.map((d, i) => ({ ...d, at: d.date ? lmeDate(d.date) : 0, vector: vectors[i] ?? new Float32Array(c.dims) }));
+      return memoryAnywhereRank(await query, seeded, q, item.questionDate ? lmeDate(item.questionDate) : Date.now());
+    },
+  };
 }
 
 export function gitSha(): string {

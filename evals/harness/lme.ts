@@ -26,12 +26,16 @@ export interface LmeQuestion {
 export interface Doc {
   id: string;
   text: string;
+  /** The session's date (LongMemEval format), when known. */
+  date?: string;
 }
 
 export interface RetrievalItem {
   qid: string;
   category: Category;
   query: string;
+  /** When the question is asked (LongMemEval format). */
+  questionDate?: string;
   docs: Doc[];
   relevant: string[];
 }
@@ -47,13 +51,13 @@ export function categoryOf(q: Pick<LmeQuestion, "question_id" | "question_type">
 }
 
 /** Split one session into rounds: each user turn with the assistant turns up to the next user turn. */
-export function rounds(sessionId: string, turns: Turn[]): { doc: Doc; relevant: boolean }[] {
+export function rounds(sessionId: string, turns: Turn[], date?: string): { doc: Doc; relevant: boolean }[] {
   const out: { doc: Doc; relevant: boolean }[] = [];
   let current: Turn[] = [];
   const flush = () => {
     if (current.length === 0) return;
     out.push({
-      doc: { id: `${sessionId}#${out.length}`, text: current.map((t) => `${t.role}: ${t.content}`).join("\n") },
+      doc: { id: `${sessionId}#${out.length}`, text: current.map((t) => `${t.role}: ${t.content}`).join("\n"), ...(date ? { date } : {}) },
       relevant: current.some((t) => t.has_answer === true),
     });
     current = [];
@@ -71,13 +75,13 @@ export function toRetrievalItem(q: LmeQuestion): RetrievalItem {
   const relevant: string[] = [];
   q.haystack_sessions.forEach((turns, i) => {
     const sid = q.haystack_session_ids[i] ?? `s${i}`;
-    for (const r of rounds(sid, turns)) {
+    for (const r of rounds(sid, turns, q.haystack_dates[i])) {
       docs.push(r.doc);
       if (r.relevant) relevant.push(r.doc.id);
     }
   });
   const category = categoryOf(q);
-  return { qid: q.question_id, category, query: q.question, docs, relevant: category === "abstention" ? [] : relevant };
+  return { qid: q.question_id, category, query: q.question, questionDate: q.question_date, docs, relevant: category === "abstention" ? [] : relevant };
 }
 
 export function loadLme(file: string): LmeQuestion[] {

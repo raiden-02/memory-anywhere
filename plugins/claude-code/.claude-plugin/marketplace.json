@@ -1,0 +1,12 @@
+{
+  "name": "memory-anywhere",
+  "description": "The memory-anywhere plugin, installed from this PC by mema init",
+  "owner": { "name": "memory-anywhere" },
+  "plugins": [
+    {
+      "name": "memory-anywhere",
+      "source": "./",
+      "description": "Personal memory across AI apps"
+    }
+  ]
+}

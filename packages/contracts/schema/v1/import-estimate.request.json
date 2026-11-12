@@ -1,0 +1,39 @@
+{
+  "type": "object",
+  "properties": {
+    "source_type": {
+      "type": "string",
+      "maxLength": 32
+    },
+    "file_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "turns": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "chars": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "item_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "since": {
+      "type": "string"
+    },
+    "until": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "source_type",
+    "file_sha256",
+    "turns",
+    "chars",
+    "item_count"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,63 @@
+name: nightly
+
+# The slower checks (evals.md §3, operations.md §9): suites W and R on their test splits with the
+# real model, and fault injection with 100 kills each. Result files are uploaded as artifacts.
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evals:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    defaults:
+      run:
+        working-directory: work space
+    env:
+      MA_TEST_MODEL_DIR: ${{ github.workspace }}/model cache/embeddinggemma
+      MA_FAULT_RUNS: "100"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: work space
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          package_json_file: work space/package.json
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24.22.2"
+          cache: pnpm
+          cache-dependency-path: work space/pnpm-lock.yaml
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: model cache
+          key: model-${{ hashFiles('work space/config/models.json') }}
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          # Public datasets and the document vectors computed from them (not committed).
+          path: |
+            work space/evals/datasets/public/data
+            work space/spikes/embed-bench/out
+          key: eval-data-${{ hashFiles('work space/evals/datasets/public/**/*.ts', 'work space/evals/datasets/public/longmemeval-s/split.json', 'work space/config/models.json') }}
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/fetch-model.ts "$MA_TEST_MODEL_DIR"
+      - name: fault injection (100 kills each)
+        run: pnpm vitest run packages/server/test/fault.test.ts packages/client/test/fault.test.ts
+      - name: suite W (test split)
+        run: node evals/harness/cli.ts run --suite W --split test --out "w-test.json"
+      - name: model files for suite R's document vectors (cached with the data)
+        run: node spikes/embed-bench/src/fetch-models.ts embeddinggemma-300m-q4
+      - name: suite R (test split)
+        run: node evals/harness/cli.ts run --suite R --split test --system bm25,vector:embeddinggemma-300m-q4,memory-anywhere --out "r-test.json"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: nightly-results
+          path: |
+            work space/w-test.json
+            work space/r-test.json

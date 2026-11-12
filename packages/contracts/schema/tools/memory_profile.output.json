@@ -1,0 +1,341 @@
+{
+  "type": "object",
+  "properties": {
+    "notice": {
+      "type": "string"
+    },
+    "policy_version": {
+      "type": "string"
+    },
+    "profile_etag": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "text": {
+      "type": "string",
+      "maxLength": 6000
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "owner_preferences": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^mem_[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "fact",
+              "preference",
+              "instruction",
+              "event"
+            ]
+          },
+          "entity": {
+            "type": "string"
+          },
+          "section": {
+            "type": "string"
+          },
+          "attribute": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 400
+          },
+          "valid_from": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "valid_to": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recorded_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "T0",
+              "T1",
+              "T2",
+              "T3"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "contested",
+              "superseded"
+            ]
+          },
+          "contested_with": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^mem_[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          "via": {
+            "type": "string",
+            "description": "display name of the client of the first source"
+          },
+          "expires_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "entity",
+          "section",
+          "content",
+          "recorded_at",
+          "tier",
+          "status",
+          "via"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "pinned": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^mem_[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "fact",
+              "preference",
+              "instruction",
+              "event"
+            ]
+          },
+          "entity": {
+            "type": "string"
+          },
+          "section": {
+            "type": "string"
+          },
+          "attribute": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 400
+          },
+          "valid_from": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "valid_to": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recorded_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "T0",
+              "T1",
+              "T2",
+              "T3"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "contested",
+              "superseded"
+            ]
+          },
+          "contested_with": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^mem_[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          "via": {
+            "type": "string",
+            "description": "display name of the client of the first source"
+          },
+          "expires_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "entity",
+          "section",
+          "content",
+          "recorded_at",
+          "tier",
+          "status",
+          "via"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "key_facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^mem_[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "fact",
+              "preference",
+              "instruction",
+              "event"
+            ]
+          },
+          "entity": {
+            "type": "string"
+          },
+          "section": {
+            "type": "string"
+          },
+          "attribute": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 400
+          },
+          "valid_from": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "valid_to": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recorded_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "T0",
+              "T1",
+              "T2",
+              "T3"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "contested",
+              "superseded"
+            ]
+          },
+          "contested_with": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^mem_[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          "via": {
+            "type": "string",
+            "description": "display name of the client of the first source"
+          },
+          "expires_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "entity",
+          "section",
+          "content",
+          "recorded_at",
+          "tier",
+          "status",
+          "via"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "pending_review_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "offline": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "notice",
+    "policy_version",
+    "profile_etag",
+    "text",
+    "sections",
+    "owner_preferences",
+    "pinned",
+    "key_facts",
+    "pending_review_count"
+  ],
+  "additionalProperties": false
+}

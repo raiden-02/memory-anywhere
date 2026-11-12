@@ -3,6 +3,22 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./paths": "./src/paths.ts"
+    "./paths": "./src/paths.ts",
+    "./ids": "./src/ids.ts",
+    "./normalize": "./src/normalize.ts",
+    "./redact": "./src/redact.ts",
+    "./reasons": "./src/reasons.ts",
+    "./spool": "./src/spool.ts",
+    "./secure-fs": "./src/secure-fs.ts",
+    "./json-schema": "./src/json-schema.ts",
+    "./schemas/common": "./src/schemas/common.ts",
+    "./schemas/tools": "./src/schemas/tools.ts",
+    "./schemas/v1": "./src/schemas/v1.ts",
+    "./schemas/export": "./src/schemas/export.ts",
+    "./policy-data": "./src/generated/policy-data.ts"
+  },
+  "dependencies": {
+    "ulid": "3.0.2",
+    "zod": "4.6.7"
   }
 }

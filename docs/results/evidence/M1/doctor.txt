@@ -1,0 +1,17 @@
+# mema doctor on the owner's PC, 2026-11-11, run from the enabled test repo
+pass  store.reachable                   http://127.0.0.1:47821 answers
+pass  store.version                     client 0.1.0, server 0.1.0
+pass  local.token                       present
+pass  claude-code.plugin                installed
+pass  claude-code.hooks                 both hooks point at the bundle
+pass  claude-code.duplicate-connector   tools appear once
+pass  codex.plugin                      installed and enabled
+pass  codex.hooks-trusted               both hooks trusted
+pass  cursor.plugin                     present
+pass  cursor.hooks                      both hooks point at the plugin's bundle
+pass  skill.single                      %USERPROFILE%\.agents\skills\memory-anywhere\SKILL.md
+pass  shadow-servers                    3 known repos clean
+pass  foreign-hooks                     none
+pass  repos.enabled                     1 enabled; deny-list: (empty)
+pass  spool                             0 waiting
+pass  caches                            fresh

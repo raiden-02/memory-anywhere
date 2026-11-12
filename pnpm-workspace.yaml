@@ -12,3 +12,6 @@ allowBuilds:
   # M0 Q14: the package already carries its prebuilt binaries; the script is not needed (ADR-0005).
   onnxruntime-node: false
   # better-sqlite3 is not used: the server uses node:sqlite (M0 Q22, ADR-0006).
+  # Dev-only bundler for the client (dist/memory-anywhere.mjs). Its binary comes from the
+  # per-platform optional package; the postinstall script only re-checks it.
+  esbuild: false

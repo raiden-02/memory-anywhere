@@ -1,0 +1,13 @@
+{
+  "type": "object",
+  "properties": {
+    "repo_key": {
+      "type": "string",
+      "pattern": "^(?:rk_[0-9a-f]{32}|none)$"
+    }
+  },
+  "required": [
+    "repo_key"
+  ],
+  "additionalProperties": false
+}

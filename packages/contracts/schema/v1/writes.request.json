@@ -1,0 +1,63 @@
+{
+  "type": "object",
+  "properties": {
+    "entries": {
+      "minItems": 1,
+      "maxItems": 100,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "idempotency_key": {
+            "type": "string",
+            "pattern": "^(spl|pxs)_[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "op": {
+            "type": "string",
+            "enum": [
+              "prompt",
+              "save",
+              "forget"
+            ]
+          },
+          "observed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "tool": {
+            "type": "string",
+            "enum": [
+              "claude-code",
+              "codex",
+              "cursor"
+            ]
+          },
+          "repo_key": {
+            "type": "string"
+          },
+          "session_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "payload": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "op",
+          "observed_at",
+          "payload"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "dry_run": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "entries"
+  ],
+  "additionalProperties": false
+}
