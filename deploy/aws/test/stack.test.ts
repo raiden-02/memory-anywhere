@@ -81,7 +81,12 @@ describe("spike stack", () => {
     spike.hasParameter("Host", { Type: "String" });
     spike.hasParameter("AlertEmail", { Type: "String" });
     // CloudFormation resolves SSM parameter types with the cfn-exec role, which may not read them.
-    expect(Object.keys(spike.toJSON()["Parameters"] as object).sort()).toEqual(["AlertEmail", "Host"]);
+    expect(Object.keys(spike.toJSON()["Parameters"] as object).sort()).toEqual(["AlertEmail", "Host", "OwnerTimezone"]);
+    const tz = (spike.toJSON()["Parameters"] as Record<string, { AllowedPattern: string; Default: string }>)["OwnerTimezone"];
+    expect(tz?.Default).toBe("UTC");
+    const re = new RegExp(tz?.AllowedPattern ?? "");
+    for (const ok of ["UTC", "Europe/Berlin", "America/Argentina/Buenos_Aires", "Etc/GMT+5"]) expect(re.test(ok)).toBe(true);
+    for (const bad of ["", "Europe/Berlin; rm -rf /", "../etc", "a b"]) expect(re.test(bad)).toBe(false);
     expect(spikeJson).not.toContain("AWS::SSM::Parameter::Value");
     expect(spikeJson).not.toMatch(/example\.com|@gmail|memory\.[a-z]+\.(com|org|net)/);
   });
@@ -222,6 +227,7 @@ describe("spike stack", () => {
       region: "us-east-1",
       host: "memory.example.com",
       alertEmail: "owner@example.com",
+      ownerTimezone: "America/Argentina/Buenos_Aires",
       releasesBucket: "memory-anywhere-releases-111111111111-us-east-1-spike",
       backupBucket: "memory-anywhere-backup-111111111111-us-east-1-spike",
       keyArn: "arn:aws:kms:us-east-1:111111111111:key/00000000-0000-0000-0000-000000000000",

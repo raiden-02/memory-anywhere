@@ -473,7 +473,9 @@ export async function deployAws(opts: DeployOptions, deps: Deps): Promise<void> 
     if (!existing && opts.update) throw new DeployError(`${stackName(ctx.stage)} does not exist yet: run without --update first`);
 
     const cdk = (args: string[]) => must(deps.run, `cdk ${args[0]}`, process.execPath, [CDK_CLI, ...args], { cwd: DEPLOY_AWS_DIR, inherit: true });
-    const params = ["--parameters", `Host=${ctx.host}`, "--parameters", `AlertEmail=${alertEmail}`];
+    // The owner's time zone is this PC's: the digest and nightly maintenance run in local time.
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+    const params = ["--parameters", `Host=${ctx.host}`, "--parameters", `AlertEmail=${alertEmail}`, "--parameters", `OwnerTimezone=${timezone}`];
     // The diff is captured, shown, and checked: replacing prod's instance rebuilds its disk from the
     // backup, so it needs --allow-replace.
     const diff = await deps.run(process.execPath, [CDK_CLI, "diff", stackName(ctx.stage), ...cdkArgs(opts, ctx.stage), ...params, "--no-color"], { cwd: DEPLOY_AWS_DIR });

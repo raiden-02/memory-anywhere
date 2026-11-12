@@ -31,6 +31,8 @@ export interface UserDataInput {
   region: string;
   host: string;
   alertEmail: string;
+  /** IANA time zone (the OwnerTimezone parameter). */
+  ownerTimezone: string;
   releasesBucket: string;
   backupBucket: string;
   keyArn: string;
@@ -86,6 +88,7 @@ function stackEnv(input: UserDataInput): string[] {
     ["MA_REGION", input.region],
     ["MA_HOST", input.host],
     ["MA_ALERT_EMAIL", input.alertEmail],
+    ["MA_OWNER_TZ", input.ownerTimezone],
     ["MA_RELEASES_BUCKET", input.releasesBucket],
     ["MA_BACKUP_BUCKET", input.backupBucket],
     ["MA_KEY_ARN", input.keyArn],

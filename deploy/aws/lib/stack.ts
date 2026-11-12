@@ -88,6 +88,13 @@ export class MemoryAnywhereStack extends Stack {
       allowedPattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
       constraintDescription: "an email address",
     });
+    const ownerTimezone = new CfnParameter(this, "OwnerTimezone", {
+      type: "String",
+      description: "The owner's IANA time zone: the daily digest and the nightly maintenance run in owner local time",
+      default: "UTC",
+      allowedPattern: "^[A-Za-z][A-Za-z0-9_+\\-]*(/[A-Za-z0-9_+\\-]+){0,2}$",
+      constraintDescription: "an IANA time zone such as Europe/Berlin",
+    });
 
     // ---- Principals referenced by policies ----
     const accountRootArn = `arn:${Aws.PARTITION}:iam::${account}:root`;
@@ -357,6 +364,7 @@ export class MemoryAnywhereStack extends Stack {
       region,
       host: host.valueAsString,
       alertEmail: alertEmail.valueAsString,
+      ownerTimezone: ownerTimezone.valueAsString,
       releasesBucket: releasesBucket.bucketName,
       backupBucket: backupBucket.bucketName,
       keyArn: key.keyArn,
