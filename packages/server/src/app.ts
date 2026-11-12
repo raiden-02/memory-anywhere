@@ -16,6 +16,8 @@ import { prepared } from "./store/db.ts";
 import { assertSchemaCurrent, latestVersion } from "./store/migrate.ts";
 import type { WriteEnv } from "./write/pipeline.ts";
 import { RateLimiter, UNLIMITED, type Limiter } from "./http/rate.ts";
+import { Alerts } from "./ops/alerts.ts";
+import { NO_OUTBOX, type Outbox } from "./ops/outbox.ts";
 import { HOUR_MS } from "./store/clock.ts";
 
 const PACKAGE = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as { version: string };
@@ -36,6 +38,8 @@ export interface AppOptions {
   readonly ids?: IdSource;
   /** Off only for an ephemeral server used by latency evals (`--no-rate-limits`). */
   readonly rateLimits?: boolean;
+  /** Where alerts and other outbound files go (aws mode); none by default. */
+  readonly outbox?: Outbox;
 }
 
 /** Per-client limits that hold on every route (operations.md §3). */
@@ -44,9 +48,9 @@ export interface ClientLimits {
   readonly recall: Limiter;
   /** Prompt intake (/v1/writes op prompt): 600 per hour per client. */
   readonly prompt: Limiter;
-  /** /mcp and /v1 requests: 120 per minute per grant. */
+  /** /mcp and /v1 requests per grant (`rate_limits.mcp_per_grant_per_min`, 120 per minute). */
   readonly requests: Limiter;
-  /** Requests without a valid token: 30 per minute per IP prefix. */
+  /** Requests without a valid credential per IP prefix (`rate_limits.unauth_per_ip_per_min`, 30 per minute). */
   readonly unauthenticated: Limiter;
 }
 
@@ -57,6 +61,8 @@ export class App {
   readonly index: VectorIndex;
   readonly sessions = new SessionStartCache();
   readonly limits: ClientLimits;
+  readonly outbox: Outbox;
+  readonly alerts: Alerts;
   readonly write: WriteEnv;
   readonly read: ReadEnv;
 
@@ -69,13 +75,20 @@ export class App {
     this.ctx = { db: o.db, clock: o.clock ?? systemClock, ids: o.ids ?? idSource() };
     this.config = o.config;
     this.embedder = o.embedder;
+    this.outbox = o.outbox ?? NO_OUTBOX;
+    this.alerts = new Alerts(this.ctx, this.outbox);
     this.index = VectorIndex.load(o.db, o.embedder.modelId);
-    this.write = { ctx: this.ctx, config: o.config, embedder: o.embedder, onCommit: (ids) => this.committed(ids) };
-    this.read = { ctx: this.ctx, config: o.config, embedder: o.embedder, index: this.index };
+    this.write = { ctx: this.ctx, config: o.config, embedder: o.embedder, onCommit: (ids) => this.committed(ids), alerts: this.alerts };
+    this.read = { ctx: this.ctx, config: o.config, embedder: o.embedder, index: this.index, alerts: this.alerts };
     const now = (): number => this.ctx.clock.now();
     this.limits = o.rateLimits === false
       ? { recall: UNLIMITED, prompt: UNLIMITED, requests: UNLIMITED, unauthenticated: UNLIMITED }
-      : { recall: new RateLimiter(60, HOUR_MS, now), prompt: new RateLimiter(600, HOUR_MS, now), requests: new RateLimiter(120, 60_000, now), unauthenticated: new RateLimiter(30, 60_000, now) };
+      : {
+          recall: new RateLimiter(60, HOUR_MS, now),
+          prompt: new RateLimiter(600, HOUR_MS, now),
+          requests: new RateLimiter(o.config.rate_limits.mcp_per_grant_per_min, 60_000, now),
+          unauthenticated: new RateLimiter(o.config.rate_limits.unauth_per_ip_per_min, 60_000, now),
+        };
   }
 
   /** After every commit: the touched memories' vectors are re-read and cached contexts dropped. */

@@ -7,6 +7,7 @@ import { createHash } from "node:crypto";
 import { norm } from "@memory-anywhere/contracts/normalize";
 import { reasonMessage, USER_WORDS_NOT_FOUND_SUFFIX, type ReasonCode } from "@memory-anywhere/contracts/reasons";
 import type { ServerConfigT } from "../config/schema.ts";
+import type { Alerts } from "../ops/alerts.ts";
 import type { Embedder } from "../embed/types.ts";
 import { POLICY_VERSION } from "../policy/generated.ts";
 import { DAY_MS, HOUR_MS, iso } from "../store/clock.ts";
@@ -29,6 +30,8 @@ export interface WriteEnv {
   readonly embedder: Embedder;
   /** Called after each commit with the memories whose search entries changed. */
   readonly onCommit?: (touchedMemoryIds: readonly string[]) => void;
+  /** Quota and remote-supersede alerts (operations.md §2); none in unit tests. */
+  readonly alerts?: Alerts;
 }
 
 export interface RequestMeta {
@@ -89,7 +92,10 @@ function preChecks(env: WriteEnv, caller: Caller, op: "save" | "forget"): void {
   if (op === "save") {
     const since = iso(env.ctx.clock.now() - HOUR_MS);
     const n = (prepared(env.ctx.db, "SELECT count(*) n FROM write_request WHERE client_id = ? AND op = 'save' AND received_at > ?").get(caller.clientId, since) as { n: number }).n;
-    if (n >= client.quota_saves_per_hour) throw new WriteError("RATE_LIMITED", "hourly save limit reached", undefined, 3600);
+    if (n >= client.quota_saves_per_hour) {
+      env.alerts?.raise("save_quota", { quota: client.quota_saves_per_hour }, { subject: caller.clientId });
+      throw new WriteError("RATE_LIMITED", "hourly save limit reached", undefined, 3600);
+    }
   }
 }
 
@@ -256,6 +262,10 @@ export async function save(env: WriteEnv, caller: Caller, req: SaveRequest, m: R
     if (d.preferenceConfirm && r.status !== "pending_review" && r.reason !== "already_stored") {
       createReview(ctx, caller, { kind: "preference_confirm", memoryId: r.memoryId, observationId: undefined, payload: undefined });
     }
+    // A non-owner save that replaced or contested a value is worth a line in the digest.
+    if (tier !== 0 && (r.reason === "update" || r.reason === "correction" || r.reason === "contested")) {
+      env.alerts?.raise("supersede_remote", { memory: r.memoryId }, { subject: caller.clientId });
+    }
     touched = r.touched;
     return finish(outcomeFor(env, r, m.idempotencyKey), touched, op);
   });
@@ -288,6 +298,7 @@ export async function forget(env: WriteEnv, caller: Caller, id: string, m: Reque
   const forgetsToday = (prepared(ctx.db, "SELECT count(*) n FROM write_request WHERE client_id = ? AND op = 'forget' AND outcome IN ('forgotten','review') AND received_at > ?")
     .get(caller.clientId, since) as { n: number }).n;
   const quota = (prepared(ctx.db, "SELECT quota_forgets_per_day q FROM client_policy WHERE client_id = ?").get(caller.clientId) as { q: number } | undefined)?.q ?? 5;
+  if (forgetsToday >= quota) env.alerts?.raise("forget_quota", { quota }, { subject: caller.clientId });
   const r: ForgetResult = forgetByClient(ctx, caller, id, { purgeAfterDays: config.retention.forgotten_purge_days, quotaPerDay: quota, forgetsToday });
   if (r.kind === "elicit") return { kind: "input_required", question: r.question };
   const out: ForgetOutcome = { id, outcome: r.outcome, message: FORGET_MESSAGES[r.outcome], ...(r.undoUntil ? { undo_until: r.undoUntil } : {}) };

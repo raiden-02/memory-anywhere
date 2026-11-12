@@ -1,40 +1,55 @@
-// The local-mode HTTP server (topology-and-ipc.md §4; mcp-interface.md §1, §7; operations.md §1, §3).
+// The HTTP server (topology-and-ipc.md §2–§4; mcp-interface.md §1, §7; operations.md §1, §3).
 //
 // Every request passes the same gates, in order, before any store or model work:
 //
-//   Host is 127.0.0.1:<port> or localhost:<port>  → else 403
-//   Origin absent, or a loopback origin            → else 403
-//   route exists                                   → else 404
-//   /v1/health needs nothing more; everything else:
-//     unauthenticated rate limit (per IP)          → 429
-//     Bearer <local token>                         → else 401
-//     per-grant rate limit                         → 429
-//     MA-Client-Version supported (/v1; /mcp if sent) → else 426
-//     body within 64 KiB (/mcp) or 1 MiB (/v1)     → else 413
+//   front door: which surface, which client address   → else 403   (front.ts)
+//   a mount of that surface serves its own routes      (OAuth pages on "mcp", the admin UI on "admin")
+//   the admin surface has nothing else                 → 404
+//   resource routes (/mcp, /v1/*):
+//     Origin absent (aws), or a loopback origin (local) → else 403
+//     route exists                                      → else 404
+//     /v1/health needs nothing more; everything else:
+//       a valid credential (authenticate)              → else 401, counted by the per-IP limit → 429
+//       per-grant rate limit                            → 429
+//       MA-Client-Version supported (/v1; /mcp if sent) → else 426
+//       body within 64 KiB (/mcp) or 1 MiB (/v1)        → else 413
 //
 // Each request writes one log line of codes and timings, never content.
 
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
-import { timingSafeEqual } from "node:crypto";
 import { toWebRequest, type NodeIncomingMessageLike } from "@modelcontextprotocol/node";
 import type { App } from "../app.ts";
-import { localGrant, type Grant } from "../api/grant.ts";
+import { localTokenAuth, type Authenticate, type Grant } from "../api/grant.ts";
 import { mcpHandler, type McpRequestExtra } from "../api/mcp.ts";
+import { isRefusal, localDoor, type Arrival, type FrontDoor, type Surface } from "./front.ts";
 import { ipPrefix, Logger, type LogLine } from "./log.ts";
 import { admin, apiError, clientVersionOk, health, projection, recallRoute, reposCheck, sessionStart, statusRoute, tooOld, writes, type V1Response } from "./v1.ts";
 
 const MCP_BODY_MAX = 64 * 1024;
 const V1_BODY_MAX = 1024 * 1024;
 
+/** Routes of one surface other than the resource routes: the OAuth pages, the admin UI. */
+export interface Mount {
+  /** Serves the request and returns true, or returns false when the path is not one of its routes. */
+  serve(req: IncomingMessage, res: ServerResponse, arrival: Arrival, log: RequestLog): boolean;
+}
+
+/** What a mount reports for the request's single log line. */
+export interface RequestLog {
+  readonly reqId: string;
+  finish(status: number, extra?: Partial<LogLine>): void;
+}
+
 export interface HttpOptions {
   readonly app: App;
-  readonly port: number;
-  readonly localToken: string;
+  readonly door: FrontDoor;
+  readonly authenticate: Authenticate;
+  readonly mounts?: Partial<Record<Surface, Mount>>;
   readonly logger?: Logger;
   readonly now?: () => number;
 }
 
-/** Every route the server answers; a test checks this list against the spec (route inventory). */
+/** Every resource route; a test checks this list against the spec (route inventory). */
 export const ROUTES = [
   "POST /mcp",
   "GET /v1/health",
@@ -51,7 +66,7 @@ export const ROUTES = [
   "POST /v1/admin/review",
 ] as const;
 
-function send(res: ServerResponse, status: number, body: unknown, headers: Record<string, string> = {}): void {
+export function send(res: ServerResponse, status: number, body: unknown, headers: Record<string, string> = {}): void {
   if (body === undefined) {
     res.writeHead(status, { "cache-control": "no-store", ...headers });
     res.end();
@@ -64,7 +79,7 @@ function send(res: ServerResponse, status: number, body: unknown, headers: Recor
 
 class BodyTooLarge extends Error {}
 
-async function readJson(req: IncomingMessage, max: number): Promise<unknown> {
+export async function readJson(req: IncomingMessage, max: number): Promise<unknown> {
   const declared = Number(req.headers["content-length"] ?? "0");
   if (declared > max) throw new BodyTooLarge();
   const chunks: Buffer[] = [];
@@ -78,18 +93,10 @@ async function readJson(req: IncomingMessage, max: number): Promise<unknown> {
   return JSON.parse(Buffer.concat(chunks).toString("utf8")) as unknown;
 }
 
-const tokenMatches = (header: string | undefined, token: string): boolean => {
-  const presented = Buffer.from(/^Bearer (\S+)$/u.exec(header ?? "")?.[1] ?? "", "utf8");
-  const expected = Buffer.from(token, "utf8");
-  return presented.length === expected.length && timingSafeEqual(presented, expected);
-};
-
 export function createHttpServer(o: HttpOptions): Server {
-  const { app } = o;
+  const { app, door } = o;
   const logger = o.logger ?? new Logger();
   const now = o.now ?? Date.now;
-  const hosts = new Set([`127.0.0.1:${o.port}`, `localhost:${o.port}`]);
-  const origins = new Set([`http://127.0.0.1:${o.port}`, `http://localhost:${o.port}`]);
   const { unauthenticated, requests: perGrant } = app.limits;
   const mcp = mcpHandler(app);
   const routes = new Set<string>(ROUTES);
@@ -99,8 +106,7 @@ export function createHttpServer(o: HttpOptions): Server {
     const reqId = app.ctx.ids.newUlid(started);
     const url = new URL(req.url ?? "/", "http://local");
     const route = `${req.method ?? "GET"} ${url.pathname}`;
-    const prefix = ipPrefix(req.socket.remoteAddress);
-    const line: { -readonly [K in keyof LogLine]?: LogLine[K] } = { level: "info", req_id: reqId, route: url.pathname, ...(prefix ? { ip_prefix: prefix } : {}) };
+    const line: { -readonly [K in keyof LogLine]?: LogLine[K] } = { level: "info", req_id: reqId, route: url.pathname };
     const finish = (status: number, extra: Partial<LogLine> = {}): void => {
       logger.log({ ...line, ...extra, level: status >= 500 ? "error" : status >= 400 ? "warn" : "info", status, latency_ms: now() - started } as LogLine);
     };
@@ -110,38 +116,49 @@ export function createHttpServer(o: HttpOptions): Server {
       if (r.after) res.once("finish", () => runAfter(logger, reqId, r.after));
     };
 
-    // Gates that need no credential.
-    if (!hosts.has(req.headers.host ?? "")) return reply(apiError("FORBIDDEN", "host not allowed"));
+    const arrival = door.arrive(req);
+    if (isRefusal(arrival)) return reply(apiError("FORBIDDEN", arrival.refused));
+    const prefix = ipPrefix(arrival.clientIp);
+    if (prefix) line.ip_prefix = prefix;
+    line.surface = arrival.surface;
+    if (o.mounts?.[arrival.surface]?.serve(req, res, arrival, { reqId, finish })) return;
+    if (arrival.surface === "admin") return reply(apiError("NOT_FOUND", "no such route"));
+
+    // Resource routes are called by apps and tools, never by a page: a browser Origin is refused
+    // in aws mode (auth-and-security.md §5.5); local mode allows its own loopback origin.
     const origin = req.headers.origin;
-    if (origin !== undefined && !origins.has(origin)) return reply(apiError("FORBIDDEN", "origin not allowed"));
+    if (origin !== undefined && (door.mode === "aws" || !arrival.allowedOrigins.has(origin))) return reply(apiError("FORBIDDEN", "origin not allowed"));
     const isAdmin = url.pathname.startsWith("/v1/admin/") && req.method === "POST";
     if (!routes.has(route) && !isAdmin) return reply(apiError("NOT_FOUND", "no such route"));
     if (route === "GET /v1/health") return reply(health(app));
 
-    // Credential, limits, version, body.
-    if (!tokenMatches(req.headers.authorization, o.localToken)) {
-      const wait = unauthenticated.take(line.ip_prefix ?? "unknown");
+    void (async () => {
+      const grant = await o.authenticate(req, reqId, isAdmin);
+      if (!grant) {
+        const wait = unauthenticated.take(prefix ?? "unknown");
+        if (wait > 0) return reply(apiError("RATE_LIMITED", "too many requests", { retry_after_s: wait }), { "retry-after": String(wait) });
+        return reply(apiError("UNAUTHORIZED", "missing or invalid token"), { "www-authenticate": wwwAuthenticate(door) });
+      }
+      line.client_id = grant.clientId;
+      if (grant.repoKey) line.repo_key = grant.repoKey;
+      const wait = perGrant.take(grant.grantId === "local" ? grant.clientId : grant.grantId);
       if (wait > 0) return reply(apiError("RATE_LIMITED", "too many requests", { retry_after_s: wait }), { "retry-after": String(wait) });
-      return reply(apiError("UNAUTHORIZED", "missing or invalid token"), { "www-authenticate": 'Bearer realm="memory-anywhere"' });
-    }
-    const grant: Grant = localGrant(new Headers(req.headers as Record<string, string>), reqId, isAdmin);
-    line.client_id = grant.clientId;
-    if (grant.repoKey) line.repo_key = grant.repoKey;
-    const wait = perGrant.take(grant.clientId);
-    if (wait > 0) return reply(apiError("RATE_LIMITED", "too many requests", { retry_after_s: wait }), { "retry-after": String(wait) });
-    const version = req.headers["ma-client-version"];
-    const versionHeader = typeof version === "string" ? version : null;
-    if ((url.pathname.startsWith("/v1/") || versionHeader !== null) && !clientVersionOk(versionHeader)) return reply(tooOld());
+      const version = req.headers["ma-client-version"];
+      const versionHeader = typeof version === "string" ? version : null;
+      if ((url.pathname.startsWith("/v1/") || versionHeader !== null) && !clientVersionOk(versionHeader)) return reply(tooOld());
 
-    if (url.pathname === "/mcp") return void serveMcp(req, res, grant).catch(() => reply(apiError("INTERNAL", "internal error")));
-
-    void readJson(req, V1_BODY_MAX)
-      .then((body) => dispatch(app, grant, route, url, body))
-      .then((r) => reply(r), (e: unknown) => {
+      if (url.pathname === "/mcp") return serveMcp(req, res, grant);
+      try {
+        const body = await readJson(req, V1_BODY_MAX);
+        return reply(await dispatch(app, grant, route, url, body));
+      } catch (e) {
         if (e instanceof BodyTooLarge) return reply({ status: 413, body: { code: "INVALID_INPUT", message: "request body too large" }, outcome: "too_large" });
         if (e instanceof SyntaxError) return reply(apiError("INVALID_INPUT", "body is not JSON", { field: "body" }));
-        return reply(apiError("INTERNAL", "internal error"));
-      });
+        throw e;
+      }
+    })().catch(() => {
+      if (!res.headersSent) reply(apiError("INTERNAL", "internal error"));
+    });
 
     async function serveMcp(request: IncomingMessage, response: ServerResponse, g: Grant): Promise<void> {
       const extra: McpRequestExtra = { grant: g, after: [] };
@@ -152,7 +169,8 @@ export function createHttpServer(o: HttpOptions): Server {
         if ((e as { status?: number }).status === 413) return reply({ status: 413, body: { code: "INVALID_INPUT", message: "request body too large" }, outcome: "too_large" });
         throw e;
       }
-      const answer = await mcp.fetch(web, { authInfo: { token: "local", clientId: g.clientId, scopes: ["memory.read", "memory.write", "memory.capture"], extra: extra as unknown as Record<string, unknown> } });
+      const scopes = [g.scopes.read && "memory.read", g.scopes.write && "memory.write", g.scopes.capture && "memory.capture"].filter((s): s is string => typeof s === "string");
+      const answer = await mcp.fetch(web, { authInfo: { token: g.grantId, clientId: g.clientId, scopes, extra: extra as unknown as Record<string, unknown> } });
       const headers: Record<string, string> = {};
       answer.headers.forEach((v, k) => {
         headers[k] = v;
@@ -165,6 +183,17 @@ export function createHttpServer(o: HttpOptions): Server {
       });
     }
   });
+}
+
+/** Local mode: 127.0.0.1:<port>, authenticated by the local token. */
+export function localHttpServer(o: { app: App; port: number; localToken: string; logger?: Logger; now?: () => number }): Server {
+  return createHttpServer({ app: o.app, door: localDoor(o.port), authenticate: localTokenAuth(o.localToken), ...(o.logger ? { logger: o.logger } : {}), ...(o.now ? { now: o.now } : {}) });
+}
+
+/** The 401 challenge: in aws mode it points the client at the protected-resource metadata (mcp-interface.md §1). */
+function wwwAuthenticate(door: FrontDoor): string {
+  if (door.mode === "local") return 'Bearer realm="memory-anywhere"';
+  return `Bearer resource_metadata="${door.baseUrl}/.well-known/oauth-protected-resource/mcp", scope="memory.read memory.write"`;
 }
 
 async function dispatch(app: App, grant: Grant, route: string, url: URL, body: unknown): Promise<V1Response> {

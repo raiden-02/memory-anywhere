@@ -4,9 +4,9 @@
 import { newId } from "@memory-anywhere/contracts/ids";
 import { afterEach, describe, expect, it } from "vitest";
 import { App } from "../src/app.ts";
-import { defaultConfig } from "../src/config/schema.ts";
+import { defaultConfig, ServerConfig } from "../src/config/schema.ts";
 import { averageLink, clusterSections, tfidfName } from "../src/jobs/sections.ts";
-import { JobWorker, nextWeekly } from "../src/jobs/worker.ts";
+import { JobWorker, nextDaily, nextWeekly } from "../src/jobs/worker.ts";
 import { DAY_MS } from "../src/store/clock.ts";
 import { forgetByOwner } from "../src/write/forget.ts";
 import { save } from "../src/write/pipeline.ts";
@@ -59,6 +59,19 @@ describe("schedule", () => {
       s.db.prepare("UPDATE job SET next_at = '2000-01-01T00:00:00.000Z' WHERE id = 'job_x' AND status = 'queued'").run();
     }
     expect(s.db.prepare("SELECT status, attempts, last_error FROM job WHERE id = 'job_x'").get()).toEqual({ status: "dropped", attempts: 4, last_error: "SyntaxError" });
+    expect(app.alerts.open().map((a) => [a.kind, a.subject])).toEqual([["job_failed", "extract"]]);
+  });
+
+  it("schedules the daily digest in aws mode only, at the owner's digest hour", async () => {
+    const { s, app } = await setup();
+    new JobWorker(app, undefined).schedule();
+    expect(n(s, "SELECT count(*) n FROM job WHERE kind = 'digest'")).toBe(0);
+    const config = ServerConfig.parse({ server: { mode: "aws", listen: "unix:/run/memory-anywhere/http.sock", public_url: "https://memory.example.com", data_dir: "/var/lib/memory-anywhere" }, alerts: { digest_hour_local: 8 }, owner: { timezone: "America/Denver" } });
+    const aws = new App({ db: s.db, config, embedder: fakeEmbedder, clock: s.clock, ids: s.ids });
+    new JobWorker(aws, undefined).schedule();
+    const at = (s.db.prepare("SELECT next_at FROM job WHERE kind = 'digest'").get() as { next_at: string }).next_at;
+    expect(new Date(at).toLocaleString("en-US", { timeZone: "America/Denver", hour: "numeric", hourCycle: "h23" })).toBe("08");
+    expect(new Date(nextDaily(Date.parse("2026-11-11T20:00:00Z"), "UTC", 8)).toISOString()).toBe("2026-11-12T08:00:00.000Z");
   });
 
   it("purges forgotten memories when due and drops their vectors", async () => {

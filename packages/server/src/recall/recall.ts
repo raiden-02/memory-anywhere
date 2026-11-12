@@ -12,6 +12,7 @@ import type { RecallInputT, RecallOutputT } from "@memory-anywhere/contracts/sch
 import type { RecallItemT } from "@memory-anywhere/contracts/schemas/common";
 import type { ServerConfigT } from "../config/schema.ts";
 import type { Embedder } from "../embed/types.ts";
+import type { Alerts } from "../ops/alerts.ts";
 import { DAY_MS, iso } from "../store/clock.ts";
 import type { StoreContext } from "../store/context.ts";
 import { prepared, transaction } from "../store/db.ts";
@@ -30,6 +31,8 @@ export interface ReadEnv {
   readonly config: ServerConfigT;
   readonly embedder: Embedder;
   readonly index: VectorIndex;
+  /** Read-budget alerts (operations.md §2); none in unit tests. */
+  readonly alerts?: Alerts;
 }
 
 export const NOTICE = {
@@ -200,6 +203,7 @@ export async function recall(env: ReadEnv, reader: Reader, input: RecallInputT):
       extra++;
     }
   }
+  budgetAlert(env.alerts, reader.clientId, budget.usedToday(), policy.budget24h);
   if (selected.length === 0) return empty(NOTICE.budget, { budget_exhausted: true });
 
   // 10. Render whole items within the text budget.
@@ -279,4 +283,10 @@ export function audit(env: ReadEnv, reader: Reader, query: string, ids: readonly
   const now = ctx.clock.now();
   prepared(ctx.db, "INSERT INTO audit (id, at, client_id, op, query_hmac, result_ids, outcome, status_code, ip_prefix, latency_ms) VALUES (?, ?, ?, 'memory_recall', ?, ?, ?, NULL, NULL, ?)")
     .run(ctx.ids.newId("aud", now), iso(now), reader.clientId, hmacHex(key, norm(query)), JSON.stringify(ids), outcome, Math.max(0, now - started));
+}
+
+/** A client past 80% of its 24-hour read budget is in the digest; at 100% the owner is emailed (operations.md §2). */
+function budgetAlert(alerts: Alerts | undefined, clientId: string, used: number, limit: number): void {
+  if (!alerts || limit <= 0 || used < 0.8 * limit) return;
+  alerts.raise("read_budget", { used, limit }, { subject: clientId, immediate: used >= limit });
 }

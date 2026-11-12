@@ -11,7 +11,14 @@
 // | section_cluster | weekly, Sunday 03:00 owner time   | dynamic sections                          |
 // | vacuum          | weekly, Sunday 04:00 (local mode) | VACUUM                                    |
 // | hmac_rotate     | 90 days after the last rotation   | new audit key                             |
+// | digest          | daily at digest_hour_local (aws)  | the alert digest email (operations.md §2) |
+//
+// Around the jobs (operations.md §2, deployment-aws.md §4): a dropped job raises `job_failed`;
+// each hourly prune also checks free disk (`disk_low` under 20%); in aws mode a purge leaves the
+// flag `maint/purge-pending`, so that night's `ma-maint` compacts the store.
 
+import { mkdirSync, statfsSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import type { App } from "../app.ts";
 import { DAY_MS, HOUR_MS, iso } from "../store/clock.ts";
 import { prepared } from "../store/db.ts";
@@ -29,16 +36,24 @@ type Schedule = (now: number, app: App) => number | undefined;
 
 const nextHour: Schedule = (now) => Math.floor(now / HOUR_MS) * HOUR_MS + HOUR_MS;
 
-/** The next time it is `weekday` (0 = Sunday) at `hour`:00 in the owner's time zone. */
-export function nextWeekly(now: number, timeZone: string, weekday: number, hour: number): number {
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+
+/** The next whole hour after `now` that is `hour`:00 in the owner's time zone, on `weekday` (0 = Sunday) if given. */
+function nextLocal(now: number, timeZone: string, hour: number, weekday: number | undefined): number {
   const fmt = new Intl.DateTimeFormat("en-US", { timeZone, weekday: "short", hour: "numeric", hourCycle: "h23" });
-  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   for (let t = Math.floor(now / HOUR_MS) * HOUR_MS + HOUR_MS; t <= now + 8 * DAY_MS; t += HOUR_MS) {
     const parts = fmt.formatToParts(t);
-    if (days.indexOf(parts.find((p) => p.type === "weekday")?.value ?? "") === weekday && Number(parts.find((p) => p.type === "hour")?.value) === hour) return t;
+    const dayOk = weekday === undefined || DAYS.indexOf((parts.find((p) => p.type === "weekday")?.value ?? "") as (typeof DAYS)[number]) === weekday;
+    if (dayOk && Number(parts.find((p) => p.type === "hour")?.value) === hour) return t;
   }
-  throw new Error(`no ${days[weekday] ?? "?"} ${hour}:00 found in ${timeZone}`);
+  throw new Error(`no ${weekday === undefined ? "" : `${DAYS[weekday] ?? "?"} `}${hour}:00 found in ${timeZone}`);
 }
+
+/** The next time it is `weekday` (0 = Sunday) at `hour`:00 in the owner's time zone. */
+export const nextWeekly = (now: number, timeZone: string, weekday: number, hour: number): number => nextLocal(now, timeZone, hour, weekday);
+
+/** The next time it is `hour`:00 in the owner's time zone. */
+export const nextDaily = (now: number, timeZone: string, hour: number): number => nextLocal(now, timeZone, hour, undefined);
 
 const RECURRING: Readonly<Partial<Record<JobKind, Schedule>>> = {
   expire: nextHour,
@@ -46,6 +61,7 @@ const RECURRING: Readonly<Partial<Record<JobKind, Schedule>>> = {
   prune: nextHour,
   section_cluster: (now, app) => nextWeekly(now, app.config.owner.timezone, 0, 3),
   vacuum: (now, app) => (app.config.server.mode === "local" ? nextWeekly(now, app.config.owner.timezone, 0, 4) : undefined),
+  digest: (now, app) => (app.config.server.mode === "aws" ? nextDaily(now, app.config.owner.timezone, app.config.alerts.digest_hour_local) : undefined),
   hmac_rotate: (now, app) => {
     const at = (prepared(app.ctx.db, "SELECT value FROM meta WHERE key = 'audit_hmac_key_rotated_at'").get() as { value: string } | undefined)?.value;
     return Math.max(now, (at ? Date.parse(at) : now) + 90 * DAY_MS);
@@ -122,6 +138,7 @@ export class JobWorker {
       const code = `${e instanceof Error ? e.name : "Error"}${(e as { code?: string }).code ? `:${(e as { code?: string }).code}` : ""}`;
       prepared(db, "UPDATE job SET status = ?, attempts = ?, next_at = ?, last_error = ? WHERE id = ?")
         .run(delay === undefined ? "dropped" : "queued", attempts, iso(clock.now() + (delay ?? 0)), code, job.id);
+      if (delay === undefined) this.#app.alerts.raise("job_failed", { job: job.id }, { subject: job.kind });
     }
     return job.kind;
   }
@@ -135,11 +152,23 @@ export class JobWorker {
       case "expire":
         expireObservations(app.ctx);
         return;
-      case "purge":
-        app.committed(purgeDue(app.ctx, app.config.server.mode));
+      case "purge": {
+        const purged = purgeDue(app.ctx, app.config.server.mode);
+        app.committed(purged);
+        if (purged.length > 0 && app.config.server.mode === "aws" && this.#storeFile) {
+          const maint = path.join(path.dirname(this.#storeFile), "maint");
+          mkdirSync(maint, { recursive: true });
+          writeFileSync(path.join(maint, "purge-pending"), `${iso(app.ctx.clock.now())}
+`);
+        }
         return;
+      }
       case "prune":
         prune(app.ctx, app.config, this.#storeFile);
+        if (this.#storeFile) checkDisk(app, path.dirname(this.#storeFile));
+        return;
+      case "digest":
+        app.alerts.sendDigest();
         return;
       case "section_cluster":
         if (clusterSections(app.ctx, app.config, app.embedder.modelId).created.length > 0) app.committed([]);
@@ -156,4 +185,12 @@ export class JobWorker {
         throw new Error(`job kind ${job.kind} is not run by this server`);
     }
   }
+}
+
+/** Raises `disk_low` when the data directory's volume has less than 20% free (operations.md §2). */
+export function checkDisk(app: App, dir: string): void {
+  const s = statfsSync(dir);
+  if (s.blocks <= 0) return;
+  const freePct = Math.round((Number(s.bavail) / Number(s.blocks)) * 100);
+  if (freePct < 20) app.alerts.raise("disk_low", { free_pct: freePct });
 }

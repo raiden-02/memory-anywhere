@@ -7,10 +7,10 @@ import { request, type Server } from "node:http";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import { newId } from "@memory-anywhere/contracts/ids";
 import { afterEach, describe, expect, it } from "vitest";
-import { App, SERVER_VERSION } from "../src/app.ts";
+import { App, SCHEMA_VERSION, SERVER_VERSION } from "../src/app.ts";
 import { defaultConfig } from "../src/config/schema.ts";
 import { Logger } from "../src/http/log.ts";
-import { createHttpServer, ROUTES } from "../src/http/server.ts";
+import { localHttpServer, ROUTES } from "../src/http/server.ts";
 import { fakeEmbedder, REPO, testStore, type TestStore } from "./helpers/store.ts";
 
 const TOKEN = "test-local-token-0123456789abcdefghijklmnopqrstuv";
@@ -45,7 +45,7 @@ async function boot(): Promise<Running> {
   const app = new App({ db: s.db, config: defaultConfig(), embedder: fakeEmbedder, clock: s.clock, ids: s.ids });
   const port = await freePort();
   const logs: string[] = [];
-  const server = createHttpServer({ app, port, localToken: TOKEN, logger: new Logger((l) => logs.push(l)) });
+  const server = localHttpServer({ app, port, localToken: TOKEN, logger: new Logger((l) => logs.push(l)) });
   await new Promise<void>((resolve) => server.listen(port, "127.0.0.1", resolve));
   const r = { s, app, base: `http://127.0.0.1:${port}`, port, logs, server };
   running.push(r);
@@ -73,7 +73,7 @@ describe("gates", () => {
     const r = await boot();
     const res = await fetch(`${r.base}/v1/health`);
     expect(res.status).toBe(200);
-    expect(await res.json()).toMatchObject({ ok: true, version: SERVER_VERSION, schema_version: 1, policy_version: "P1" });
+    expect(await res.json()).toMatchObject({ ok: true, version: SERVER_VERSION, schema_version: SCHEMA_VERSION, policy_version: "P1" });
   });
 
   it("rejects a foreign Host or Origin, a missing token, and an unsupported client", async () => {

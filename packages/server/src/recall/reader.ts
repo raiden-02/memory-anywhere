@@ -101,6 +101,8 @@ export function visible(
 export interface Budget {
   /** Whether the next memory can be returned; counts it if it can. */
   admit(memoryId: string): boolean;
+  /** Distinct memories read in the last 24 hours, including those admitted so far. */
+  usedToday(): number;
 }
 
 /**
@@ -123,6 +125,7 @@ export function readBudget(db: DatabaseSync, clientId: string, policy: ReadPolic
       day.add(memoryId);
       return true;
     },
+    usedToday: () => day.size,
   };
 }
 

@@ -145,7 +145,7 @@ describe("canonical dump and hashes", () => {
 });
 
 describe("migration fixtures", () => {
-  it("opens the committed v1 fixture and finds nothing to migrate", async () => {
+  it("migrates the committed v1 fixture to the current schema, keeping its data", async () => {
     const dir = mkdtempSync(path.join(os.tmpdir(), "ma fixture "));
     const file = path.join(dir, "store.db");
     copyFileSync(path.join(import.meta.dirname, "fixtures/store-v1.db"), file);

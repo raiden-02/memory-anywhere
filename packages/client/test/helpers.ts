@@ -10,7 +10,7 @@ import { resolvePaths, type Paths } from "@memory-anywhere/contracts/paths";
 import { App } from "../../server/src/app.ts";
 import { defaultConfig } from "../../server/src/config/schema.ts";
 import { Logger } from "../../server/src/http/log.ts";
-import { createHttpServer } from "../../server/src/http/server.ts";
+import { localHttpServer } from "../../server/src/http/server.ts";
 import { fakeEmbedder, testStore, type TestStore } from "../../server/test/helpers/store.ts";
 import { parseClientConfig, type ClientConfigT } from "../src/config.ts";
 import { StoreClient } from "../src/store-client.ts";
@@ -39,7 +39,7 @@ export async function localServer(): Promise<LocalServer> {
   await new Promise<void>((resolve) => probe.listen(0, "127.0.0.1", resolve));
   const port = (probe.address() as AddressInfo).port;
   await new Promise((resolve) => probe.close(resolve));
-  const server: Server = createHttpServer({ app, port, localToken: TOKEN, logger: new Logger(() => undefined) });
+  const server: Server = localHttpServer({ app, port, localToken: TOKEN, logger: new Logger(() => undefined) });
   await new Promise<void>((resolve) => server.listen(port, "127.0.0.1", resolve));
   const url = `http://127.0.0.1:${port}`;
   let stopped = false;

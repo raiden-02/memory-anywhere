@@ -18,6 +18,8 @@ export interface LogLine {
   readonly error_code?: string;
   /** The MA-Repo-Key a request acted for (a hash, never a path). */
   readonly repo_key?: string;
+  /** Which origin served it: `mcp` ({host}) or `admin` (admin.{host}). */
+  readonly surface?: "mcp" | "admin";
 }
 
 export type LogSink = (line: string) => void;

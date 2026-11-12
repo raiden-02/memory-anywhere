@@ -106,9 +106,31 @@ export const ServerConfig = z.strictObject({
       recover_per_ip_per_hour: 5, mcp_per_grant_per_min: 120, unauth_per_ip_per_min: 30,
     }),
   alerts: z.strictObject({ sns_topic_arn: z.string().default(""), digest_hour_local: z.int().min(0).max(23).default(8) }).default({ sns_topic_arn: "", digest_hour_local: 8 }),
+}).superRefine((c, ctx) => {
+  // Each mode has one shape (topology-and-ipc.md §2, §4): local binds loopback only; aws serves
+  // a unix socket behind Caddy and has a public https URL, which is also the OAuth issuer.
+  const issue = (key: string, message: string): void => void ctx.addIssue({ code: "custom", path: ["server", key], message });
+  if (c.server.mode === "local") {
+    if (!/^127\.0\.0\.1:\d{1,5}$/u.test(c.server.listen)) issue("listen", "local mode listens on 127.0.0.1:<port> only");
+  } else {
+    if (!/^unix:\/\S+$/u.test(c.server.listen)) issue("listen", "aws mode listens on a unix socket: unix:/run/memory-anywhere/http.sock");
+    if (!/^https:\/\/[a-z0-9.-]+$/u.test(c.server.public_url)) issue("public_url", "aws mode needs public_url = \"https://<host>\"");
+    if (!c.server.data_dir) issue("data_dir", "aws mode needs data_dir");
+  }
 });
 
 export type ServerConfigT = z.output<typeof ServerConfig>;
+
+export type ListenTarget = { readonly kind: "tcp"; readonly port: number } | { readonly kind: "unix"; readonly path: string };
+
+/** Where the server listens: a loopback port (local) or a unix socket (aws). */
+export function listenTarget(config: ServerConfigT, portOverride?: number): ListenTarget {
+  const { listen } = config.server;
+  if (listen.startsWith("unix:")) return { kind: "unix", path: listen.slice("unix:".length) };
+  const port = portOverride ?? Number(listen.split(":")[1]);
+  if (!Number.isInteger(port) || port < 1 || port > 65_535) throw new ConfigError(`invalid port in server.listen ${listen}`);
+  return { kind: "tcp", port };
+}
 
 /** The configuration with every default (local mode). */
 export function defaultConfig(): ServerConfigT {

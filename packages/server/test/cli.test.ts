@@ -8,7 +8,7 @@ import { createServer, type AddressInfo } from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { SERVER_VERSION } from "../src/app.ts";
+import { SCHEMA_VERSION, SERVER_VERSION } from "../src/app.ts";
 import { activeModel, modelDir, verifyModel } from "../src/embed/manifest.ts";
 
 const CLI = path.join(import.meta.dirname, "..", "src", "cli.ts");
@@ -18,7 +18,7 @@ afterAll(() => rmSync(tmp, { recursive: true, force: true, maxRetries: 5 }));
 it("prints server, schema and policy versions", () => {
   const r = spawnSync(process.execPath, [CLI, "version"], { encoding: "utf8" });
   expect(r.status).toBe(0);
-  expect(JSON.parse(r.stdout)).toEqual({ server: SERVER_VERSION, schema: 1, policy: "P1" });
+  expect(JSON.parse(r.stdout)).toEqual({ server: SERVER_VERSION, schema: SCHEMA_VERSION, policy: "P1" });
 });
 
 it("refuses to start in local mode on anything but 127.0.0.1", () => {
@@ -26,7 +26,15 @@ it("refuses to start in local mode on anything but 127.0.0.1", () => {
   writeFileSync(toml, '[server]\nmode = "local"\nlisten = "0.0.0.0:47821"\n');
   const r = spawnSync(process.execPath, [CLI, "start", "--config", toml, "--ephemeral"], { encoding: "utf8" });
   expect(r.status).toBe(1);
-  expect(r.stderr).toMatch(/binds 127\.0\.0\.1 only/u);
+  expect(r.stderr).toMatch(/server\.listen: local mode listens on 127\.0\.0\.1:<port> only/u);
+});
+
+it("refuses an aws config without a socket or an https public URL", () => {
+  const toml = path.join(tmp, "aws-tcp.toml");
+  writeFileSync(toml, '[server]\nmode = "aws"\nlisten = "127.0.0.1:47821"\npublic_url = "http://memory.example.com"\ndata_dir = "/var/lib/memory-anywhere"\n');
+  const r = spawnSync(process.execPath, [CLI, "start", "--config", toml], { encoding: "utf8" });
+  expect(r.status).toBe(1);
+  expect(r.stderr).toMatch(/server\.listen: aws mode listens on a unix socket/u);
 });
 
 const SPIKE_DIR = path.join(import.meta.dirname, "..", "..", "..", "spikes", "embed-bench", "out", "models", "onnx-community__embeddinggemma-300m-ONNX@5090578d9565");
