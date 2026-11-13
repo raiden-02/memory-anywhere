@@ -1,0 +1,9 @@
+[Unit]
+Description=memory-anywhere selfcheck request (eval stacks only; spec-issues #57, #76)
+
+[Path]
+PathExists=/run/memory-anywhere/selfcheck/request.json
+Unit=ma-selfcheck.service
+
+[Install]
+WantedBy=multi-user.target

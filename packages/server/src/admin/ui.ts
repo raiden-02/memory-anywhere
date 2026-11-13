@@ -5,6 +5,7 @@
 //   GET  /reviews  /observations  /changes  /apps  /sections  /repos  /exports  /system
 //   POST /api/act/:action      one owner action (owner-actions.ts), JSON {input}
 //   POST /api/reset/cancel     cancel a pending owner reset
+//   POST /api/selfcheck  GET /api/selfcheck   eval stacks only: ask for the on-instance checks, read the result
 //
 // Every page needs the admin session; without one the sign-in page is shown. Every action carries
 // the session's CSRF token, and §3.4 actions need a passkey within the last 5 minutes: the endpoint
@@ -13,12 +14,15 @@
 // Local mode serves the same pages under /admin on 127.0.0.1 (local-ui.ts): there the session comes
 // from `mema ui`'s one-time link, the local token being the owner credential, and no passkey exists.
 
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { dirname } from "node:path";
 import type { App } from "../app.ts";
 import { ADMIN_COOKIE, STEP_UP_MS, type OwnerCredentials } from "../auth/owner.ts";
 import { VENDORS } from "../auth/vendors.ts";
 import { cookies, csrfOk, readPageJson, sendJson, sendPage } from "../web/pages.ts";
 import { ActionError, isAction, needsUv, runAction } from "./owner-actions.ts";
+import { parseRequest, selfcheckFiles } from "../ops/selfcheck.ts";
 import * as views from "./views.ts";
 
 export interface AdminUiOptions {
@@ -64,7 +68,8 @@ export function adminUi(o: AdminUiOptions): (req: IncomingMessage, res: ServerRe
     const isPage = req.method === "GET" && ((PAGES as readonly string[]).includes(path) || MEMORY_PAGE.test(path));
     const act = req.method === "POST" ? ACT.exec(path) : null;
     const resetCancel = req.method === "POST" && path === "/api/reset/cancel";
-    if (!isPage && !act && !resetCancel) return undefined;
+    const selfcheck = path === "/api/selfcheck" && (req.method === "POST" || req.method === "GET") ? selfcheckFiles(app.config, app.config.server.data_dir) : undefined;
+    if (!isPage && !act && !resetCancel && !selfcheck) return undefined;
 
     const session = owner.session(cookies(req)[cookieName]);
     if (isPage) {
@@ -107,12 +112,24 @@ export function adminUi(o: AdminUiOptions): (req: IncomingMessage, res: ServerRe
         return status;
       };
       if (!session) return json(401, { error: "login_required" });
+      if (selfcheck && req.method === "GET") {
+        // The result once the root service has written it for the latest request; ids and counts only.
+        if (!existsSync(selfcheck.result) || (existsSync(selfcheck.request) && statSync(selfcheck.request).mtimeMs >= statSync(selfcheck.result).mtimeMs)) return json(200, { status: "pending" });
+        return json(200, { status: "done", ...(JSON.parse(readFileSync(selfcheck.result, "utf8")) as object) });
+      }
       if (!csrfOk(req, o.origin, o.secret, `admin:${session.idHash}`)) return json(403, { error: "csrf" });
       const fresh = local || app.ctx.clock.now() - session.uvAt <= STEP_UP_MS;
       const body = (await readPageJson(req)) ?? {};
       if (resetCancel) {
         if (!fresh) return json(401, { error: "step_up_required" });
         return json(200, { cancelled: owner.cancelReset() });
+      }
+      if (selfcheck) {
+        const request = parseRequest(body);
+        if (!request) return json(400, { error: "canaries: 1 to 50 strings of 4 to 100 characters" });
+        mkdirSync(dirname(selfcheck.request), { recursive: true, mode: 0o700 });
+        writeFileSync(selfcheck.request, JSON.stringify(request), { mode: 0o600 });
+        return json(202, { status: "pending" });
       }
       const name = act?.[1] ?? "";
       if (!isAction(name)) return json(404, { error: "not_found" });

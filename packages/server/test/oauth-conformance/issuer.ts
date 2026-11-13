@@ -10,6 +10,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { createServer as createNetServer, type AddressInfo } from "node:net";
 import type { Server } from "node:http";
+import path from "node:path";
 import type { Configuration } from "oidc-provider";
 import { App } from "../../src/app.ts";
 import { createAuth, type Auth } from "../../src/auth/index.ts";
@@ -65,11 +66,15 @@ function testDoor(mcpPort: number, adminPort: number, hostname: "127.0.0.1" | "l
 /** The suite makes hundreds of OAuth requests from one address; rate limits get their own test. */
 const UNTHROTTLED = { token_per_ip_per_min: 100_000, register_per_ip_per_min: 100_000, authorize_per_ip_per_min: 100_000, login_per_ip_per_min: 100_000, mcp_per_grant_per_min: 100_000, unauth_per_ip_per_min: 100_000 };
 
-export async function startIssuer(opts: { fetch?: Configuration["fetch"]; rateLimits?: Partial<typeof UNTHROTTLED>; host?: "127.0.0.1" | "localhost" } = {}) {
+export async function startIssuer(opts: { fetch?: Configuration["fetch"]; rateLimits?: Partial<typeof UNTHROTTLED>; host?: "127.0.0.1" | "localhost"; selfcheck?: boolean } = {}) {
   const store = await testStore(); // on disk, in a folder with a space in its path
   const clock = new Clock();
   const ctx = { ...store, clock };
-  const config = ServerConfig.parse({ rate_limits: { ...UNTHROTTLED, ...opts.rateLimits } });
+  const config = ServerConfig.parse({
+    rate_limits: { ...UNTHROTTLED, ...opts.rateLimits },
+    // An eval stack's selfcheck routes, with the store's folder as the data directory.
+    ...(opts.selfcheck ? { deployment: { selfcheck: true }, server: { mode: "local", data_dir: path.dirname(store.file) } } : {}),
+  });
   const app = new App({ db: store.db, config, embedder: fakeEmbedder, clock, ids: store.ids });
   const [mcpPort, adminPort] = [await freePort(), await freePort()];
   const door = testDoor(mcpPort, adminPort, opts.host ?? "127.0.0.1");

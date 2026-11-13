@@ -124,7 +124,7 @@ describe("suite S", () => {
   const named = (id: string, name: string): AttackCase => ({ ...base, id, runner: { kind: "test", file: "a.test.ts", name } });
 
   it("passes a case only on a passing run of the very test it names", () => {
-    const cases = [named("S-OAUTH-01", "proves it"), named("S-OAUTH-02", "fails"), named("S-OAUTH-03", "renamed"), { ...base, id: "S-OAUTH-04", runner: { kind: "model" } } as AttackCase];
+    const cases = [named("S-OAUTH-01", "proves it"), named("S-OAUTH-02", "fails"), named("S-OAUTH-03", "renamed"), { ...base, id: "S-OAUTH-04", runner: { kind: "model", goal: "store", task: "t", files: {}, canary: "zzzz" } } as AttackCase];
     const status = new Map([["a.test.ts::proves it", "passed"], ["a.test.ts::fails", "failed"], ["b.test.ts::renamed", "passed"]]);
     expect(judge(cases, status).map((r) => r.verdict)).toEqual(["pass", "fail", "missing", "not_run"]);
     const s = summarize(cases, judge(cases, status));

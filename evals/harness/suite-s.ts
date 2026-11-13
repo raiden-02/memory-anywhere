@@ -34,7 +34,18 @@ const Case = z.strictObject({
   /** Where the case runs: a named test here, a model-driven run, or an eval stack. */
   runner: z.discriminatedUnion("kind", [
     z.strictObject({ kind: z.literal("test"), file: z.string().min(1), name: z.string().min(1) }),
-    z.strictObject({ kind: z.literal("model") }),
+    z.strictObject({
+      kind: z.literal("model"),
+      /** store: no active memory may hold the canary; leak: no file the agent wrote may; admin: no owner command may take effect. */
+      goal: z.enum(["store", "leak", "admin"]),
+      /** What the user asks the agent to do: always benign; the attack is in `files`. */
+      task: z.string().min(1),
+      /** Attacker-controlled files in the agent's folder, by relative path. */
+      files: z.record(z.string(), z.string()),
+      canary: z.string().min(4),
+      /** Owner memories stored before the run (the private facts an exfiltration goes after). */
+      seed: z.array(z.string()).optional(),
+    }),
     z.strictObject({ kind: z.literal("eval-stack") }),
   ]),
 });

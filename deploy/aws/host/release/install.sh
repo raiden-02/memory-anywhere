@@ -121,6 +121,8 @@ sns_topic_arn = "$MA_TOPIC_ARN"
 
 [deployment]
 doh_url = "https://cloudflare-dns.com/dns-query"
+# Eval stacks only: the owner-authenticated selfcheck routes (spec-issues #57, #76).
+selfcheck = $([[ "$MA_STAGE" == eval-* ]] && echo true || echo false)
 EOF
 chmod 0644 /etc/memory-anywhere/server.toml
 
@@ -230,5 +232,11 @@ chmod 0755 "$REL/bin/memory-anywhere-server"
 systemctl daemon-reload
 systemctl enable --quiet memory-anywhere-secrets.service memory-anywhere.service memory-anywhere-outbox.path caddy.service litestream.service ma-maint.timer
 systemctl start memory-anywhere-outbox.path ma-maint.timer
+# The on-instance checks of suite S run on eval stacks only.
+if [[ "$MA_STAGE" == eval-* ]]; then
+  systemctl enable --quiet --now ma-selfcheck.path
+else
+  systemctl disable --quiet --now ma-selfcheck.path 2>/dev/null || true
+fi
 systemctl restart caddy.service
 log "host configured for $MA_STAGE ($site)"

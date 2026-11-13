@@ -90,7 +90,13 @@ export const ServerConfig = z.strictObject({
       forgotten_purge_days: 30, extraction_cache_days: 30, resolved_review_days: 30, audit_days: 90, write_request_days: 180,
       session_prompt_hours: 24, pre_copy_hours: 24,
     }),
-  deployment: z.strictObject({ doh_url: z.string().default("https://cloudflare-dns.com/dns-query") }).default({ doh_url: "https://cloudflare-dns.com/dns-query" }),
+  deployment: z
+    .strictObject({
+      doh_url: z.string().default("https://cloudflare-dns.com/dns-query"),
+      /** Eval stacks only (install.sh): the owner-authenticated selfcheck routes (spec-issues #57, #76). */
+      selfcheck: z.boolean().default(false),
+    })
+    .default({ doh_url: "https://cloudflare-dns.com/dns-query", selfcheck: false }),
   rate_limits: z
     .strictObject({
       token_per_ip_per_min: z.int().min(1).default(10),

@@ -1,0 +1,8 @@
+[Unit]
+Description=memory-anywhere selfcheck: suite S's on-instance checks (eval stacks only)
+
+[Service]
+Type=oneshot
+# Root: it probes IMDS as the server and Caddy users and reads the raw device and the swap file.
+ExecStart=/opt/memory-anywhere/current/bin/memory-anywhere-server selfcheck
+TimeoutStartSec=30min

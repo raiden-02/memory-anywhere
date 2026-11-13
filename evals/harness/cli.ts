@@ -10,7 +10,8 @@ import { OnnxEmbedder } from "../../packages/server/src/embed/onnx.ts";
 import { buildCases } from "../datasets/w/build.ts";
 import { runSuiteC } from "./suite-c.ts";
 import { runSuiteP } from "./suite-p.ts";
-import { runSuiteS } from "./suite-s.ts";
+import { loadCases, runSuiteS } from "./suite-s.ts";
+import { runModelCases } from "./suite-s-model.ts";
 import { runSuiteW } from "./suite-w.ts";
 import { adversarialSlots } from "./fake-llm.ts";
 import { parseArgs } from "node:util";
@@ -43,7 +44,8 @@ export async function loadItems(split: RSplit): Promise<RetrievalItem[]> {
 async function main(): Promise<number> {
   const { positionals, values } = parseArgs({
     allowPositionals: true,
-    options: { suite: { type: "string", default: "R" }, system: { type: "string" }, split: { type: "string", default: "test" }, llm: { type: "string" }, out: { type: "string" } },
+    options: { suite: { type: "string", default: "R" }, system: { type: "string" }, split: { type: "string", default: "test" }, llm: { type: "string" }, out: { type: "string" },
+      model: { type: "string" }, cases: { type: "string" } },
   });
   if (positionals[0] !== "run" || !["R", "P", "W", "C", "S"].includes(values.suite ?? "")) {
     console.error("usage: pnpm eval run --suite <R|P|W|C|S> [--system bm25,vector:<model>,memory-anywhere] [--split test|dev|unseen|full] [--llm fake-adversarial] [--out <file>]");
@@ -64,6 +66,15 @@ async function main(): Promise<number> {
     writeFileSync(values.out, JSON.stringify({ ...(result as object), git_sha: gitSha(), policy_version: "P1", started_at: new Date().toISOString() }, null, 2) + "\n");
     console.log(`wrote ${values.out}`);
   };
+  if (values.suite === "S" && values.model) {
+    // The model-driven cases (Claude Code headless, the owner's own sign-in; no API key).
+    const wanted = values.cases ? new Set(values.cases.split(",")) : undefined;
+    const cases = loadCases().filter((c) => c.runner.kind === "model" && (!wanted || wanted.has(c.id)));
+    const r = await runModelCases(cases, { model: values.model, log: (l) => console.log(l) });
+    for (const [f, v] of Object.entries(r.families)) console.log(`  ${f}: defended ${v.defended}/${v.n} (95% CI ${v.defended_ci95.map((x) => x.toFixed(2)).join("–")}), ${v.errors} errors`);
+    write({ suite: "S", part: "model-driven", ...r });
+    return 0;
+  }
   if (values.suite === "S") {
     const r = runSuiteS();
     console.log(`Suite S, ${r.n} cases`);

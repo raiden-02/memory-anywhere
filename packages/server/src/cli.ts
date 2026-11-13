@@ -103,6 +103,25 @@ async function init(l: Layout): Promise<void> {
 }
 
 /**
+ * `selfcheck` (eval stacks, as root, from ma-selfcheck.service): runs the checks of the pending
+ * request and writes the result where the owner-authenticated route reads it (spec-issues #76).
+ */
+async function selfcheck(l: Layout): Promise<void> {
+  const { instanceEnv, parseRequest, runSelfcheck, selfcheckFiles } = await import("./ops/selfcheck.ts");
+  const files = selfcheckFiles(l.config, l.dataDir);
+  if (!files) throw new Error("selfcheck is off: install.sh turns it on for eval stacks only ([deployment] selfcheck = true)");
+  if (!existsSync(files.request)) {
+    process.stdout.write(`${JSON.stringify({ ok: true, request: "none" })}\n`);
+    return;
+  }
+  const request = parseRequest(JSON.parse(readFileSync(files.request, "utf8")));
+  rmSync(files.request, { force: true }); // tmpfs: the canaries leave with it
+  const result = runSelfcheck(request ?? { canaries: [] }, instanceEnv(l.dataDir));
+  writeFileAtomic(files.result, `${JSON.stringify(result)}\n`);
+  process.stdout.write(`${JSON.stringify({ ok: true, checks: result.checks.length, failed: result.checks.filter((c) => !c.pass).map((c) => c.id) })}\n`);
+}
+
+/**
  * `import-export --prepare | --in <file> [--include-auth]` (deployment-aws.md §5.6), run by
  * ma-operator.sh through SSM Run Command with the server stopped. The one-time key lives in the
  * inbox beside the socket (`--key-dir` overrides it, for tests).
@@ -276,6 +295,8 @@ async function main(argv: readonly string[]): Promise<void> {
       db.close();
       return;
     }
+    case "selfcheck":
+      return selfcheck(l);
     case "import-export":
       return importExport(l, { prepare: values.prepare === true, file: values.in, includeAuth: values["include-auth"] === true, keyDir: values["key-dir"] });
     case "maint": {
@@ -310,7 +331,7 @@ async function main(argv: readonly string[]): Promise<void> {
       process.stdout.write(`${JSON.stringify({ server: SERVER_VERSION, schema: SCHEMA_VERSION, policy: POLICY_VERSION })}\n`);
       return;
     default:
-      throw new Error(`usage: memory-anywhere-server <start|init|migrate|dump|backup|maint|import-export|setup-token|reset-owner|version> [flags]`);
+      throw new Error(`usage: memory-anywhere-server <start|init|migrate|dump|backup|maint|import-export|selfcheck|setup-token|reset-owner|version> [flags]`);
   }
 }
 
