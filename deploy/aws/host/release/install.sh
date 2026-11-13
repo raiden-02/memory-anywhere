@@ -177,6 +177,38 @@ dbs:
 EOF
 chmod 0644 /etc/litestream.yml
 
+# ---- 5b. log shipping (§2): the CloudWatch agent reads files, not the journal ----
+# From Amazon Linux's own signed repository, whose release is fixed by the pinned AMI.
+rpm -q amazon-cloudwatch-agent >/dev/null 2>&1 || dnf install -y -q amazon-cloudwatch-agent
+install -d -m 0750 -o root -g root /var/log/memory-anywhere
+cat >/etc/logrotate.d/memory-anywhere <<EOF
+/var/log/memory-anywhere/server.log {
+	daily
+	rotate 7
+	missingok
+	notifempty
+	compress
+	delaycompress
+	copytruncate
+}
+EOF
+cwa=/opt/aws/amazon-cloudwatch-agent
+cat >"$cwa/etc/memory-anywhere.json" <<EOF
+{
+  "agent": { "run_as_user": "root" },
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          { "file_path": "/var/log/memory-anywhere/server.log", "log_group_name": "$MA_LOG_GROUP", "log_stream_name": "{instance_id}", "retention_in_days": -1 }
+        ]
+      }
+    }
+  }
+}
+EOF
+"$cwa/bin/amazon-cloudwatch-agent-ctl" -a fetch-config -m ec2 -s -c "file:$cwa/etc/memory-anywhere.json" >/dev/null
+
 # ---- 6. helpers and units (§4 step 5) ----
 install -m 0755 "$HOSTDIR/libexec/secrets.sh" /usr/local/libexec/memory-anywhere/secrets.sh
 install -m 0755 "$HOSTDIR/libexec/outbox.sh" /usr/local/libexec/memory-anywhere/outbox.sh

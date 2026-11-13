@@ -229,7 +229,7 @@ export class MemoryAnywhereStack extends Stack {
         }),
         new iam.PolicyStatement({
           sid: "ShipLogs",
-          actions: ["logs:CreateLogStream", "logs:PutLogEvents"],
+          actions: ["logs:CreateLogStream", "logs:PutLogEvents", "logs:DescribeLogStreams"],
           // log-group:<name>:* covers the group and every stream in it.
           resources: [`arn:${Aws.PARTITION}:logs:${region}:${account}:log-group:${names.logGroup(stage)}:*`],
         }),

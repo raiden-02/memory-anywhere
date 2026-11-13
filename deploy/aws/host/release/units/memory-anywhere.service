@@ -10,6 +10,11 @@ User=memory-anywhere
 Group=caddy
 SupplementaryGroups=memory-anywhere ma-data
 EnvironmentFile=-/run/memory-anywhere/secrets.env
+# One JSON line per request, ids and codes only (operations.md §1): the CloudWatch agent ships
+# this file to the stage's log group, where the metric filters raise the alarms. systemd opens
+# it before dropping privileges, so ProtectSystem=strict still holds.
+StandardOutput=append:/var/log/memory-anywhere/server.log
+StandardError=journal
 ExecStart=/opt/memory-anywhere/current/bin/memory-anywhere-server start --config /etc/memory-anywhere/server.toml
 Restart=always
 RestartSec=2

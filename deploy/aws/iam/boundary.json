@@ -40,7 +40,7 @@
     {
       "Sid": "InstanceLogs",
       "Effect": "Allow",
-      "Action": ["logs:CreateLogStream", "logs:PutLogEvents"],
+      "Action": ["logs:CreateLogStream", "logs:PutLogEvents", "logs:DescribeLogStreams"],
       "Resource": "arn:aws:logs:${REGION}:${ACCOUNT_ID}:log-group:/memory-anywhere/*"
     },
     {
