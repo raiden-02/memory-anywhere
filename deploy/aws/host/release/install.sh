@@ -97,7 +97,10 @@ esac
 # The owner's time zone (stack parameter OwnerTimezone); CloudFormation already checked
 # its shape, and this check keeps anything else out of the generated files.
 tz=${MA_OWNER_TZ:-UTC}
-[[ "$tz" =~ ^[A-Za-z][A-Za-z0-9_+-]*(/[A-Za-z0-9_+-]+){0,2}$ ]] && [ -e "/usr/share/zoneinfo/$tz" ] || { log "unknown time zone '$tz'; using UTC"; tz=UTC; }
+if ! [[ "$tz" =~ ^[A-Za-z][A-Za-z0-9_+-]*(/[A-Za-z0-9_+-]+){0,2}$ ]] || [ ! -e "/usr/share/zoneinfo/$tz" ]; then
+  log "unknown time zone '$tz'; using UTC"
+  tz=UTC
+fi
 cat >/etc/memory-anywhere/server.toml <<EOF
 # Written by host/install.sh from /etc/memory-anywhere/stack.env (config-and-cli.md §5).
 [server]

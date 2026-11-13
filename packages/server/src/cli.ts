@@ -102,6 +102,37 @@ async function init(l: Layout): Promise<void> {
   process.stdout.write(`${JSON.stringify({ ok: true, store: l.storeFile, schema_version: SCHEMA_VERSION, model: model.modelId })}\n`);
 }
 
+/**
+ * `import-export --prepare | --in <file> [--include-auth]` (deployment-aws.md §5.6), run by
+ * ma-operator.sh through SSM Run Command with the server stopped. The one-time key lives in the
+ * inbox beside the socket (`--key-dir` overrides it, for tests).
+ */
+async function importExport(l: Layout, o: { prepare: boolean; file: string | undefined; includeAuth: boolean; keyDir: string | undefined }): Promise<void> {
+  const { inboxKeyDirFor, importTransfer, prepareTransferKey } = await import("./ops/import-export.ts");
+  const target = listenTarget(l.config);
+  const keyDir = o.keyDir ?? (target.kind === "unix" ? inboxKeyDirFor(target.path) : undefined);
+  if (!keyDir) throw new Error("import-export needs --key-dir outside aws mode");
+  if (o.prepare === (o.file !== undefined)) throw new Error("import-export needs exactly one of --prepare and --in <file>");
+  if (o.prepare) {
+    const recipient = await prepareTransferKey(keyDir, systemClock.now());
+    process.stdout.write(`${JSON.stringify({ recipient, valid_minutes: 60 })}\n`);
+    return;
+  }
+  const model = activeModel();
+  const embedder = await OnnxEmbedder.load(modelDir(l.modelsDir, model), model);
+  const db = await openForServing(l);
+  try {
+    const ctx = { db, clock: systemClock, ids: idSource() };
+    const { Alerts } = await import("./ops/alerts.ts");
+    const outbox = target.kind === "unix" ? new FileOutbox(outboxDirFor(target.path)) : NO_OUTBOX;
+    const r = await importTransfer({ ctx, embedder, alerts: new Alerts(ctx, outbox), keyDir, file: o.file ?? "", includeAuth: o.includeAuth });
+    process.stdout.write(`${JSON.stringify({ ok: true, ...r })}\n`);
+  } finally {
+    db.close();
+    await embedder.release();
+  }
+}
+
 /** Opens an existing store for serving: aws mode migrates a store an older release (or a restore) left behind. */
 async function openForServing(l: Layout): Promise<DatabaseSync> {
   if (!existsSync(l.storeFile)) throw new Error(`no store at ${l.storeFile}; run \`memory-anywhere-server init\``);
@@ -200,6 +231,7 @@ async function main(argv: readonly string[]): Promise<void> {
       config: { type: "string" }, local: { type: "boolean" }, port: { type: "string" }, ephemeral: { type: "boolean" },
       "dry-run": { type: "boolean" }, "no-rate-limits": { type: "boolean" }, canonical: { type: "boolean" }, content: { type: "boolean" }, out: { type: "string" },
       compact: { type: "boolean" }, renew: { type: "boolean" }, schedule: { type: "boolean" }, cancel: { type: "boolean" },
+      prepare: { type: "boolean" }, in: { type: "string" }, "include-auth": { type: "boolean" }, "key-dir": { type: "string" },
     },
     allowPositionals: false,
   });
@@ -244,6 +276,8 @@ async function main(argv: readonly string[]): Promise<void> {
       db.close();
       return;
     }
+    case "import-export":
+      return importExport(l, { prepare: values.prepare === true, file: values.in, includeAuth: values["include-auth"] === true, keyDir: values["key-dir"] });
     case "maint": {
       if (!values.compact) throw new Error("maint needs --compact");
       process.stdout.write(`${JSON.stringify({ ok: true, ...compactStore(l.storeFile) })}\n`);
@@ -276,7 +310,7 @@ async function main(argv: readonly string[]): Promise<void> {
       process.stdout.write(`${JSON.stringify({ server: SERVER_VERSION, schema: SCHEMA_VERSION, policy: POLICY_VERSION })}\n`);
       return;
     default:
-      throw new Error(`usage: memory-anywhere-server <start|init|migrate|dump|backup|maint|setup-token|reset-owner|version> [flags]`);
+      throw new Error(`usage: memory-anywhere-server <start|init|migrate|dump|backup|maint|import-export|setup-token|reset-owner|version> [flags]`);
   }
 }
 

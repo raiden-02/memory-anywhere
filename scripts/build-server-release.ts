@@ -111,6 +111,8 @@ function main(): void {
         'here=$(dirname "$(readlink -f "$0")")',
         'node=/opt/memory-anywhere/node/bin/node',
         '[ -x "$node" ] || node=node # outside an instance (the release smoke test)',
+        "# On an instance every command acts on its store: the config is added unless one is given.",
+        'case " $* " in *" --config "*) ;; *) [ -f /etc/memory-anywhere/server.toml ] && set -- "$@" --config /etc/memory-anywhere/server.toml ;; esac',
         'exec "$node" "$here/../app/packages/server/src/cli.ts" "$@"',
         "",
       ].join("\n"),

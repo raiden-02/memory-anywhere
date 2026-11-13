@@ -55,23 +55,6 @@ switch_current() { # switch_current <release dir>: atomic symlink swap
   mv -T "$CURRENT.new" "$CURRENT"
 }
 
-# first_store <release dir>: a new instance has no store.db (deployment-aws.md §4 step 8).
-# If the backup bucket holds a replica, Litestream restores it and the server starts in
-# restored state (§5.5); otherwise `init` creates a new store. `init` also downloads and
-# checks the embedding model, so it runs in both cases.
-first_store() {
-  local rel=$1
-  if runuser -u litestream -- /usr/local/bin/litestream restore -config /etc/litestream.yml -if-db-not-exists -if-replica-exists "$DATA/store.db" &&
-    [ -f "$DATA/store.db" ]; then
-    chown memory-anywhere:ma-data "$DATA/store.db" && chmod 0660 "$DATA/store.db" || return 1
-    install -m 0660 -o memory-anywhere -g ma-data /dev/null "$DATA/maint/restored" &&
-      printf '{"reason":"lost","to":""}\n' >"$DATA/maint/restored" || return 1
-    log "restored the store from the backup; the server starts in restored state"
-  fi
-  runuser -u memory-anywhere -- "$rel/bin/memory-anywhere-server" init --config /etc/memory-anywhere/server.toml >/dev/null ||
-    { log "memory-anywhere-server init failed"; return 1; }
-}
-
 # install_release <version> <sha256>. Called as a condition, so set -e does not apply
 # inside it: every step checks its own result and returns 1 (refuse) before anything
 # is switched.
@@ -130,7 +113,8 @@ install_release() {
   fi
 
   systemctl stop memory-anywhere.service 2>/dev/null || true
-  if [ ! -f "$DATA/store.db" ] && ! first_store "$dest"; then
+  # A new instance: restore the backup or create the store (the release's host/first-store.sh).
+  if [ ! -f "$DATA/store.db" ] && ! bash "$dest/host/first-store.sh" "$dest"; then
     log "could not create or restore the store with $version"
     alert update_failed "Release $version: the first store could not be created or restored."
     return 1

@@ -202,7 +202,7 @@ let s="";for(let i=0;i<26;i++){s=a[Number(n&31n)]+s;n>>=5n}process.stdout.write(
 import_export() {
   load_stack
   if [ "$prepare" = 1 ]; then
-    run_on_instance "import-export --prepare" "runuser -u memory-anywhere -- $SERVER import-export --prepare"
+    run_on_instance "import-export --prepare" "runuser -u memory-anywhere -- $SERVER import-export --config /etc/memory-anywhere/server.toml --prepare"
     return
   fi
   [ -n "$file" ] || die "import-export needs --prepare or --file <path>"
@@ -216,7 +216,10 @@ import_export() {
 runuser -u memory-anywhere -- touch /run/memory-anywhere/outbox/fetch-$ulid
 for i in \$(seq 1 60); do [ -f /run/memory-anywhere/inbox/drop/$ulid.age ] && break; sleep 2; done
 [ -f /run/memory-anywhere/inbox/drop/$ulid.age ] || { echo 'the outbox helper did not fetch the file' >&2; exit 1; }
-runuser -u memory-anywhere -- $SERVER import-export --in /run/memory-anywhere/inbox/drop/$ulid.age$auth"
+# The import replaces the store's rows, so the server (and its caches) restarts around it.
+systemctl stop memory-anywhere.service
+trap 'systemctl start memory-anywhere.service' EXIT
+runuser -u memory-anywhere -- $SERVER import-export --config /etc/memory-anywhere/server.toml --in /run/memory-anywhere/inbox/drop/$ulid.age$auth"
 }
 
 delete_data() {

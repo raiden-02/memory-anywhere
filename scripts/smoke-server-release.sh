@@ -18,7 +18,7 @@ fail() { echo "smoke: $*" >&2; exit 1; }
 [ "$(tr -d '[:space:]' <"$rel/VERSION")" = "$VERSION" ] || fail "VERSION is not $VERSION"
 [ -L "$rel/app/node_modules/@memory-anywhere/contracts" ] || fail "contracts is not a symlink (Node would refuse its .ts files)"
 [ -x "$rel/bin/memory-anywhere-server" ] || fail "the launcher is not executable"
-for f in install.sh libexec/outbox.sh libexec/ma-maint.sh libexec/secrets.sh units/memory-anywhere.service units/ma-maint.service; do
+for f in install.sh first-store.sh libexec/outbox.sh libexec/ma-maint.sh libexec/secrets.sh units/memory-anywhere.service units/ma-maint.service; do
   [ -f "$rel/host/$f" ] || fail "host/$f is missing"
 done
 
