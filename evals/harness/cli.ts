@@ -1,4 +1,4 @@
-// pnpm eval run --suite <R|P|W|C|S> [--system …] [--split test|dev|unseen|full] [--llm fake-adversarial] [--out <file>] (evals.md §9).
+// pnpm eval run --suite <R|P|W|C|S|A> [--system …] [--split test|dev|unseen|full] [--llm fake-adversarial] [--out <file>] (evals.md §9).
 // Needs no API keys. R: with no --system, runs every baseline that is available and the full
 // system. P: server stage. W: FactConsolidation cases. C: local latency against an ephemeral server.
 // W and C need the pinned model files (MA_TEST_MODEL_DIR, else the M0 spike's download folder).
@@ -12,6 +12,8 @@ import { runSuiteC } from "./suite-c.ts";
 import { runSuiteP } from "./suite-p.ts";
 import { loadCases, runSuiteS } from "./suite-s.ts";
 import { runModelCases } from "./suite-s-model.ts";
+import { runSuiteA } from "./suite-a.ts";
+import { runSuitePModel } from "./suite-p-model.ts";
 import { runSuiteW } from "./suite-w.ts";
 import { adversarialSlots } from "./fake-llm.ts";
 import { parseArgs } from "node:util";
@@ -41,14 +43,19 @@ export async function loadItems(split: RSplit): Promise<RetrievalItem[]> {
   return all.filter((q) => keep(q.question_id)).map(toRetrievalItem);
 }
 
+function usage1(message: string): number {
+  console.error(message);
+  return 1;
+}
+
 async function main(): Promise<number> {
   const { positionals, values } = parseArgs({
     allowPositionals: true,
     options: { suite: { type: "string", default: "R" }, system: { type: "string" }, split: { type: "string", default: "test" }, llm: { type: "string" }, out: { type: "string" },
       model: { type: "string" }, cases: { type: "string" } },
   });
-  if (positionals[0] !== "run" || !["R", "P", "W", "C", "S"].includes(values.suite ?? "")) {
-    console.error("usage: pnpm eval run --suite <R|P|W|C|S> [--system bm25,vector:<model>,memory-anywhere] [--split test|dev|unseen|full] [--llm fake-adversarial] [--out <file>]");
+  if (positionals[0] !== "run" || !["R", "P", "W", "C", "S", "A"].includes(values.suite ?? "")) {
+    console.error("usage: pnpm eval run --suite <R|P|W|C|S|A> [--system bm25,vector:<model>,memory-anywhere] [--split test|dev|unseen|full] [--llm fake-adversarial] [--out <file>]");
     return 1;
   }
   if (values.llm !== undefined && (values.suite !== "W" || values.llm !== "fake-adversarial")) {
@@ -66,6 +73,25 @@ async function main(): Promise<number> {
     writeFileSync(values.out, JSON.stringify({ ...(result as object), git_sha: gitSha(), policy_version: "P1", started_at: new Date().toISOString() }, null, 2) + "\n");
     console.log(`wrote ${values.out}`);
   };
+  if (values.suite === "A") {
+    // Claude Code headless with the owner's own sign-in (no API key); reported, not gated.
+    if (!values.model) return usage1("suite A needs --model <id>, such as claude-haiku-5-5");
+    const only = values.cases ? new Set(values.cases.split(",")) : undefined;
+    const r = await runSuiteA({ model: values.model, ...(only ? { only } : {}), log: (l) => console.log(l) });
+    for (const [v, m] of Object.entries(r.variants)) {
+      const pct = (x: { k: number; n: number }) => `${x.k}/${x.n}`;
+      console.log(`  ${v}: recall when personal ${pct(m.recall_when_personal)}, save when stated ${pct(m.save_when_stated)}, false recall ${pct(m.false_recall)}, spurious save ${pct(m.spurious_save)}`);
+    }
+    write(r);
+    return 0;
+  }
+  if (values.suite === "P" && values.model) {
+    const r = await runSuitePModel({ model: values.model, log: (l) => console.log(l) });
+    for (const [l, v] of Object.entries(r.rates)) console.log(`  ${l}: ${v.k}/${v.n} as labelled (95% CI ${v.ci95.map((x) => x.toFixed(2)).join("–")})`);
+    console.log(`  outcomes: ${JSON.stringify(r.outcomes)}; ${r.errors} errors`);
+    write(r);
+    return 0;
+  }
   if (values.suite === "S" && values.model) {
     // The model-driven cases (Claude Code headless, the owner's own sign-in; no API key).
     const wanted = values.cases ? new Set(values.cases.split(",")) : undefined;
