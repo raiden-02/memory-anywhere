@@ -1,9 +1,12 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { bm25Rank, ftsQuery } from "../adapters/bm25.ts";
 import { allocate, shuffle } from "../datasets/public/make-subsets.ts";
 import { categoryOf, rounds, toRetrievalItem } from "../harness/lme.ts";
 import { ndcgAt, recallAt } from "../harness/metrics.ts";
 import { bootstrapMean, mulberry32, pairedBootstrap, wilson } from "../harness/stats.ts";
+import { judge, loadCases, ROOT, summarize, type AttackCase } from "../harness/suite-s.ts";
 
 describe("metrics", () => {
   it("scores a perfect and a missed ranking", () => {
@@ -113,5 +116,29 @@ describe("BM25 baseline", () => {
       { id: "b", text: "user: I started running every morning" },
     ];
     expect(bm25Rank(docs, "how often do I run?")[0]).toBe("b");
+  });
+});
+
+describe("suite S", () => {
+  const base = { family: "S-OAUTH", channel: "/mcp", setup: "s", payload: "p", success_condition: "c" } as const;
+  const named = (id: string, name: string): AttackCase => ({ ...base, id, runner: { kind: "test", file: "a.test.ts", name } });
+
+  it("passes a case only on a passing run of the very test it names", () => {
+    const cases = [named("S-OAUTH-01", "proves it"), named("S-OAUTH-02", "fails"), named("S-OAUTH-03", "renamed"), { ...base, id: "S-OAUTH-04", runner: { kind: "model" } } as AttackCase];
+    const status = new Map([["a.test.ts::proves it", "passed"], ["a.test.ts::fails", "failed"], ["b.test.ts::renamed", "passed"]]);
+    expect(judge(cases, status).map((r) => r.verdict)).toEqual(["pass", "fail", "missing", "not_run"]);
+    const s = summarize(cases, judge(cases, status));
+    expect(s.gate.local_deterministic_pass).toBe(false);
+    expect(s.families["S-OAUTH"]).toMatchObject({ cases: 4, pass: 1, fail: 1, missing: 1, not_run: 1 });
+  });
+
+  it("the case file parses, its ids are unique and in their family, and every test it names exists", () => {
+    const cases = loadCases();
+    expect(cases.length).toBeGreaterThan(0);
+    for (const c of cases) {
+      if (c.runner.kind !== "test") continue;
+      const source = readFileSync(join(ROOT, c.runner.file), "utf8");
+      expect(source.includes(JSON.stringify(c.runner.name)) || source.includes(`"${c.runner.name}"`), `${c.id}: ${c.runner.name}`).toBe(true);
+    }
   });
 });

@@ -52,6 +52,7 @@ export const ERROR_PAGE = `<!doctype html><html lang="en"><meta charset="utf-8">
 export function createProvider(o: ProviderOptions): Provider {
   const { ctx, issuer, pairing } = o;
   const mcpUrl = `${issuer}/mcp`;
+  const secureCookies = issuer.startsWith("https:") || new URL(issuer).hostname === "localhost";
   const rotation = (oauthClientId: string): string | undefined =>
     (prepared(ctx.db, "SELECT refresh_rotation FROM client_policy WHERE oauth_client_id = ?").get(oauthClientId) as { refresh_rotation: string } | undefined)?.refresh_rotation;
   const grantCreated = (grantId: string): number | undefined => {
@@ -96,9 +97,10 @@ export function createProvider(o: ProviderOptions): Provider {
     cookies: {
       keys: [cookieKey],
       names: { session: "__Secure-ma_as_session", interaction: "__Secure-ma_as", resume: "__Secure-ma_as_resume" },
-      // Secure whenever the issuer is https (always in aws mode); the loopback test issuer is plain http.
-      long: { httpOnly: true, sameSite: "lax", secure: issuer.startsWith("https:") },
-      short: { httpOnly: true, sameSite: "lax", secure: issuer.startsWith("https:") },
+      // Secure whenever the issuer is https (always in aws mode), and on http://localhost, which
+      // browsers treat as a secure context (the browser suite); the 127.0.0.1 test issuer is plain http.
+      long: { httpOnly: true, sameSite: "lax", secure: secureCookies },
+      short: { httpOnly: true, sameSite: "lax", secure: secureCookies },
     },
     // Nothing is signed with it (opaque tokens, no ID tokens); a per-process key keeps /oauth/jwks valid.
     jwks: { keys: [{ ...generateKeyPairSync("rsa", { modulusLength: 2048 }).privateKey.export({ format: "jwk" }), alg: "RS256", use: "sig" }] },

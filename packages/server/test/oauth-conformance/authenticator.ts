@@ -97,6 +97,23 @@ export class SoftAuthenticator {
     };
   }
 
+  /**
+   * The enrolled credential in the shape of Chrome's WebAuthn.addCredential (standard base64,
+   * PKCS#8 key), so a real browser's virtual authenticator can sign in with the same passkey.
+   * The browser's counter starts above this one's, as a counter must only grow.
+   */
+  exportCredential(rpId: string): { credentialId: string; isResidentCredential: true; rpId: string; privateKey: string; signCount: number; userHandle: string } {
+    if (!this.credentialId || !this.privateKey) throw new Error("no credential enrolled");
+    return {
+      credentialId: this.credentialId.toString("base64"),
+      isResidentCredential: true,
+      rpId,
+      privateKey: this.privateKey.export({ format: "der", type: "pkcs8" }).toString("base64"),
+      signCount: this.counter + 100,
+      userHandle: Buffer.from("owner").toString("base64"),
+    };
+  }
+
   /** navigator.credentials.get() for PublicKeyCredentialRequestOptionsJSON. */
   get(options: { challenge: string; rpId?: string }, origin = this.origin): Record<string, unknown> {
     if (!this.credentialId || !this.privateKey) throw new Error("no credential enrolled");

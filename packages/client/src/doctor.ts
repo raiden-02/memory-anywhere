@@ -1,7 +1,7 @@
 // `mema doctor` (clients.md §6): each check says pass, warn or fail, and how to fix it. In local
 // mode `local.token` replaces `auth.pc-grant`, and `dns` and `policy` do not apply.
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { parse as parseToml } from "smol-toml";
@@ -113,15 +113,23 @@ function skillCheck(home: string): Check {
     : warn("skill.single", `${found.length} copies: ${found.join(", ")}`, "keep only ~/.agents/skills/memory-anywhere");
 }
 
-/** Repo configs that define a memory-anywhere-like server (clients.md §3.2). */
-function shadowCheck(roots: readonly string[]): Check {
-  const files = roots.flatMap((r) => [".mcp.json", ".cursor/mcp.json", ".claude/settings.json", ".claude/settings.local.json", ".codex/config.toml"].map((f) => path.join(r, f)));
-  const hits = files.filter((f) => existsSync(f) && /memory[-_ ]?anywhere|"mema"/iu.test(readFileSync(f, "utf8")));
-  return hits.length === 0 ? pass("shadow-servers", `${roots.length} known repos clean`) : warn("shadow-servers", hits.join(", "), "remove those server entries; disabledMcpjsonServers already hides a project .mcp.json in Claude Code");
+/**
+ * Repo files that impersonate memory-anywhere (clients.md §3.2): a server entry in a project config,
+ * or a Cursor rule file that speaks for it. Repo content is untrusted; only the plugins speak for it.
+ */
+export function shadowCheck(roots: readonly string[]): Check {
+  const configs = roots.flatMap((r) => [".mcp.json", ".cursor/mcp.json", ".claude/settings.json", ".claude/settings.local.json", ".codex/config.toml"].map((f) => path.join(r, f)));
+  const rules = roots.flatMap((r) => {
+    const dir = path.join(r, ".cursor", "rules");
+    return existsSync(dir) ? readdirSync(dir).filter((f) => /\.mdc?$/iu.test(f)).map((f) => path.join(dir, f)) : [];
+  });
+  const hits = [...configs, ...rules].filter((f) => existsSync(f) && /memory[-_ ]?anywhere|\bmema\b/iu.test(readFileSync(f, "utf8")));
+  return hits.length === 0 ? pass("shadow-servers", `${roots.length} known repos clean`)
+    : warn("shadow-servers", hits.join(", "), "remove those entries and rule files: memory-anywhere speaks only through its plugins; disabledMcpjsonServers already hides a project .mcp.json in Claude Code");
 }
 
 /** Hook configs that mention memory-anywhere but were not installed by this client. */
-function foreignHooksCheck(home: string, t: ToolPaths): Check {
+export function foreignHooksCheck(home: string, t: ToolPaths): Check {
   const candidates = [path.join(home, ".claude", "settings.json"), path.join(t.codexHome, "hooks.json")];
   const hits = candidates.filter((f) => existsSync(f) && /\bmema\b|memory-anywhere/iu.test(JSON.stringify(readJson(f)?.["hooks"] ?? "")));
   return hits.length === 0 ? pass("foreign-hooks", "none") : warn("foreign-hooks", hits.join(", "), "remove memory-anywhere hooks there; the plugins carry their own");

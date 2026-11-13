@@ -41,9 +41,13 @@ async function freePort(): Promise<number> {
 }
 
 /** The two surfaces on two loopback ports, told apart by the port the request arrived on. */
-function testDoor(mcpPort: number, adminPort: number): FrontDoor {
-  const baseUrl = `http://127.0.0.1:${mcpPort}`;
-  const adminUrl = `http://127.0.0.1:${adminPort}`;
+/**
+ * The two surfaces on two loopback ports. `host` is 127.0.0.1 for the HTTP-level suites, or
+ * localhost for a real browser, which refuses an IP address as a passkey's RP ID.
+ */
+function testDoor(mcpPort: number, adminPort: number, hostname: "127.0.0.1" | "localhost"): FrontDoor {
+  const baseUrl = `http://${hostname}:${mcpPort}`;
+  const adminUrl = `http://${hostname}:${adminPort}`;
   return {
     mode: "aws",
     baseUrl,
@@ -51,8 +55,8 @@ function testDoor(mcpPort: number, adminPort: number): FrontDoor {
     arrive(req) {
       const port = req.socket.localPort;
       const host = req.headers.host;
-      if (port === mcpPort && host === `127.0.0.1:${mcpPort}`) return { surface: "mcp", clientIp: req.socket.remoteAddress, allowedOrigins: new Set([baseUrl]) };
-      if (port === adminPort && host === `127.0.0.1:${adminPort}`) return { surface: "admin", clientIp: req.socket.remoteAddress, allowedOrigins: new Set([adminUrl]) };
+      if (port === mcpPort && host === `${hostname}:${mcpPort}`) return { surface: "mcp", clientIp: req.socket.remoteAddress, allowedOrigins: new Set([baseUrl]) };
+      if (port === adminPort && host === `${hostname}:${adminPort}`) return { surface: "admin", clientIp: req.socket.remoteAddress, allowedOrigins: new Set([adminUrl]) };
       return { refused: "unknown origin" };
     },
   };
@@ -61,14 +65,14 @@ function testDoor(mcpPort: number, adminPort: number): FrontDoor {
 /** The suite makes hundreds of OAuth requests from one address; rate limits get their own test. */
 const UNTHROTTLED = { token_per_ip_per_min: 100_000, register_per_ip_per_min: 100_000, authorize_per_ip_per_min: 100_000, login_per_ip_per_min: 100_000, mcp_per_grant_per_min: 100_000, unauth_per_ip_per_min: 100_000 };
 
-export async function startIssuer(opts: { fetch?: Configuration["fetch"]; rateLimits?: Partial<typeof UNTHROTTLED> } = {}) {
+export async function startIssuer(opts: { fetch?: Configuration["fetch"]; rateLimits?: Partial<typeof UNTHROTTLED>; host?: "127.0.0.1" | "localhost" } = {}) {
   const store = await testStore(); // on disk, in a folder with a space in its path
   const clock = new Clock();
   const ctx = { ...store, clock };
   const config = ServerConfig.parse({ rate_limits: { ...UNTHROTTLED, ...opts.rateLimits } });
   const app = new App({ db: store.db, config, embedder: fakeEmbedder, clock, ids: store.ids });
   const [mcpPort, adminPort] = [await freePort(), await freePort()];
-  const door = testDoor(mcpPort, adminPort);
+  const door = testDoor(mcpPort, adminPort, opts.host ?? "127.0.0.1");
   const logger = new Logger(() => undefined);
   const auth: Auth = createAuth({ app, door, logger, ...(opts.fetch ? { fetch: opts.fetch } : {}) });
   const servers: Server[] = [mcpPort, adminPort].map(() => createHttpServer({ app, door, authenticate: auth.authenticate, mounts: auth.mounts, stepUps: auth.stepUps, logger, now: clock.now }));

@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "@modelcontextprotocol/client": "2.4.0",
-    "@types/oidc-provider": "9.13.1"
+    "@types/oidc-provider": "9.13.1",
+    "playwright-core": "1.64.1"
   }
 }

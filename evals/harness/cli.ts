@@ -1,4 +1,4 @@
-// pnpm eval run --suite <R|P|W|C> [--system …] [--split test|dev] [--llm fake-adversarial] [--out <file>] (evals.md §9).
+// pnpm eval run --suite <R|P|W|C|S> [--system …] [--split test|dev|unseen|full] [--llm fake-adversarial] [--out <file>] (evals.md §9).
 // Needs no API keys. R: with no --system, runs every baseline that is available and the full
 // system. P: server stage. W: FactConsolidation cases. C: local latency against an ephemeral server.
 // W and C need the pinned model files (MA_TEST_MODEL_DIR, else the M0 spike's download folder).
@@ -10,6 +10,7 @@ import { OnnxEmbedder } from "../../packages/server/src/embed/onnx.ts";
 import { buildCases } from "../datasets/w/build.ts";
 import { runSuiteC } from "./suite-c.ts";
 import { runSuiteP } from "./suite-p.ts";
+import { runSuiteS } from "./suite-s.ts";
 import { runSuiteW } from "./suite-w.ts";
 import { adversarialSlots } from "./fake-llm.ts";
 import { parseArgs } from "node:util";
@@ -24,11 +25,19 @@ function fmt(i: { mean: number; ci95: [number, number] }): string {
   return `${i.mean.toFixed(3)} [${i.ci95[0].toFixed(3)}, ${i.ci95[1].toFixed(3)}]`;
 }
 
-export async function loadItems(split: "dev" | "test"): Promise<RetrievalItem[]> {
-  const ids = new Set((JSON.parse(readFileSync(SPLIT_FILE, "utf8")) as Record<string, string[]>)[split]);
-  return loadLme(await fetchLongMemEval())
-    .filter((q) => ids.has(q.question_id))
-    .map(toRetrievalItem);
+/**
+ * Suite R questions: `dev` (100, every tuning choice), `test` (200, M1's gate), `unseen` (the 400
+ * questions outside dev: M2's gate) or `full` (all 500, reported; spec-issues #58).
+ */
+export type RSplit = "dev" | "test" | "unseen" | "full";
+
+export async function loadItems(split: RSplit): Promise<RetrievalItem[]> {
+  const subsets = JSON.parse(readFileSync(SPLIT_FILE, "utf8")) as Record<"dev" | "test", string[]>;
+  const all = loadLme(await fetchLongMemEval());
+  const dev = new Set(subsets.dev);
+  const chosen = split === "dev" || split === "test" ? new Set(subsets[split]) : undefined;
+  const keep = (id: string): boolean => (chosen ? chosen.has(id) : split === "full" || !dev.has(id));
+  return all.filter((q) => keep(q.question_id)).map(toRetrievalItem);
 }
 
 async function main(): Promise<number> {
@@ -36,20 +45,36 @@ async function main(): Promise<number> {
     allowPositionals: true,
     options: { suite: { type: "string", default: "R" }, system: { type: "string" }, split: { type: "string", default: "test" }, llm: { type: "string" }, out: { type: "string" } },
   });
-  if (positionals[0] !== "run" || !["R", "P", "W", "C"].includes(values.suite ?? "")) {
-    console.error("usage: pnpm eval run --suite <R|P|W|C> [--system bm25,vector:<model>,memory-anywhere] [--split test|dev] [--llm fake-adversarial] [--out <file>]");
+  if (positionals[0] !== "run" || !["R", "P", "W", "C", "S"].includes(values.suite ?? "")) {
+    console.error("usage: pnpm eval run --suite <R|P|W|C|S> [--system bm25,vector:<model>,memory-anywhere] [--split test|dev|unseen|full] [--llm fake-adversarial] [--out <file>]");
     return 1;
   }
   if (values.llm !== undefined && (values.suite !== "W" || values.llm !== "fake-adversarial")) {
     console.error("--llm fake-adversarial applies to suite W only");
     return 1;
   }
-  const split = values.split === "dev" ? "dev" : "test";
+  if (!["dev", "test", "unseen", "full"].includes(values.split ?? "") || (values.suite !== "R" && !["dev", "test"].includes(values.split ?? ""))) {
+    console.error("--split is dev or test (and, for suite R, unseen or full)");
+    return 1;
+  }
+  const rSplit = values.split as RSplit;
+  const split = rSplit === "dev" ? "dev" : "test";
   const write = (result: unknown): void => {
     if (!values.out) return;
     writeFileSync(values.out, JSON.stringify({ ...(result as object), git_sha: gitSha(), policy_version: "P1", started_at: new Date().toISOString() }, null, 2) + "\n");
     console.log(`wrote ${values.out}`);
   };
+  if (values.suite === "S") {
+    const r = runSuiteS();
+    console.log(`Suite S, ${r.n} cases`);
+    for (const [f, v] of Object.entries(r.families)) {
+      console.log(`  ${f.padEnd(8)} ${String(v.cases).padStart(3)} cases (min ${v.minimum}): ${v.pass} pass, ${v.fail} fail, ${v.missing} missing, ${v.not_run} not run here`);
+    }
+    for (const c of r.cases.filter((x) => x.verdict === "fail" || x.verdict === "missing")) console.log(`  ${c.verdict.toUpperCase()} ${c.id}: ${c.evidence}`);
+    console.log(`local deterministic cases ${r.gate.local_deterministic_pass ? "PASS" : "FAIL"}; family minimums ${r.gate.counts_met ? "met" : "not met yet"}`);
+    write(r);
+    return r.gate.local_deterministic_pass ? 0 : 1;
+  }
   if (values.suite === "P") {
     const r = await runSuiteP();
     console.log(`Suite P server stage, n = ${r.n}`);
@@ -77,15 +102,15 @@ async function main(): Promise<number> {
     write(result);
     return result.gate.pass ? 0 : 1;
   }
-  const items = await loadItems(split);
+  const items = await loadItems(rSplit);
   const bm25System: RankingSystem = { name: "bm25", rank: (docs, q) => bm25Rank(docs, q) };
   const full = !values.system || values.system.split(",").includes("memory-anywhere") ? memoryAnywhereSystem() : undefined;
   const systems = [bm25System, ...(await systemsFromRegistry(values.system)), ...(full ? [full] : [])].filter((s) => !values.system || values.system.split(",").includes(s.name));
-  const dataset = `longmemeval-s-${split === "test" ? 200 : 100}`;
+  const dataset = `longmemeval-s-${items.length}`;
   const results: SuiteRResult[] = [];
   for (const s of systems) {
-    process.stderr.write(`running ${s.name} on ${items.length} ${split} questions ...\n`);
-    results.push(await runSuiteR(s, items, { dataset, split }));
+    process.stderr.write(`running ${s.name} on ${items.length} ${rSplit} questions ...\n`);
+    results.push(await runSuiteR(s, items, { dataset, split: rSplit }));
   }
   const bm25 = results.find((r) => r.system === "bm25");
   for (const r of results) {
@@ -93,7 +118,7 @@ async function main(): Promise<number> {
     // The M1 gate also needs the full system against vector-only.
     if (r.system === "memory-anywhere") for (const v of results.filter((x) => x.system.startsWith("vector:"))) r.comparisons.push(compare(r, v, "ndcg10"), compare(r, v, "r5"));
   }
-  console.log(`Suite R, ${dataset} (${split}), answerable n = ${results[0]?.per_query.filter((p) => p.category !== "abstention").length ?? 0}, 95% bootstrap CIs (10,000 resamples, seed 1234)`);
+  console.log(`Suite R, ${dataset} (${rSplit}), answerable n = ${results[0]?.per_query.filter((p) => p.category !== "abstention").length ?? 0}, 95% bootstrap CIs (10,000 resamples, seed 1234)`);
   for (const r of results) {
     console.log(`\n${r.system}: nDCG@10 ${fmt(r.metrics.ndcg10)}  R@5 ${fmt(r.metrics.r5)}  (${(r.duration_ms / 1000).toFixed(1)} s)`);
     for (const [c, v] of Object.entries(r.per_category)) {

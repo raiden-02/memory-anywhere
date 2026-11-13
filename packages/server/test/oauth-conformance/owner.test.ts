@@ -2,9 +2,10 @@
 // owner setup and recovery, passkey independence and clone checks, rate limits, idle lifetimes,
 // one grant per vendor with Replace, and what each grant may do at /mcp.
 
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { Decrypter, generateIdentity, identityToRecipient } from "age-encryption";
 import { SERVER_VERSION } from "../../src/app.ts";
+import { fakeEmbedder } from "../helpers/store.ts";
 import { SoftAuthenticator } from "./authenticator.ts";
 import { authorize, authUrl, Browser, callMcp, openWindow, ownerSetup, pkce, startIssuer, token, type Issuer } from "./issuer.ts";
 
@@ -99,6 +100,38 @@ describe("owner setup and recovery (§3.1, §3.3)", () => {
     expect((await callMcp(issuer, g.access)).status).toBe(200);
     expect(issuer.app.alerts.open().map((a) => a.kind)).toContain("recovery_used");
   }, 90_000);
+
+  test("setup race: a second browser holding the same token cannot add a passkey once setup is confirmed", async () => {
+    const issuer = await issuerWith();
+    const token = issuer.issueSetupToken();
+    const admin = (p: string) => `${issuer.adminOrigin}${p}`;
+    const racer = new Browser(issuer.origin);
+    // The racer fetched options with the token before the owner finished.
+    const early = await racer.postJson(admin("/setup/options"), { token });
+    expect(early.status).toBe(200);
+    // The owner completes setup with the same token (two passkeys, a code typed back).
+    let codes: string[] = [];
+    const owner = new Browser(issuer.origin);
+    for (const a of [issuer.authenticator, issuer.second]) {
+      const options = await owner.postJson(admin("/setup/options"), { token });
+      codes = ((await owner.postJson(admin("/setup/verify"), { token, response: a.create(options.data as never) })).data["codes"] as string[] | undefined) ?? codes;
+    }
+    expect((await owner.postJson(admin("/setup/confirm"), { token, code: codes[2] })).status).toBe(200);
+    const attacker = new SoftAuthenticator(issuer.adminOrigin);
+    expect((await racer.postJson(admin("/setup/verify"), { token, response: attacker.create(early.data as never) })).status).toBe(403);
+    expect((await racer.postJson(admin("/setup/confirm"), { token, code: codes[2] })).status).toBe(403);
+    expect(issuer.passkeys.count()).toBe(2);
+  }, 60_000);
+
+  test("recovery brute force: wrong codes raise auth_fail at five, and the sixth try in an hour answers 429", async () => {
+    const issuer = await issuerWith();
+    await ownerSetup(issuer);
+    const stranger = new Browser(issuer.origin);
+    const tries: number[] = [];
+    for (let i = 0; i < 6; i++) tries.push((await stranger.postJson(`${issuer.adminOrigin}/recover`, { code: `AAAA-BBBB-CCCC-${String(1000 + i)}` })).status);
+    expect(tries).toEqual([403, 403, 403, 403, 403, 429]);
+    expect(issuer.app.alerts.open().map((a) => a.kind)).toContain("auth_fail");
+  }, 60_000);
 });
 
 describe("passkeys (§3.2)", () => {
@@ -336,5 +369,43 @@ describe("rate limits (operations.md §3)", () => {
     const statuses: number[] = [];
     for (let i = 0; i < 4; i++) statuses.push((await fetch(`${issuer.origin}${authUrl(issuer, { client_id: "ma_x", redirect_uri: CLAUDE_REDIRECT })}`, { redirect: "manual" })).status);
     expect(statuses).toEqual([400, 400, 400, 429]);
+  }, 30_000);
+
+  test("an unauthenticated flood gets 401, then 429 per address, and does no store or embedding work", async () => {
+    const issuer = await issuerWith({ rateLimits: { unauth_per_ip_per_min: 5 } });
+    const query = vi.spyOn(fakeEmbedder, "embedQuery");
+    const documents = vi.spyOn(fakeEmbedder, "embedDocuments");
+    const rows = () => ["write_request", "read_ledger", "memory", "event"].map((t) => (issuer.db.prepare(`SELECT count(*) AS n FROM ${t}`).get() as { n: number }).n);
+    const before = rows();
+    const statuses: number[] = [];
+    for (let i = 0; i < 4; i++) statuses.push((await callMcp(issuer, `not-a-token-${i}`)).status);
+    for (let i = 0; i < 3; i++) {
+      const r = await fetch(`${issuer.origin}/v1/recall`, {
+        method: "POST", headers: { authorization: "Bearer forged", "content-type": "application/json", "ma-client-version": SERVER_VERSION }, body: JSON.stringify({ query: "where do I live" }),
+      });
+      statuses.push(r.status);
+    }
+    expect(statuses).toEqual([401, 401, 401, 401, 401, 429, 429]);
+    expect(query).not.toHaveBeenCalled();
+    expect(documents).not.toHaveBeenCalled();
+    expect(rows()).toEqual(before);
+    query.mockRestore();
+    documents.mockRestore();
+  }, 30_000);
+
+  test("one grant's requests past mcp_per_grant_per_min answer 429", async () => {
+    const issuer = await issuerWith({ rateLimits: { mcp_per_grant_per_min: 3 } });
+    const owner = await ownerSetup(issuer);
+    const g = await grant(issuer, owner, { vendor: "claude", method: "static" });
+    const statuses: number[] = [];
+    for (let i = 0; i < 4; i++) statuses.push((await callMcp(issuer, g.access)).status);
+    expect(statuses).toEqual([200, 200, 200, 429]);
+  }, 60_000);
+
+  test("/oauth/token answers 429 after the per-IP limit", async () => {
+    const issuer = await issuerWith({ rateLimits: { token_per_ip_per_min: 2 } });
+    const statuses: number[] = [];
+    for (let i = 0; i < 3; i++) statuses.push((await token(issuer, { grant_type: "refresh_token", refresh_token: `dead-${i}`, client_id: "memory-anywhere-cli" })).status);
+    expect(statuses).toEqual([400, 400, 429]);
   }, 30_000);
 });
