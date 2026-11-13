@@ -94,12 +94,27 @@ case "$MA_STAGE" in
   spike) site="spike.$MA_HOST" ;;
   *) site="eval.$MA_HOST" ;;
 esac
+# The owner's time zone (stack parameter OwnerTimezone); CloudFormation already checked
+# its shape, and this check keeps anything else out of the generated files.
+tz=${MA_OWNER_TZ:-UTC}
+[[ "$tz" =~ ^[A-Za-z][A-Za-z0-9_+-]*(/[A-Za-z0-9_+-]+){0,2}$ ]] && [ -e "/usr/share/zoneinfo/$tz" ] || { log "unknown time zone '$tz'; using UTC"; tz=UTC; }
 cat >/etc/memory-anywhere/server.toml <<EOF
-# Written by host/install.sh from /etc/memory-anywhere/stack.env.
+# Written by host/install.sh from /etc/memory-anywhere/stack.env (config-and-cli.md §5).
 [server]
-public_origin = "https://$site"
-socket = "/run/memory-anywhere/http.sock"
+mode = "aws"
+public_url = "https://$site"
+listen = "unix:/run/memory-anywhere/http.sock"
 data_dir = "/var/lib/memory-anywhere"
+models_dir = "/var/lib/memory-anywhere/models"
+
+[owner]
+timezone = "$tz"
+
+[llm]
+provider = "anthropic"
+
+[alerts]
+sns_topic_arn = "$MA_TOPIC_ARN"
 
 [deployment]
 doh_url = "https://cloudflare-dns.com/dns-query"
@@ -162,10 +177,23 @@ chmod 0644 /etc/litestream.yml
 # ---- 6. helpers and units (§4 step 5) ----
 install -m 0755 "$HOSTDIR/libexec/secrets.sh" /usr/local/libexec/memory-anywhere/secrets.sh
 install -m 0755 "$HOSTDIR/libexec/outbox.sh" /usr/local/libexec/memory-anywhere/outbox.sh
+install -m 0755 "$HOSTDIR/libexec/ma-maint.sh" /usr/local/libexec/memory-anywhere/ma-maint.sh
 for unit in "$HOSTDIR"/units/*; do install -m 0644 "$unit" "/etc/systemd/system/$(basename "$unit")"; done
+# The maintenance timer runs at 04:15 in the owner's time zone, so it is written here.
+cat >/etc/systemd/system/ma-maint.timer <<EOF
+[Unit]
+Description=memory-anywhere nightly maintenance at 04:15 owner time (deployment-aws.md §4)
+
+[Timer]
+OnCalendar=*-*-* 04:15:00 $tz
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
 chmod 0755 "$REL/bin/memory-anywhere-server"
 systemctl daemon-reload
-systemctl enable --quiet memory-anywhere-secrets.service memory-anywhere.service memory-anywhere-outbox.path caddy.service litestream.service
-systemctl start memory-anywhere-outbox.path
+systemctl enable --quiet memory-anywhere-secrets.service memory-anywhere.service memory-anywhere-outbox.path caddy.service litestream.service ma-maint.timer
+systemctl start memory-anywhere-outbox.path ma-maint.timer
 systemctl restart caddy.service
 log "host configured for $MA_STAGE ($site)"

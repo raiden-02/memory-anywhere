@@ -79,6 +79,30 @@ jobs:
         shell: bash
       - run: pnpm vitest run packages/server/test/embed.test.ts packages/server/test/cli.test.ts
 
+  release-build:
+    # The server release tarball builds and runs on the instance's platform (deployment-aws.md
+    # §7.3), on every push, so a tag never meets a broken build (release.yml uses the same script).
+    runs-on: ubuntu-24.04-arm
+    defaults:
+      run:
+        working-directory: work space
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: work space
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          package_json_file: work space/package.json
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24.22.2"
+          cache: pnpm
+          cache-dependency-path: work space/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/build-server-release.ts 0.0.0-ci --out "$RUNNER_TEMP/release"
+      - run: bash scripts/smoke-server-release.sh "$RUNNER_TEMP/release/memory-anywhere-server-0.0.0-ci.tar.gz" 0.0.0-ci
+      - run: bash scripts/audit-release-signatures.sh "$RUNNER_TEMP/release/memory-anywhere-server-0.0.0-ci.tar.gz"
+
   plugin-validate:
     # clients.md §3.2: the Claude Code plugin passes Claude Code's own strict validator.
     runs-on: ubuntu-24.04

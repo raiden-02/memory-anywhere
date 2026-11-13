@@ -55,6 +55,23 @@ switch_current() { # switch_current <release dir>: atomic symlink swap
   mv -T "$CURRENT.new" "$CURRENT"
 }
 
+# first_store <release dir>: a new instance has no store.db (deployment-aws.md §4 step 8).
+# If the backup bucket holds a replica, Litestream restores it and the server starts in
+# restored state (§5.5); otherwise `init` creates a new store. `init` also downloads and
+# checks the embedding model, so it runs in both cases.
+first_store() {
+  local rel=$1
+  if runuser -u litestream -- /usr/local/bin/litestream restore -config /etc/litestream.yml -if-db-not-exists -if-replica-exists "$DATA/store.db" &&
+    [ -f "$DATA/store.db" ]; then
+    chown memory-anywhere:ma-data "$DATA/store.db" && chmod 0660 "$DATA/store.db" || return 1
+    install -m 0660 -o memory-anywhere -g ma-data /dev/null "$DATA/maint/restored" &&
+      printf '{"reason":"lost","to":""}\n' >"$DATA/maint/restored" || return 1
+    log "restored the store from the backup; the server starts in restored state"
+  fi
+  runuser -u memory-anywhere -- "$rel/bin/memory-anywhere-server" init --config /etc/memory-anywhere/server.toml >/dev/null ||
+    { log "memory-anywhere-server init failed"; return 1; }
+}
+
 # install_release <version> <sha256>. Called as a condition, so set -e does not apply
 # inside it: every step checks its own result and returns 1 (refuse) before anything
 # is switched.
@@ -89,7 +106,7 @@ install_release() {
 
   if [ -L "$CURRENT" ]; then previous=$(readlink -f "$CURRENT"); fi
   if [ -n "$previous" ] && [ -f "$DATA/store.db" ]; then
-    runuser -u memory-anywhere -- "$CURRENT/bin/memory-anywhere-server" backup --out "$DATA/pre-$version.db" ||
+    runuser -u memory-anywhere -- "$CURRENT/bin/memory-anywhere-server" backup --config /etc/memory-anywhere/server.toml --out "$DATA/pre-$version.db" ||
       { log "pre-update backup failed; not updating"; return 1; }
   fi
 
@@ -113,11 +130,18 @@ install_release() {
   fi
 
   systemctl stop memory-anywhere.service 2>/dev/null || true
-  if [ -f "$DATA/store.db" ] && ! runuser -u memory-anywhere -- "$dest/bin/memory-anywhere-server" migrate; then
+  if [ ! -f "$DATA/store.db" ] && ! first_store "$dest"; then
+    log "could not create or restore the store with $version"
+    alert update_failed "Release $version: the first store could not be created or restored."
+    return 1
+  fi
+  if ! runuser -u memory-anywhere -- "$dest/bin/memory-anywhere-server" migrate --config /etc/memory-anywhere/server.toml; then
     log "migrate failed for $version; rolling back"
   else
     switch_current "$dest"
     systemctl start memory-anywhere.service || true
+    # Replication starts once a store exists (its unit has ConditionPathExists).
+    systemctl start litestream.service || true
   fi
 
   if wait_healthy "$version"; then

@@ -12,7 +12,7 @@ log() { echo "outbox: $*"; }
 # handle <file> <name>: returns non-zero if any step fails. Steps are chained with
 # && because `set -e` does not apply inside a function called as a condition.
 handle() {
-  local f=$1 name=$2 id ulid json
+  local f=$1 name=$2 id ulid json text
   case "$name" in
     setup-token)
       json=$(python3 -c 'import json,sys; print(json.dumps({"Value": open(sys.argv[1]).read()}))' "$f") &&
@@ -26,6 +26,19 @@ handle() {
         [[ "$id" =~ ^[a-z_]{1,40}$ ]] &&
         aws_ sns publish --topic-arn "$MA_TOPIC_ARN" --subject "memory-anywhere $MA_STAGE: $id" --message "file://$f" >/dev/null &&
         log "published alert $id" ;;
+    digest-*.json)
+      # The daily digest (operations.md §2): kinds, subjects (ids) and counts, never content.
+      [[ "$name" =~ ^digest-[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$ ]] || { log "ignored a malformed digest name"; return 1; }
+      text=$(python3 -c '
+import json, sys
+d = json.load(open(sys.argv[1]))
+lines = ["memory-anywhere digest for " + d["date"] + ": " + str(len(d["alerts"])) + " item(s).", ""]
+for a in d["alerts"]:
+    lines.append("- " + a["kind"] + (" (" + a["subject"] + ")" if a["subject"] else "") + ": " + str(a["count"]) + " time(s), last " + a["last_at"])
+lines += ["", "Open the admin UI (System) for details."]
+print("\n".join(lines))' "$f") &&
+        aws_ sns publish --topic-arn "$MA_TOPIC_ARN" --subject "memory-anywhere $MA_STAGE: daily digest" --message "$text" >/dev/null &&
+        log "published the digest" ;;
     acme-account-uri)
       aws_ ssm put-parameter --name "$MA_PREFIX/acme/account-uri" --type String --overwrite --value "$(cat "$f")" >/dev/null &&
         log "stored acme account uri" ;;
