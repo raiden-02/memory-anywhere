@@ -36,9 +36,10 @@ function readHost(name: string): string {
   return readFileSync(join(DEPLOY_AWS_DIR, "host", name), "utf8");
 }
 
-export function readReleaseKeys(stage: Stage): ReleaseKey[] {
+/** The public keys a stage trusts, read from `dir` (deploy/aws/release-keys). */
+export function readReleaseKeys(stage: Stage, dir = join(DEPLOY_AWS_DIR, "release-keys")): ReleaseKey[] {
   return trustedReleaseKeys(stage).map((name) => {
-    const file = join(DEPLOY_AWS_DIR, "release-keys", name);
+    const file = join(dir, name);
     if (!existsSync(file)) throw new Error(`stage ${stage} trusts ${name}, but deploy/aws/release-keys/${name} does not exist`);
     const content = readFileSync(file, "utf8");
     if (!/^untrusted comment: .*\nRW[A-Za-z0-9+/]{54}\n?$/.test(content.replace(/\r\n/g, "\n"))) {

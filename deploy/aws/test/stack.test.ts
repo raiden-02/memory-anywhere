@@ -1,9 +1,10 @@
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vitest";
-import { DEPLOY_AWS_DIR, loadStackInputs } from "../lib/inputs.ts";
+import { DEPLOY_AWS_DIR, loadStackInputs, readReleaseKeys } from "../lib/inputs.ts";
 import { MemoryAnywhereStack } from "../lib/stack.ts";
 import { USER_DATA_LIMIT, userDataParts } from "../lib/user-data.ts";
 import type { Stage } from "../lib/names.ts";
@@ -275,8 +276,14 @@ describe("prod stack", () => {
     expect(JSON.stringify(prod.toJSON())).toContain(":parameter/memory-anywhere/");
   });
 
-  it("refuses to synthesize while the release key it trusts does not exist", () => {
-    expect(() => loadStackInputs({ stage: "prod", region: "us-east-1", amiPins: AMI_PINS })).toThrow(/release-keys\/release\.pub does not exist/);
+  it("trusts the committed release key, and refuses to synthesize while a key it trusts does not exist", () => {
+    expect(loadStackInputs({ stage: "prod", region: "us-east-1", amiPins: AMI_PINS }).releaseKeys.map((k) => k.name)).toEqual(["release.pub"]);
+    const empty = mkdtempSync(join(tmpdir(), "ma release keys "));
+    try {
+      expect(() => readReleaseKeys("prod", empty)).toThrow(/release-keys\/release\.pub does not exist/);
+    } finally {
+      rmSync(empty, { recursive: true, force: true });
+    }
   });
 
   it("refuses an unpinned region and a malformed stage", () => {
