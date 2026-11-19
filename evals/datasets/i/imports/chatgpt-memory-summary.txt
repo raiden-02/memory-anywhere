@@ -1,0 +1,18 @@
+Memory summary
+Updated just now
+Work and tools
+
+Alex is a backend engineer at Tidewell who writes most services in TypeScript and keeps a strong preference for small, well-tested modules. Alex edits in Neovim and uses pnpm for JavaScript work.
+
+Side projects
+
+Alex is building Orrery, a star-map app for amateur astronomers, in the evenings. Its backend keeps everything in SQLite.
+
+Life in Lisbon
+
+Alex lives in Lisbon with partner Sam and a beagle named Pixel, and is learning Portuguese with a tutor.
+
+Dive Deeper
+Ask how Orrery could add offline maps.
+Ask for a half marathon training plan.
+Close dialog

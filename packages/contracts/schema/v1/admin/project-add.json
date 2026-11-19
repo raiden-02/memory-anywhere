@@ -1,0 +1,39 @@
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "aliases": {
+      "maxItems": 20,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 80
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "idea",
+        "active",
+        "paused",
+        "shipped",
+        "archived"
+      ]
+    },
+    "goal": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 400
+    }
+  },
+  "required": [
+    "name",
+    "aliases"
+  ],
+  "additionalProperties": false
+}

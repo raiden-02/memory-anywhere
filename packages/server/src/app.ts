@@ -1,0 +1,144 @@
+// One running store: the database, the embedder, the in-memory vector index and the session-start
+// cache, plus the write and read environments built on them. The HTTP layer, the job worker and
+// the CLI all work through an App, so there is one write path and one read path (topology §3).
+
+import { SERVER_PACKAGE_JSON } from "./root.ts";
+import { readFileSync } from "node:fs";
+import type { DatabaseSync } from "node:sqlite";
+import { idSource, type IdSource } from "@memory-anywhere/contracts/ids";
+import type { ServerConfigT } from "./config/schema.ts";
+import type { Embedder } from "./embed/types.ts";
+import type { ReadEnv } from "./recall/recall.ts";
+import { SessionStartCache } from "./recall/session-start.ts";
+import { VectorIndex } from "./recall/vector-index.ts";
+import { systemClock, type Clock } from "./store/clock.ts";
+import type { StoreContext } from "./store/context.ts";
+import { prepared } from "./store/db.ts";
+import { assertSchemaCurrent, latestVersion } from "./store/migrate.ts";
+import type { WriteEnv } from "./write/pipeline.ts";
+import { assertEvalStore, type EvalBuild } from "./write/eval-build.ts";
+import { RateLimiter, UNLIMITED, type Limiter } from "./http/rate.ts";
+import { Alerts } from "./ops/alerts.ts";
+import { Llm, type LlmProvider } from "./llm/adapter.ts";
+import { backfillAfterKey } from "./llm/slots.ts";
+import { NO_OUTBOX, type Outbox } from "./ops/outbox.ts";
+import { HOUR_MS } from "./store/clock.ts";
+import { estimate } from "./write/imports.ts";
+import type { ImportEstimateRequest, ImportEstimateResponse } from "@memory-anywhere/contracts/schemas/v1";
+import type { z } from "zod";
+import { metaValue } from "./store/meta.ts";
+
+const PACKAGE = JSON.parse(readFileSync(SERVER_PACKAGE_JSON, "utf8")) as { version: string };
+
+export const SERVER_VERSION = PACKAGE.version;
+/** Clients one minor version behind are still served (topology-and-ipc.md §11). */
+export const MIN_CLIENT_VERSION = ((): string => {
+	const [major, minor] = SERVER_VERSION.split(".").map(Number) as [number, number];
+	return `${major}.${Math.max(0, minor - 1)}.0`;
+})();
+export const SCHEMA_VERSION = latestVersion();
+
+export interface AppOptions {
+	readonly db: DatabaseSync;
+	readonly config: ServerConfigT;
+	readonly embedder: Embedder;
+	readonly clock?: Clock;
+	readonly ids?: IdSource;
+	/** Off only for an ephemeral server used by latency evals (`--no-rate-limits`). */
+	readonly rateLimits?: boolean;
+	/** Where alerts and other outbound files go (aws mode); none by default. */
+	readonly outbox?: Outbox;
+	/** The model behind the LLM adapter; absent when `provider = none` or no key is set (write-path.md §6.2). */
+	readonly llmProvider?: LlmProvider;
+	/** Eval harness only: the rule bypass of suite P's ablation; refused unless the store is in memory (eval-build.ts). */
+	readonly evalBuild?: EvalBuild;
+}
+
+/** Per-client limits that hold on every route (operations.md §3). */
+export interface ClientLimits {
+	/** Recall calls: 60 per hour per client. */
+	readonly recall: Limiter;
+	/** Prompt intake (/v1/writes op prompt): 600 per hour per client. */
+	readonly prompt: Limiter;
+	/** /mcp and /v1 requests per grant (`rate_limits.mcp_per_grant_per_min`, 120 per minute). */
+	readonly requests: Limiter;
+	/** Requests without a valid credential per IP prefix (`rate_limits.unauth_per_ip_per_min`, 30 per minute). */
+	readonly unauthenticated: Limiter;
+}
+
+export class App {
+	readonly ctx: StoreContext;
+	readonly config: ServerConfigT;
+	readonly embedder: Embedder;
+	readonly index: VectorIndex;
+	readonly sessions = new SessionStartCache();
+	readonly limits: ClientLimits;
+	readonly outbox: Outbox;
+	readonly alerts: Alerts;
+	readonly write: WriteEnv;
+	readonly read: ReadEnv;
+	readonly llm: Llm;
+
+	constructor(o: AppOptions) {
+		assertSchemaCurrent(o.db);
+		if (o.evalBuild) assertEvalStore(o.db, o.config);
+		const modelId = metaValue(o.db, "embedding_model_id");
+		if (modelId !== o.embedder.modelId) {
+			throw new Error(
+				`the store was embedded with ${modelId ?? "no model"}, but the server loaded ${o.embedder.modelId}; re-embedding is a migration (data-model.md §8)`,
+			);
+		}
+		this.ctx = { db: o.db, clock: o.clock ?? systemClock, ids: o.ids ?? idSource() };
+		this.config = o.config;
+		this.embedder = o.embedder;
+		this.outbox = o.outbox ?? NO_OUTBOX;
+		this.alerts = new Alerts(this.ctx, this.outbox);
+		this.llm = new Llm({ ctx: this.ctx, config: o.config, provider: o.llmProvider, alerts: this.alerts });
+		// A key that arrived after saves were stored without one: those saves get their slot proposal.
+		if (this.llm.available) backfillAfterKey(this.ctx);
+		this.index = VectorIndex.load(o.db, o.embedder.modelId);
+		this.write = {
+			ctx: this.ctx,
+			config: o.config,
+			embedder: o.embedder,
+			onCommit: (ids) => this.committed(ids),
+			alerts: this.alerts,
+			llm: this.llm,
+			...(o.evalBuild ? { evalBuild: o.evalBuild } : {}),
+		};
+		this.read = { ctx: this.ctx, config: o.config, embedder: o.embedder, index: this.index, alerts: this.alerts };
+		const now = (): number => this.ctx.clock.now();
+		this.limits =
+			o.rateLimits === false
+				? { recall: UNLIMITED, prompt: UNLIMITED, requests: UNLIMITED, unauthenticated: UNLIMITED }
+				: {
+						recall: new RateLimiter(60, HOUR_MS, now),
+						prompt: new RateLimiter(600, HOUR_MS, now),
+						requests: new RateLimiter(o.config.rate_limits.mcp_per_grant_per_min, 60_000, now),
+						unauthenticated: new RateLimiter(o.config.rate_limits.unauth_per_ip_per_min, 60_000, now),
+					};
+	}
+
+	/** After every commit: the touched memories' vectors are re-read and cached contexts dropped. */
+	committed(memoryIds: readonly string[]): void {
+		this.index.sync(this.ctx.db, memoryIds);
+		this.sessions.invalidate();
+	}
+
+	/** What an import would cost (write-path.md §10.5 step 1): POST /v1/import/estimate, and the import step-up's approval page. */
+	importEstimate(r: z.infer<typeof ImportEstimateRequest>): z.infer<typeof ImportEstimateResponse> {
+		return estimate(this.ctx, this.llm, this.config.llm.import_usd_cap, r);
+	}
+
+	/** `ok` of /v1/health (operations.md §5): the store is open and writable (the model loaded before the App existed). */
+	healthy(): boolean {
+		try {
+			return (
+				this.ctx.db.isOpen &&
+				(prepared(this.ctx.db, "PRAGMA query_only").get() as { query_only: number }).query_only === 0
+			);
+		} catch {
+			return false;
+		}
+	}
+}

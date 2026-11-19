@@ -1,0 +1,14 @@
+<% layout("./layout") %>
+<p><%= it.vendor %> will return to</p>
+<p class="host"><%= it.redirectHost %></p>
+<p class="muted break"><%= it.redirectUri %></p>
+<% if (it.clientName) { %><p>Name: <%= it.clientName %> <span class="muted">(self-declared)</span></p><% } %>
+<% if (it.pcCode) { %><p>Code: <strong class="code"><%= it.pcCode %></strong> <span class="muted">must match your terminal</span></p><% } %>
+<p>Can <strong><%= it.scope %></strong>.</p>
+<p class="muted"><%= it.age %></p>
+<h1>Did you just click Connect in <%= it.vendor %>?</h1>
+<div class="actions">
+  <button id="approve" type="button" disabled>Approve with passkey</button>
+  <button id="deny" type="button" class="secondary">Deny</button>
+</div>
+<p id="msg" role="status"></p>

@@ -1,0 +1,69 @@
+# Sensitive category `health` (memory-policy.md §7.1): physical and mental health, conditions, medication, therapy, diagnoses, disability. Policy P1.
+# Words and phrases matched on word boundaries against norm(content) and norm(user_words), and
+# against recall queries (§7.2 rule 7). Only unambiguous terms: a hit blocks or holds a save.
+diagnosed
+diagnosis
+medical condition
+chronic illness
+illness
+disease
+disorder
+depression
+depressed
+anxiety
+panic attacks
+adhd
+autism
+autistic
+bipolar
+schizophrenia
+ptsd
+ocd
+eating disorder
+anorexia
+bulimia
+diabetes
+diabetic
+cancer
+tumor
+chemotherapy
+hiv
+aids
+asthma
+epilepsy
+migraine
+migraines
+arthritis
+heart condition
+high blood pressure
+hypertension
+pregnant
+pregnancy
+miscarriage
+infertility
+ivf
+medication
+medications
+prescription
+prescribed
+antidepressant
+antidepressants
+insulin
+therapy
+therapist
+psychiatrist
+psychologist
+counseling
+counselling
+rehab
+addiction
+alcoholism
+substance abuse
+surgery
+disability
+disabled
+wheelchair user
+mental health
+suicidal
+self harm
+self-harm

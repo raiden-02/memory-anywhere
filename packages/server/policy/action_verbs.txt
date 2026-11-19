@@ -1,0 +1,31 @@
+# Action verbs for the action-instruction screen (memory-policy.md §3.2 clause 2). Policy P1.
+# Matched on word boundaries against norm(content); a hit needs a target as well.
+send
+post
+upload
+fetch
+download
+call
+run
+execute
+install
+import
+require
+use
+open
+visit
+email
+message
+contact
+forward
+share
+push
+commit
+deploy
+delete
+transfer
+pay
+log in
+sign in
+paste
+include

@@ -1,0 +1,80 @@
+{
+  "type": "object",
+  "properties": {
+    "batch_id": {
+      "type": "string",
+      "pattern": "^imb_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "items": {
+      "minItems": 1,
+      "maxItems": 100,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "source_item_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "ordinal": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "atomic",
+              "extract"
+            ]
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400
+          },
+          "messages": {
+            "minItems": 1,
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4000
+            }
+          },
+          "group_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "date": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "section_hint": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          }
+        },
+        "required": [
+          "key",
+          "source_item_id",
+          "ordinal",
+          "mode"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "batch_id",
+    "items"
+  ],
+  "additionalProperties": false
+}

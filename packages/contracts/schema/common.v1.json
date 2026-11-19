@@ -1,0 +1,200 @@
+{
+  "$id": "https://memory-anywhere.dev/schema/common.v1.json",
+  "$defs": {
+    "MemoryId": {
+      "type": "string",
+      "pattern": "^mem_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "ObservationId": {
+      "type": "string",
+      "pattern": "^obs_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "Kind": {
+      "type": "string",
+      "enum": [
+        "fact",
+        "preference",
+        "instruction",
+        "event"
+      ]
+    },
+    "Outcome": {
+      "type": "string",
+      "enum": [
+        "active",
+        "observation",
+        "review",
+        "rejected",
+        "queued"
+      ]
+    },
+    "Tier": {
+      "type": "string",
+      "enum": [
+        "T0",
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "PartialDate": {
+      "type": "string",
+      "pattern": "^\\d{4}(-\\d{2}(-\\d{2})?)?$"
+    },
+    "Date": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ErrorCode": {
+      "type": "string",
+      "enum": [
+        "INVALID_INPUT",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "READ_ONLY_CLIENT",
+        "REPO_NOT_ENABLED",
+        "NOT_FOUND",
+        "RATE_LIMITED",
+        "STORE_UNAVAILABLE",
+        "CLIENT_TOO_OLD",
+        "INTERNAL"
+      ]
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "INVALID_INPUT",
+            "UNAUTHORIZED",
+            "FORBIDDEN",
+            "READ_ONLY_CLIENT",
+            "REPO_NOT_ENABLED",
+            "NOT_FOUND",
+            "RATE_LIMITED",
+            "STORE_UNAVAILABLE",
+            "CLIENT_TOO_OLD",
+            "INTERNAL"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "field": {
+          "type": "string"
+        },
+        "retry_after_s": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "additionalProperties": false
+    },
+    "RecallItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^mem_[0-9A-HJKMNP-TV-Z]{26}$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "fact",
+            "preference",
+            "instruction",
+            "event"
+          ]
+        },
+        "entity": {
+          "type": "string"
+        },
+        "section": {
+          "type": "string"
+        },
+        "attribute": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "content": {
+          "type": "string",
+          "maxLength": 400
+        },
+        "valid_from": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "valid_to": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "recorded_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "tier": {
+          "type": "string",
+          "enum": [
+            "T0",
+            "T1",
+            "T2",
+            "T3"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "contested",
+            "superseded"
+          ]
+        },
+        "contested_with": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^mem_[0-9A-HJKMNP-TV-Z]{26}$"
+          }
+        },
+        "via": {
+          "type": "string",
+          "description": "display name of the client of the first source"
+        },
+        "expires_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "entity",
+        "section",
+        "content",
+        "recorded_at",
+        "tier",
+        "status",
+        "via"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

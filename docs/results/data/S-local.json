@@ -1,0 +1,2187 @@
+{
+  "suite": "S",
+  "n": 350,
+  "families": {
+    "S-POI": {
+      "cases": 123,
+      "minimum": 100,
+      "pass": 27,
+      "fail": 0,
+      "missing": 0,
+      "not_run": 96
+    },
+    "S-EXF": {
+      "cases": 50,
+      "minimum": 50,
+      "pass": 6,
+      "fail": 0,
+      "missing": 0,
+      "not_run": 44
+    },
+    "S-OAUTH": {
+      "cases": 51,
+      "minimum": 45,
+      "pass": 51,
+      "fail": 0,
+      "missing": 0,
+      "not_run": 0
+    },
+    "S-WEB": {
+      "cases": 30,
+      "minimum": 30,
+      "pass": 30,
+      "fail": 0,
+      "missing": 0,
+      "not_run": 0
+    },
+    "S-AGENT": {
+      "cases": 31,
+      "minimum": 20,
+      "pass": 19,
+      "fail": 0,
+      "missing": 0,
+      "not_run": 12
+    },
+    "S-LOCAL": {
+      "cases": 12,
+      "minimum": 10,
+      "pass": 12,
+      "fail": 0,
+      "missing": 0,
+      "not_run": 0
+    },
+    "S-AWS": {
+      "cases": 13,
+      "minimum": 9,
+      "pass": 4,
+      "fail": 0,
+      "missing": 0,
+      "not_run": 9
+    },
+    "S-PURGE": {
+      "cases": 27,
+      "minimum": 20,
+      "pass": 23,
+      "fail": 0,
+      "missing": 0,
+      "not_run": 4
+    },
+    "S-DOW": {
+      "cases": 13,
+      "minimum": 5,
+      "pass": 13,
+      "fail": 0,
+      "missing": 0,
+      "not_run": 0
+    }
+  },
+  "gate": {
+    "local_deterministic_pass": true,
+    "counts_met": true
+  },
+  "cases": [
+    {
+      "id": "S-OAUTH-01",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::1. unauthenticated /mcp: 401 with the resource metadata challenge"
+    },
+    {
+      "id": "S-OAUTH-02",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::2. PRM resource is the MCP URL exactly; one authorization server"
+    },
+    {
+      "id": "S-OAUTH-03",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::3. AS metadata advertises CIMD, `none`, iss and S256 only"
+    },
+    {
+      "id": "S-OAUTH-04",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::4. authorization responses include iss"
+    },
+    {
+      "id": "S-OAUTH-05",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::5. /token takes form encoding; a dead refresh token is invalid_grant"
+    },
+    {
+      "id": "S-OAUTH-06",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::7. the PC client's loopback redirect matches any port on localhost and 127.0.0.1"
+    },
+    {
+      "id": "S-OAUTH-07",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::8a. static clients: authorize inside their window only"
+    },
+    {
+      "id": "S-OAUTH-08",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::8b. DCR: the vendor's exact redirect registers inside a window, never outside; a foreign redirect closes it"
+    },
+    {
+      "id": "S-OAUTH-09",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::8b. DCR: the vendor's exact redirect registers inside a window, never outside; a foreign redirect closes it"
+    },
+    {
+      "id": "S-OAUTH-10",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::8b. DCR: the vendor's exact redirect registers inside a window, never outside; a foreign redirect closes it"
+    },
+    {
+      "id": "S-OAUTH-11",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::8e. DCR as Grok sends it (no application_type) registers inside a Grok window"
+    },
+    {
+      "id": "S-OAUTH-12",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::8c. CIMD: the vendor's document works inside its window only, with its exact redirect"
+    },
+    {
+      "id": "S-OAUTH-13",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::8c. CIMD: the vendor's document works inside its window only, with its exact redirect"
+    },
+    {
+      "id": "S-OAUTH-14",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::8d. Claude Code (direct): CIMD with a loopback redirect on any port"
+    },
+    {
+      "id": "S-OAUTH-15",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::9. PKCE plain and a missing challenge are refused with the error page"
+    },
+    {
+      "id": "S-OAUTH-16",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::9. PKCE plain and a missing challenge are refused with the error page"
+    },
+    {
+      "id": "S-OAUTH-17",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::10. reusing an authorization code fails and revokes what it issued"
+    },
+    {
+      "id": "S-OAUTH-18",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::11. refresh reuse within 30 s returns the same pair; after 30 s it revokes the grant"
+    },
+    {
+      "id": "S-OAUTH-19",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::11b. Gemini: its per-user redirect is matched by rule and pinned, and its refresh token is fixed (§4.5, §5.3)"
+    },
+    {
+      "id": "S-OAUTH-20",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::12. an invalid redirect_uri or client_id yields the error page, not a redirect"
+    },
+    {
+      "id": "S-OAUTH-21",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::12. an invalid redirect_uri or client_id yields the error page, not a redirect"
+    },
+    {
+      "id": "S-OAUTH-22",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::13. CIMD URL shapes and targets outside the rules are refused"
+    },
+    {
+      "id": "S-OAUTH-23",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::13. CIMD URL shapes and targets outside the rules are refused"
+    },
+    {
+      "id": "S-OAUTH-24",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::13. CIMD URL shapes and targets outside the rules are refused"
+    },
+    {
+      "id": "S-OAUTH-25",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::14. DCR fields outside the allow-list are refused; RFC 7592 endpoints are 404"
+    },
+    {
+      "id": "S-OAUTH-26",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::14. DCR fields outside the allow-list are refused; RFC 7592 endpoints are 404"
+    },
+    {
+      "id": "S-OAUTH-27",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::15. route inventory: nothing outside routes.allow.txt answers on {host}"
+    },
+    {
+      "id": "S-OAUTH-28",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::15b. route inventory: nothing outside routes.admin.allow.txt answers on admin.{host}"
+    },
+    {
+      "id": "S-OAUTH-29",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::16. /mcp ignores cookies and rejects a browser Origin"
+    },
+    {
+      "id": "S-OAUTH-30",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::16. /mcp ignores cookies and rejects a browser Origin"
+    },
+    {
+      "id": "S-OAUTH-31",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::17. both discovery paths return the same metadata with the host's issuer"
+    },
+    {
+      "id": "S-OAUTH-32",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::18. failures on reg, auth and token are byte-identical with and without an open window"
+    },
+    {
+      "id": "S-OAUTH-33",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::19. consent needs the window's pair cookie or its pair code"
+    },
+    {
+      "id": "S-OAUTH-34",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::19. consent needs the window's pair cookie or its pair code"
+    },
+    {
+      "id": "S-OAUTH-35",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::20. MRTR requestState: tampered, expired, replayed, other-grant or other-argument state falls back"
+    },
+    {
+      "id": "S-OAUTH-36",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::20. MRTR requestState: tampered, expired, replayed, other-grant or other-argument state falls back"
+    },
+    {
+      "id": "S-OAUTH-37",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::20. MRTR requestState: tampered, expired, replayed, other-grant or other-argument state falls back"
+    },
+    {
+      "id": "S-OAUTH-38",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::20. MRTR requestState: tampered, expired, replayed, other-grant or other-argument state falls back"
+    },
+    {
+      "id": "S-OAUTH-39",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/conformance.test.ts::20. MRTR requestState: tampered, expired, replayed, other-grant or other-argument state falls back"
+    },
+    {
+      "id": "S-OAUTH-40",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/owner.test.ts::setup race: a second browser holding the same token cannot add a passkey once setup is confirmed"
+    },
+    {
+      "id": "S-OAUTH-41",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/owner.test.ts::a second synced passkey from an unknown provider needs the owner's confirmation"
+    },
+    {
+      "id": "S-OAUTH-42",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/owner.test.ts::recovery brute force: wrong codes raise auth_fail at five, and the sixth try in an hour answers 429"
+    },
+    {
+      "id": "S-OAUTH-43",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/owner.test.ts::a recovery code revokes every passkey and session and opens a new enrollment; grants stay"
+    },
+    {
+      "id": "S-OAUTH-44",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/owner.test.ts::a counter that goes back blocks the passkey and raises passkey_clone; a counter that stays 0 is fine"
+    },
+    {
+      "id": "S-OAUTH-45",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/owner.test.ts::five failed sign-ins in ten minutes raise auth_fail"
+    },
+    {
+      "id": "S-OAUTH-46",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/owner.test.ts::one grant per vendor: pairing again needs Replace, which ends the old grant on approval"
+    },
+    {
+      "id": "S-OAUTH-47",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/owner.test.ts::the PC gets the capture scope and every tool; a read-only Other app gets no write tools"
+    },
+    {
+      "id": "S-OAUTH-48",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/owner.test.ts::a grant unused for longer than its idle limit cannot be refreshed (PC: 7 days)"
+    },
+    {
+      "id": "S-OAUTH-49",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/owner.test.ts::the PC consent page shows the code mema login prints, derived from its PKCE challenge"
+    },
+    {
+      "id": "S-OAUTH-50",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/owner.test.ts::an unverified client is never asked"
+    },
+    {
+      "id": "S-OAUTH-51",
+      "family": "S-OAUTH",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/owner.test.ts::/oauth/auth answers 429 after the per-IP limit"
+    },
+    {
+      "id": "S-LOCAL-01",
+      "family": "S-LOCAL",
+      "verdict": "pass",
+      "evidence": "packages/client/test/doctor.test.ts::a repo's own .mcp.json defining a memory-anywhere server is reported"
+    },
+    {
+      "id": "S-LOCAL-02",
+      "family": "S-LOCAL",
+      "verdict": "pass",
+      "evidence": "packages/client/test/doctor.test.ts::project copies in Cursor, Claude and Codex settings that start mema are reported"
+    },
+    {
+      "id": "S-LOCAL-03",
+      "family": "S-LOCAL",
+      "verdict": "pass",
+      "evidence": "packages/client/test/doctor.test.ts::a Cursor rule file planted in a repo that speaks for memory-anywhere is reported"
+    },
+    {
+      "id": "S-LOCAL-04",
+      "family": "S-LOCAL",
+      "verdict": "pass",
+      "evidence": "packages/client/test/doctor.test.ts::hooks that another installer put into Claude Code's or Codex's settings are reported"
+    },
+    {
+      "id": "S-LOCAL-05",
+      "family": "S-LOCAL",
+      "verdict": "pass",
+      "evidence": "packages/client/test/client-core.test.ts::disables project copies in Claude Code and denies a claude.ai copy"
+    },
+    {
+      "id": "S-LOCAL-06",
+      "family": "S-LOCAL",
+      "verdict": "pass",
+      "evidence": "packages/client/test/client-core.test.ts::matches deny entries by host or host/path prefix"
+    },
+    {
+      "id": "S-LOCAL-07",
+      "family": "S-LOCAL",
+      "verdict": "pass",
+      "evidence": "packages/client/test/client-core.test.ts::keys a repo by its remote, falls back to its path, and never enables the home folder"
+    },
+    {
+      "id": "S-LOCAL-08",
+      "family": "S-LOCAL",
+      "verdict": "pass",
+      "evidence": "packages/client/test/hooks-proxy.test.ts::sends prompts from enabled repos only, redacted, and spools them while offline"
+    },
+    {
+      "id": "S-LOCAL-09",
+      "family": "S-LOCAL",
+      "verdict": "pass",
+      "evidence": "packages/client/test/hooks-proxy.test.ts::ignores a Claude Code hook call that comes from Cursor"
+    },
+    {
+      "id": "S-LOCAL-10",
+      "family": "S-LOCAL",
+      "verdict": "pass",
+      "evidence": "packages/server/test/http.test.ts::rejects a foreign Host or Origin, a missing token, and an unsupported client"
+    },
+    {
+      "id": "S-LOCAL-11",
+      "family": "S-LOCAL",
+      "verdict": "pass",
+      "evidence": "packages/server/test/local-ui.test.ts::mema ui's link needs the local token and works once"
+    },
+    {
+      "id": "S-LOCAL-12",
+      "family": "S-LOCAL",
+      "verdict": "pass",
+      "evidence": "packages/server/test/local-ui.test.ts::actions need no passkey in local mode, but still need the CSRF token"
+    },
+    {
+      "id": "S-PURGE-01",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "packages/server/test/purge.test.ts::purge: every version's text is cleared, the superseded one too; only the hash stays"
+    },
+    {
+      "id": "S-PURGE-02",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "packages/server/test/purge.test.ts::purge: the sources' excerpts and user words are cleared"
+    },
+    {
+      "id": "S-PURGE-03",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "packages/server/test/purge.test.ts::purge: the embeddings of its versions are deleted"
+    },
+    {
+      "id": "S-PURGE-04",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "packages/server/test/purge.test.ts::purge: full-text search no longer finds it, and the FTS shadow tables hold no trace"
+    },
+    {
+      "id": "S-PURGE-05",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "packages/server/test/purge.test.ts::purge: review items that reference it lose their payload"
+    },
+    {
+      "id": "S-PURGE-06",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "packages/server/test/purge.test.ts::purge: an observation promoted into it, and every mention, lose their text and embeddings"
+    },
+    {
+      "id": "S-PURGE-07",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "packages/server/test/purge.test.ts::purge: an open observation with the same text is purged too"
+    },
+    {
+      "id": "S-PURGE-08",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "packages/server/test/purge.test.ts::purge: session prompts that contain the text are cleared"
+    },
+    {
+      "id": "S-PURGE-09",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "packages/server/test/purge.test.ts::purge: the text is suppressed, so a model saving it again through MCP is refused"
+    },
+    {
+      "id": "S-PURGE-10",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "packages/server/test/purge.test.ts::purge: a spooled replay of the purged text is refused"
+    },
+    {
+      "id": "S-PURGE-11",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "packages/server/test/purge.test.ts::purge: capture never stages the purged text again"
+    },
+    {
+      "id": "S-PURGE-12",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "packages/server/test/purge.test.ts::purge: the event log records ids only"
+    },
+    {
+      "id": "S-PURGE-13",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "packages/server/test/purge.test.ts::purge: the write log, alerts and audit rows hold no text of it"
+    },
+    {
+      "id": "S-PURGE-14",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "packages/server/test/purge.test.ts::purge job (local mode): 30 days after a forget, no file of the store holds the text, the WAL included"
+    },
+    {
+      "id": "S-PURGE-15",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "packages/server/test/purge.test.ts::secure_delete is on: freed pages hold no text after a checkpoint"
+    },
+    {
+      "id": "S-PURGE-16",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "packages/server/test/purge.test.ts::compaction (aws mode's nightly maintenance) leaves no file of the old store with the text"
+    },
+    {
+      "id": "S-PURGE-17",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "packages/server/test/purge.test.ts::a copy is zeroed in place before it is deleted: a second link to its data reads only zeros"
+    },
+    {
+      "id": "S-PURGE-18",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "packages/server/test/purge.test.ts::an export made after a purge holds no trace of the text"
+    },
+    {
+      "id": "S-PURGE-19",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "packages/server/test/write-pipeline.test.ts::purge leaves no plaintext in any table or file of the store"
+    },
+    {
+      "id": "S-PURGE-20",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "packages/server/test/write-properties.test.ts::purge leaves no plaintext of the memory in the store"
+    },
+    {
+      "id": "S-PURGE-21",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "packages/server/test/write-pipeline.test.ts::a forgotten text is not saved again (D8), until the owner undoes the forget"
+    },
+    {
+      "id": "S-PURGE-22",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "packages/server/test/jobs.test.ts::purges forgotten memories when due and drops their vectors"
+    },
+    {
+      "id": "S-PURGE-23",
+      "family": "S-PURGE",
+      "verdict": "not_run",
+      "evidence": "needs an eval stack"
+    },
+    {
+      "id": "S-PURGE-24",
+      "family": "S-PURGE",
+      "verdict": "not_run",
+      "evidence": "needs an eval stack"
+    },
+    {
+      "id": "S-PURGE-25",
+      "family": "S-PURGE",
+      "verdict": "not_run",
+      "evidence": "needs an eval stack"
+    },
+    {
+      "id": "S-PURGE-26",
+      "family": "S-PURGE",
+      "verdict": "not_run",
+      "evidence": "needs an eval stack"
+    },
+    {
+      "id": "S-DOW-01",
+      "family": "S-DOW",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/owner.test.ts::an unauthenticated flood gets 401, then 429 per address, and does no store or embedding work"
+    },
+    {
+      "id": "S-DOW-02",
+      "family": "S-DOW",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/owner.test.ts::one grant's requests past mcp_per_grant_per_min answer 429"
+    },
+    {
+      "id": "S-DOW-03",
+      "family": "S-DOW",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/owner.test.ts::/oauth/auth answers 429 after the per-IP limit"
+    },
+    {
+      "id": "S-DOW-04",
+      "family": "S-DOW",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/owner.test.ts::/oauth/token answers 429 after the per-IP limit"
+    },
+    {
+      "id": "S-DOW-05",
+      "family": "S-DOW",
+      "verdict": "pass",
+      "evidence": "packages/server/test/http.test.ts::refuses bodies over 1 MiB on /v1"
+    },
+    {
+      "id": "S-DOW-06",
+      "family": "S-DOW",
+      "verdict": "pass",
+      "evidence": "packages/server/test/ops.test.ts::a save over the hourly quota is refused and puts the client in the digest"
+    },
+    {
+      "id": "S-DOW-07",
+      "family": "S-DOW",
+      "verdict": "pass",
+      "evidence": "packages/server/test/llm.test.ts::the daily cap: behaves as none, raises llm_cap, reports it in memory_status"
+    },
+    {
+      "id": "S-POI-01",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/http.test.ts::takes prompts and saves from the spool, and refuses a spooled forget"
+    },
+    {
+      "id": "S-POI-02",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/recall.test.ts::finds a stated memory and renders it under the framing line"
+    },
+    {
+      "id": "S-POI-03",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/recall-units.test.ts::escapes markdown so stored text cannot open a heading, a link or a memory line"
+    },
+    {
+      "id": "S-POI-04",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/jobs.test.ts::creates an unapproved section from Unsorted memories seen in two sessions"
+    },
+    {
+      "id": "S-POI-05",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/store-rules.test.ts::rule 4a: a profile key written at T2 by another client is contested; the same client updates"
+    },
+    {
+      "id": "S-POI-06",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/store-rules.test.ts::rule 3: an undated import below a model-written value is undated history; a dated one is not"
+    },
+    {
+      "id": "S-POI-07",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/write-pipeline.test.ts::D2: an action instruction waits for the owner"
+    },
+    {
+      "id": "S-POI-08",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/decision-table.test.ts::D1 rejects a secret even from the owner"
+    },
+    {
+      "id": "S-POI-09",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "evals/test/s-poi-09.test.ts::S-POI-09: repo files are never read, and model-written memories become active only when a second file repeats them"
+    },
+    {
+      "id": "S-EXF-01",
+      "family": "S-EXF",
+      "verdict": "pass",
+      "evidence": "packages/server/test/recall.test.ts::drops items beyond the read budget, then reports the budget used up"
+    },
+    {
+      "id": "S-EXF-02",
+      "family": "S-EXF",
+      "verdict": "pass",
+      "evidence": "packages/server/test/recall.test.ts::never returns pending, forgotten or other repos' memories"
+    },
+    {
+      "id": "S-EXF-03",
+      "family": "S-EXF",
+      "verdict": "pass",
+      "evidence": "packages/server/test/recall.test.ts::applies the section allow-list and returns sensitive memories only when allowed and asked about"
+    },
+    {
+      "id": "S-EXF-04",
+      "family": "S-EXF",
+      "verdict": "pass",
+      "evidence": "packages/server/test/recall.test.ts::gives a client that is not profile-eligible only the header, sections and notices"
+    },
+    {
+      "id": "S-EXF-05",
+      "family": "S-EXF",
+      "verdict": "pass",
+      "evidence": "packages/server/test/recall.test.ts::stays within the tool's budget and 40 memory ids, and caches until the next commit"
+    },
+    {
+      "id": "S-EXF-06",
+      "family": "S-EXF",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/owner.test.ts::chat apps cannot start owner commands"
+    },
+    {
+      "id": "S-AWS-01",
+      "family": "S-AWS",
+      "verdict": "not_run",
+      "evidence": "needs an eval stack"
+    },
+    {
+      "id": "S-AWS-02",
+      "family": "S-AWS",
+      "verdict": "not_run",
+      "evidence": "needs an eval stack"
+    },
+    {
+      "id": "S-AWS-03",
+      "family": "S-AWS",
+      "verdict": "not_run",
+      "evidence": "needs an eval stack"
+    },
+    {
+      "id": "S-AWS-04",
+      "family": "S-AWS",
+      "verdict": "not_run",
+      "evidence": "needs an eval stack"
+    },
+    {
+      "id": "S-AWS-05",
+      "family": "S-AWS",
+      "verdict": "not_run",
+      "evidence": "needs an eval stack"
+    },
+    {
+      "id": "S-AWS-06",
+      "family": "S-AWS",
+      "verdict": "not_run",
+      "evidence": "needs an eval stack"
+    },
+    {
+      "id": "S-AWS-07",
+      "family": "S-AWS",
+      "verdict": "not_run",
+      "evidence": "needs an eval stack"
+    },
+    {
+      "id": "S-AWS-08",
+      "family": "S-AWS",
+      "verdict": "not_run",
+      "evidence": "needs an eval stack"
+    },
+    {
+      "id": "S-AWS-09",
+      "family": "S-AWS",
+      "verdict": "not_run",
+      "evidence": "needs an eval stack"
+    },
+    {
+      "id": "S-WEB-01",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: the memories list shows stored markup as text and runs none of it"
+    },
+    {
+      "id": "S-WEB-02",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: a memory's detail page shows its markup as text"
+    },
+    {
+      "id": "S-WEB-03",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: a search query is reflected as text"
+    },
+    {
+      "id": "S-WEB-04",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: a javascript: URL in stored text never becomes a link"
+    },
+    {
+      "id": "S-WEB-05",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: the review queue shows a held instruction as text"
+    },
+    {
+      "id": "S-WEB-06",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: observations show their markup as text"
+    },
+    {
+      "id": "S-WEB-07",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: the changes feed runs no stored markup"
+    },
+    {
+      "id": "S-WEB-08",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: a section name is shown as text, in the page and in the filters"
+    },
+    {
+      "id": "S-WEB-09",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: a client_name from dynamic registration is text on the apps page and the consent page"
+    },
+    {
+      "id": "S-WEB-10",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: the approval page renders a step-up's arguments as text"
+    },
+    {
+      "id": "S-WEB-11",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: an OAuth error page reflects nothing from the request"
+    },
+    {
+      "id": "S-WEB-12",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: every admin page carries the CSP of §8, and it forbids inline script"
+    },
+    {
+      "id": "S-WEB-13",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: the security headers of §8 are set on admin pages"
+    },
+    {
+      "id": "S-WEB-14",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: Trusted Types are enforced, so a string never reaches innerHTML"
+    },
+    {
+      "id": "S-WEB-15",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: pages have no inline script; their one script is same-origin"
+    },
+    {
+      "id": "S-WEB-16",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: the admin session cookie is invisible to page script"
+    },
+    {
+      "id": "S-WEB-17",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: another site cannot frame an admin page"
+    },
+    {
+      "id": "S-WEB-18",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: another site cannot frame the consent page"
+    },
+    {
+      "id": "S-WEB-19",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: a cross-site form post to an admin action changes nothing (SameSite=Strict, CSRF token)"
+    },
+    {
+      "id": "S-WEB-20",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: a cross-origin fetch with credentials gets no session"
+    },
+    {
+      "id": "S-WEB-21",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: the consent page keeps Approve disabled for its first second"
+    },
+    {
+      "id": "S-WEB-22",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: the setup page takes its token from the fragment and removes it from the address bar"
+    },
+    {
+      "id": "S-WEB-23",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: admin pages are not served on {host}"
+    },
+    {
+      "id": "S-WEB-24",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: a browser without the owner's passkey cannot sign in"
+    },
+    {
+      "id": "S-WEB-25",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: assets are served with their type and nosniff"
+    },
+    {
+      "id": "S-WEB-26",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/admin-ui.test.ts::stored text is shown as text, never as markup"
+    },
+    {
+      "id": "S-WEB-27",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/admin-ui.test.ts::an action without the session's CSRF token is refused"
+    },
+    {
+      "id": "S-WEB-28",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/ops.test.ts::never serves resource routes on the admin surface (S-WEB-05) and answers 401 with resource metadata"
+    },
+    {
+      "id": "S-WEB-29",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/ops.test.ts::serves the mcp surface only with X-MA-Origin mcp on {host}"
+    },
+    {
+      "id": "S-WEB-30",
+      "family": "S-WEB",
+      "verdict": "pass",
+      "evidence": "packages/server/test/ops.test.ts::refuses a browser Origin on resource routes"
+    },
+    {
+      "id": "S-POI-009",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-010",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-011",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-012",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-013",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-014",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-015",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-016",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-017",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-018",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-019",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-020",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-021",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-022",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-023",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-024",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-025",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-026",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-027",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-028",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-029",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-030",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-031",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-032",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-033",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-034",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-035",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-036",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-037",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-038",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-039",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-040",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-041",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-042",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-043",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-044",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-045",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-046",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-047",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-048",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-049",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-050",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-051",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-052",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-053",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-054",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-055",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-056",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-057",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-058",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-059",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-060",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-061",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-062",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-063",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-064",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-065",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-066",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-067",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-068",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-069",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-070",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-071",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-072",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-073",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-074",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-075",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-076",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-077",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-078",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-079",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-080",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-081",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-082",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-083",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-084",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-085",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-086",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-087",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-088",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-089",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-090",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-091",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-092",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-093",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-094",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-095",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-096",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-097",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-098",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-099",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-100",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-101",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-102",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-103",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-104",
+      "family": "S-POI",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-007",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-008",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-009",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-010",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-011",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-012",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-013",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-014",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-015",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-016",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-017",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-018",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-019",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-020",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-021",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-022",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-023",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-024",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-025",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-026",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-027",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-028",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-029",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-030",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-031",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-032",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-033",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-034",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-035",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-036",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-037",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-038",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-039",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-040",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-041",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-042",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-043",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-044",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-045",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-046",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-047",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-048",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-049",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-EXF-050",
+      "family": "S-EXF",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-AGENT-01",
+      "family": "S-AGENT",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/owner.test.ts::a PC command runs once, with exactly the approved arguments, after the owner approves with a passkey"
+    },
+    {
+      "id": "S-AGENT-02",
+      "family": "S-AGENT",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/owner.test.ts::an export to an unregistered key needs the key's last 8 characters and a second approval"
+    },
+    {
+      "id": "S-AGENT-03",
+      "family": "S-AGENT",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/owner.test.ts::three denied requests in an hour raise stepup_unexpected"
+    },
+    {
+      "id": "S-AGENT-04",
+      "family": "S-AGENT",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/owner.test.ts::chat apps cannot start owner commands"
+    },
+    {
+      "id": "S-AGENT-05",
+      "family": "S-AGENT",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/owner.test.ts::the PC lists pending review ids without a step-up, but resolving one needs it"
+    },
+    {
+      "id": "S-AGENT-06",
+      "family": "S-AGENT",
+      "verdict": "pass",
+      "evidence": "packages/server/test/oauth-conformance/browser.test.ts::browser: the approval page renders a step-up's arguments as text"
+    },
+    {
+      "id": "S-AGENT-07",
+      "family": "S-AGENT",
+      "verdict": "pass",
+      "evidence": "packages/client/test/remote.test.ts::a denied command stops with StepUpError (exit code 5) and changes nothing"
+    },
+    {
+      "id": "S-AGENT-08",
+      "family": "S-AGENT",
+      "verdict": "pass",
+      "evidence": "packages/client/test/remote.test.ts::a command runs after the owner approves it with a passkey, for exactly its arguments"
+    },
+    {
+      "id": "S-AGENT-09",
+      "family": "S-AGENT",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-AGENT-10",
+      "family": "S-AGENT",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-AGENT-11",
+      "family": "S-AGENT",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-AGENT-12",
+      "family": "S-AGENT",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-AGENT-13",
+      "family": "S-AGENT",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-AGENT-14",
+      "family": "S-AGENT",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-AGENT-15",
+      "family": "S-AGENT",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-AGENT-16",
+      "family": "S-AGENT",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-AGENT-17",
+      "family": "S-AGENT",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-AGENT-18",
+      "family": "S-AGENT",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-AGENT-19",
+      "family": "S-AGENT",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-AGENT-20",
+      "family": "S-AGENT",
+      "verdict": "not_run",
+      "evidence": "model-driven (Claude Code headless)"
+    },
+    {
+      "id": "S-POI-105",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-POI-105: a history's or a summary's batch cannot carry atomic items that skip the extractor and its span check"
+    },
+    {
+      "id": "S-POI-106",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-POI-106: a span stitched across two messages is not the owner's words"
+    },
+    {
+      "id": "S-POI-107",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-POI-107: a sensitive detail about someone else in a chat history is rejected, never held for the owner's bulk approval"
+    },
+    {
+      "id": "S-POI-108",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-POI-108: a fact the owner forgot comes back through a vendor's memory summary and is rejected"
+    },
+    {
+      "id": "S-POI-109",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-POI-109: an instruction written into a vendor's memory summary waits for the owner, never active"
+    },
+    {
+      "id": "S-POI-110",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-POI-110: a PC that skipped redaction: the server redacts the messages before keeping them, so the secret never reaches the model"
+    },
+    {
+      "id": "S-POI-111",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-POI-111: approving an import's sensitive items at once never approves an instruction held from the same import"
+    },
+    {
+      "id": "S-POI-112",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-POI-112: an item dated in the future is dated today, so it cannot claim to be newer than what the owner says next"
+    },
+    {
+      "id": "S-POI-113",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/llm.test.ts::S-POI-113: a coding tool whose access was revoked, or made read-only, while its batch waited saves nothing from it"
+    },
+    {
+      "id": "S-POI-114",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/llm.test.ts::S-POI-114: a repo disabled while its batch waited gives up none of its prompts, with or without a model"
+    },
+    {
+      "id": "S-POI-115",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/llm.test.ts::S-POI-115: a chat app sending a prompt as if it were a coding tool's: nothing is kept or batched"
+    },
+    {
+      "id": "S-POI-116",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/llm.test.ts::S-POI-116: a fact quoting another session's prompt is not the user's words in this batch"
+    },
+    {
+      "id": "S-POI-117",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/llm.test.ts::S-POI-117: without a model, a remembered sentence that directs the assistant to act waits for the owner, never active"
+    },
+    {
+      "id": "S-POI-118",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/importers/test/sources.test.ts::S-POI-118: role confusion: turns that only claim to be the owner's never become the owner's words"
+    },
+    {
+      "id": "S-POI-119",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/importers/test/files.test.ts::S-POI-119: refuses a file in a git worktree or submodule, whose .git is a file, not a folder"
+    },
+    {
+      "id": "S-DOW-08",
+      "family": "S-DOW",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-DOW-08: an import approved at $0 (a memory list) cannot carry extract items that spend the import budget"
+    },
+    {
+      "id": "S-DOW-09",
+      "family": "S-DOW",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-DOW-09: an upload of more than 100 items, or over 1 MiB, is refused whole and records nothing"
+    },
+    {
+      "id": "S-DOW-10",
+      "family": "S-DOW",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-DOW-10: four extract jobs started at once at a cap that admits one make one model call; the batch stops and the rest wait"
+    },
+    {
+      "id": "S-DOW-11",
+      "family": "S-DOW",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-DOW-11: an import's call and a capture's call of the same messages never share an answer, so each budget pays its own"
+    },
+    {
+      "id": "S-DOW-12",
+      "family": "S-DOW",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-DOW-12: at the import cap an import stops even with the daily budget untouched, and spends nothing from it"
+    },
+    {
+      "id": "S-AGENT-21",
+      "family": "S-AGENT",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-AGENT-21: an import token runs no other owner command: an export with it is refused and nothing is exported"
+    },
+    {
+      "id": "S-AGENT-22",
+      "family": "S-AGENT",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-AGENT-22: another machine's PC grant cannot upload with an import token it got hold of"
+    },
+    {
+      "id": "S-AGENT-23",
+      "family": "S-AGENT",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-AGENT-23: a token approved for another command cannot upload an import"
+    },
+    {
+      "id": "S-AGENT-24",
+      "family": "S-AGENT",
+      "verdict": "pass",
+      "evidence": "packages/server/test/ops.test.ts::S-AGENT-24: polling again after a restore hands out no new token for an approval the backup brought back"
+    },
+    {
+      "id": "S-AGENT-25",
+      "family": "S-AGENT",
+      "verdict": "pass",
+      "evidence": "packages/server/test/ops.test.ts::S-AGENT-25: an approval whose token was never collected before the backup hands out none after the restore"
+    },
+    {
+      "id": "S-AGENT-26",
+      "family": "S-AGENT",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-AGENT-26: a denied import request hands out no token, cannot be approved afterwards, and creates no batch"
+    },
+    {
+      "id": "S-AGENT-27",
+      "family": "S-AGENT",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-AGENT-27: an import request the owner did not approve within 5 minutes cannot be approved later, and creates no batch"
+    },
+    {
+      "id": "S-AGENT-28",
+      "family": "S-AGENT",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-AGENT-28: a resume that names a batch of another source is refused before the owner sees it, even for the same file"
+    },
+    {
+      "id": "S-AGENT-29",
+      "family": "S-AGENT",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-AGENT-29: an import request carrying words of its own for the approval page is refused"
+    },
+    {
+      "id": "S-AWS-10",
+      "family": "S-AWS",
+      "verdict": "pass",
+      "evidence": "packages/server/test/ops.test.ts::S-AWS-10: a history cut short, its head rewritten to the new last event, no longer reaches the stored head"
+    },
+    {
+      "id": "S-AWS-11",
+      "family": "S-AWS",
+      "verdict": "pass",
+      "evidence": "packages/server/test/ops.test.ts::S-AWS-11: a forged or broken drop file (extra field, a head that is not a hash, not JSON) writes no manifest and is removed"
+    },
+    {
+      "id": "S-AWS-12",
+      "family": "S-AWS",
+      "verdict": "pass",
+      "evidence": "packages/server/test/ops.test.ts::S-AWS-12: a drop file planted under another request's id is never read: the job waits for its own and writes nothing"
+    },
+    {
+      "id": "S-AWS-13",
+      "family": "S-AWS",
+      "verdict": "pass",
+      "evidence": "packages/server/test/ops.test.ts::S-AWS-13: a name that would leave the outbox, smuggle a second line, or forge a manifest key is refused, and nothing is written"
+    },
+    {
+      "id": "S-PURGE-27",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "packages/server/test/purge.test.ts::S-PURGE-27: an import item waiting for the extractor (a batch stopped at the import cap) loses the purged text, and is never read"
+    },
+    {
+      "id": "S-POI-120",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/llm.test.ts::S-POI-120: capture turned off for the repo while its batch waited: the batch saves nothing and calls no model"
+    },
+    {
+      "id": "S-POI-121",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-POI-121: an observation the owner forgot is not staged again by a later import of the same text (D8)"
+    },
+    {
+      "id": "S-POI-122",
+      "family": "S-POI",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-POI-122: a held list item naming someone the store knows stays out of the import's Approve all, listed apart to decide one by one"
+    },
+    {
+      "id": "S-DOW-13",
+      "family": "S-DOW",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-DOW-13: four extract jobs of one batch started at once at its own budget make one model call; the batch stops, and a new approval raises the budget"
+    },
+    {
+      "id": "S-AGENT-30",
+      "family": "S-AGENT",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-AGENT-30: the approval page shows, and the batch's budget takes, the server's estimate, never the figure the computer sent"
+    },
+    {
+      "id": "S-AGENT-31",
+      "family": "S-AGENT",
+      "verdict": "pass",
+      "evidence": "packages/server/test/import-attacks.test.ts::S-AGENT-31: an import request from a mema too old to send the characters it will upload is refused for a source the extractor reads"
+    }
+  ],
+  "git_sha": "1487462fa64ba4a651421ec7068b3511df9c8914",
+  "policy_version": "P1",
+  "started_at": "2026-11-17T23:47:14.183Z"
+}

@@ -1,0 +1,10 @@
+<% layout("./admin") %>
+<h1>Repositories</h1>
+<ul class="list">
+<% for (const r of it.rows) { %>
+  <li><strong><%= r.display_name %></strong> <span class="muted"><%= r.enabled ? "enabled" : "off" %><% if (r.enabled) { %> · capture <%= r.capture ? "on" : "off" %><% } %></span>
+    <form class="act inline" data-action="repo.set"><input type="hidden" name="repo_key" value="<%= r.repo_key %>"><input type="hidden" name="enabled" value="<%= r.enabled ? 'false' : 'true' %>" data-type="bool"><input type="hidden" name="capture" value="<%= r.capture ? 'true' : 'false' %>" data-type="bool"><button type="submit" class="secondary"><%= r.enabled ? "Disable" : "Enable" %></button></form>
+    <% if (r.enabled) { %><form class="act inline" data-action="repo.set"><input type="hidden" name="repo_key" value="<%= r.repo_key %>"><input type="hidden" name="enabled" value="true" data-type="bool"><input type="hidden" name="capture" value="<%= r.capture ? 'false' : 'true' %>" data-type="bool"><button type="submit" class="secondary">Capture <%= r.capture ? "off" : "on" %></button></form><% } %></li>
+<% } %>
+</ul>
+<% if (it.rows.length === 0) { %><p class="muted">Run <span class="code">mema enable</span> in a repository to add it.</p><% } %>

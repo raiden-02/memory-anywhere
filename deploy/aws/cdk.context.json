@@ -1,0 +1,5 @@
+{
+  "memory-anywhere:ami-al2023-arm64": {
+    "us-east-1": "ami-0951c836c26e34fc8"
+  }
+}

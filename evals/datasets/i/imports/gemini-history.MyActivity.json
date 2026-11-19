@@ -1,0 +1,48 @@
+[
+  {
+    "header": "Gemini Apps",
+    "title": "Prompted I'm training for a half marathon in April, can you plan my long runs?",
+    "time": "2026-03-01T18:40:00.000Z",
+    "products": ["Gemini Apps"],
+    "activityControls": ["Gemini Apps Activity"],
+    "safeHtmlItem": [{ "html": "<p>Here is a plan. Alex also owns a sailboat.</p>" }]
+  },
+  {
+    "header": "Gemini Apps",
+    "title": "Prompted I usually run in the mornings before work, about 30 km a week.",
+    "time": "2026-03-01T18:30:00.000Z",
+    "products": ["Gemini Apps"],
+    "activityControls": ["Gemini Apps Activity"],
+    "safeHtmlItem": [{ "html": "<p>Great base.</p>" }]
+  },
+  {
+    "header": "Gemini Apps",
+    "title": "Gave feedback: Good response",
+    "time": "2026-03-01T18:31:00.000Z",
+    "products": ["Gemini Apps"],
+    "activityControls": ["Gemini Apps Activity"]
+  },
+  {
+    "header": "Gemini Apps",
+    "title": "Prompted My sister Jo is visiting Lisbon with me in May; I prefer quiet neighbourhoods.",
+    "time": "2026-02-10T09:00:00.000Z",
+    "products": ["Gemini Apps"],
+    "activityControls": ["Gemini Apps Activity"],
+    "safeHtmlItem": [{ "html": "<p>Try Alfama.</p>" }]
+  },
+  {
+    "header": "Gemini Apps",
+    "title": "Prompted I don't eat meat, so suggest vegetarian places.",
+    "time": "2026-02-10T09:05:00.000Z",
+    "products": ["Gemini Apps"],
+    "activityControls": ["Gemini Apps Activity"],
+    "safeHtmlItem": [{ "html": "<p>Sure.</p>" }]
+  },
+  {
+    "header": "Gemini Apps",
+    "title": "Used an Assistant feature",
+    "time": "2026-02-11T07:00:00.000Z",
+    "products": ["Gemini Apps"],
+    "activityControls": ["Gemini Apps Activity"]
+  }
+]

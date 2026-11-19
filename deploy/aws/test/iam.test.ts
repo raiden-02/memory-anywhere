@@ -1,0 +1,221 @@
+// Static checks on the bootstrap IAM documents. These files are applied once by
+// the owner in CloudShell and are hard to change afterwards, so the properties
+// the design relies on (deployment-aws.md §3.3–§3.4) are pinned here.
+
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { describe, expect, it } from "vitest";
+
+interface Statement {
+	Sid: string;
+	Effect: "Allow" | "Deny";
+	Action?: string | string[];
+	NotAction?: string | string[];
+	Resource?: string | string[];
+	NotResource?: string | string[];
+	Condition?: Record<string, Record<string, string | string[]>>;
+}
+interface PolicyDoc {
+	Version: string;
+	Statement: Statement[];
+}
+
+const IAM_DIR = path.join(import.meta.dirname, "..", "iam");
+const raw = (name: string): string => readFileSync(path.join(IAM_DIR, name), "utf8");
+const doc = (name: string): PolicyDoc => JSON.parse(raw(name)) as PolicyDoc;
+const list = (v: string | string[] | undefined): string[] => (v === undefined ? [] : Array.isArray(v) ? v : [v]);
+const actions = (d: PolicyDoc, effect: "Allow" | "Deny"): string[] =>
+	d.Statement.filter((s) => s.Effect === effect).flatMap((s) => list(s.Action));
+
+// IAM quotas: customer managed policy 6,144 characters excluding whitespace;
+// Identity Center permission-set inline policy 32,768 characters.
+// cfn-exec is split in two only because of that quota; the
+// CDK execution role gets both.
+const MANAGED = ["cfn-exec.json", "cfn-exec-services.json", "boundary.json"];
+const PERMISSION_SETS = ["deploy-permission-set.json", "operator-permission-set.json"];
+
+describe("IAM documents", () => {
+	for (const name of [...MANAGED, ...PERMISSION_SETS]) {
+		it(`${name} is a valid policy with unique Sids and only known placeholders`, () => {
+			const d = doc(name);
+			expect(d.Version).toBe("2012-10-17");
+			const sids = d.Statement.map((s) => s.Sid);
+			expect(new Set(sids).size).toBe(sids.length);
+			const placeholders = new Set(raw(name).match(/\$\{[^}]+\}/g) ?? []);
+			const allowed = PERMISSION_SETS.includes(name)
+				? ["${ACCOUNT_ID}", "${aws:userid}"]
+				: ["${ACCOUNT_ID}", "${REGION}"];
+			for (const p of placeholders) expect(allowed).toContain(p);
+			expect(raw(name)).not.toMatch(/\b\d{12}\b/); // no real account ids
+		});
+	}
+
+	for (const name of MANAGED) {
+		it(`${name} fits the managed-policy size quota`, () => {
+			expect(raw(name).replace(/\s/g, "").length).toBeLessThanOrEqual(6144);
+		});
+	}
+
+	for (const name of PERMISSION_SETS) {
+		it(`${name} fits the permission-set inline policy quota`, () => {
+			expect(raw(name).length).toBeLessThanOrEqual(32768);
+		});
+	}
+});
+
+describe("cfn-exec (§3.3)", () => {
+	const d = doc("cfn-exec.json");
+
+	it("creates roles only with the memory-anywhere boundary attached", () => {
+		const s = d.Statement.find((x) => list(x.Action).includes("iam:CreateRole"));
+		expect(s?.Condition?.["StringEquals"]?.["iam:PermissionsBoundary"]).toBe(
+			"arn:aws:iam::${ACCOUNT_ID}:policy/memory-anywhere-boundary",
+		);
+		expect(list(s?.Resource)).toEqual(["arn:aws:iam::${ACCOUNT_ID}:role/memory-anywhere-*"]);
+	});
+
+	it("passes roles only to EC2 and DLM", () => {
+		const s = d.Statement.find((x) => list(x.Action).includes("iam:PassRole"));
+		expect(s?.Condition?.["StringEquals"]?.["iam:PassedToService"]).toEqual(["ec2.amazonaws.com", "dlm.amazonaws.com"]);
+	});
+
+	it("never allows Lambda, IAM users, access keys or editing managed policies", () => {
+		const allowed = actions(d, "Allow");
+		for (const a of allowed) expect(a).not.toMatch(/^(lambda|organizations|sso|identitystore):/);
+		for (const forbidden of ["iam:CreateUser", "iam:CreateAccessKey", "iam:CreatePolicy", "iam:CreatePolicyVersion"]) {
+			expect(allowed).not.toContain(forbidden);
+			expect(actions(d, "Deny")).toContain(forbidden);
+		}
+	});
+
+	it("schedules key deletion only for tagged non-prod keys", () => {
+		const s = d.Statement.find((x) => list(x.Action).includes("kms:ScheduleKeyDeletion"));
+		expect(s?.Effect).toBe("Allow");
+		expect(s?.Condition?.["StringNotEquals"]?.["aws:ResourceTag/memory-anywhere:stage"]).toBe("prod");
+		expect(s?.Condition?.["Null"]?.["aws:ResourceTag/memory-anywhere:stage"]).toBe("false");
+	});
+});
+
+describe("deploy permission set (§3.4)", () => {
+	const d = doc("deploy-permission-set.json");
+	const denied = actions(d, "Deny");
+
+	it("denies every operator capability explicitly", () => {
+		for (const a of [
+			"ssm:StartSession",
+			"ssm:SendCommand",
+			"ssm:GetParameter*",
+			"s3:GetObject*",
+			"s3:Delete*",
+			"kms:Decrypt",
+			"kms:ScheduleKeyDeletion",
+			"kms:DisableKey",
+			"kms:PutKeyPolicy",
+			"iam:*",
+			"sso:*",
+			"identitystore:*",
+			"organizations:*",
+			"cloudshell:*",
+		]) {
+			expect(denied).toContain(a);
+		}
+	});
+
+	it("reads the account's costs and nothing else in Cost Explorer (mema cost aws)", () => {
+		const ce = actions(d, "Allow").filter((a) => a.startsWith("ce:"));
+		expect(ce).toEqual(["ce:GetCostAndUsage"]);
+	});
+
+	it("decrypts only eval-stage parameters, and only through SSM", () => {
+		const evalParams = "arn:aws:ssm:*:${ACCOUNT_ID}:parameter/memory-anywhere-eval-*/*";
+		const allow = d.Statement.find((x) => x.Sid === "DecryptEvalParameters");
+		expect(allow?.Condition).toEqual({
+			StringLike: { "kms:ViaService": "ssm.*.amazonaws.com", "kms:EncryptionContext:PARAMETER_ARN": evalParams },
+		});
+		// Two separate denies, so missing either condition key (a direct KMS call, an S3 object, a prod parameter) is denied.
+		expect(d.Statement.find((x) => x.Sid === "DenyDecryptOutsideSsm")?.Condition).toEqual({
+			StringNotLike: { "kms:ViaService": "ssm.*.amazonaws.com" },
+		});
+		expect(d.Statement.find((x) => x.Sid === "DenyDecryptOutsideEvalParameters")?.Condition).toEqual({
+			StringNotLike: { "kms:EncryptionContext:PARAMETER_ARN": evalParams },
+		});
+		const kmsAllows = d.Statement.filter(
+			(x) => x.Effect === "Allow" && list(x.Action).some((a) => a.startsWith("kms:")),
+		);
+		expect(kmsAllows.map((x) => x.Sid)).toEqual(["DecryptEvalParameters"]);
+	});
+
+	it("cleans up a destroyed non-prod stage's parameters and snapshots, never prod's", () => {
+		const params = d.Statement.find((x) => x.Sid === "DeleteNonProdParametersOnDestroy");
+		for (const r of list(params?.Resource)) expect(r).toMatch(/parameter\/memory-anywhere-(spike|eval-\*)(\/\*)?$/);
+		const snaps = d.Statement.find((x) => x.Sid === "DeleteNonProdSnapshotsOnDestroy");
+		expect(snaps?.Condition).toEqual({ StringLike: { "aws:ResourceTag/memory-anywhere:stage": ["spike", "eval-*"] } });
+	});
+
+	it("can delete objects only in spike and eval buckets", () => {
+		const s = d.Statement.find((x) => x.Sid === "EmptyNonProdBucketsOnDestroy");
+		for (const r of list(s?.Resource)) expect(r).toMatch(/-(spike|eval-\*)(\/\*)?$/);
+	});
+
+	it("reads logs and runs shell commands on eval instances only; no session, nothing on prod", () => {
+		const sid = (x: string) => d.Statement.find((s) => s.Sid === x);
+		for (const r of list(sid("ReadEvalLogs")?.Resource))
+			expect(r).toMatch(/:log-group:\/memory-anywhere\/eval-\*(:\*)?$/);
+		const logActions = d.Statement.filter((s) => s.Effect === "Allow")
+			.flatMap((s) => list(s.Action))
+			.filter((a) => a.startsWith("logs:"));
+		expect(logActions.sort()).toEqual(["logs:DescribeLogStreams", "logs:FilterLogEvents", "logs:GetLogEvents"]);
+		const evalTag = { "ssm:resourceTag/memory-anywhere:stage": "eval-*" };
+		expect(sid("RunShellOnEvalInstances")?.Condition).toEqual({ StringLike: evalTag });
+		// The denies hold whatever else is allowed: any instance without an eval tag, any other document or target, any session.
+		expect(sid("DenyCommandsOutsideEvalInstances")).toMatchObject({
+			Effect: "Deny",
+			Resource: "arn:aws:ec2:*:*:instance/*",
+			Condition: { StringNotLike: evalTag },
+		});
+		expect(list(sid("DenyOtherCommandTargetsAndDocuments")?.NotResource)).toEqual([
+			"arn:aws:ec2:*:*:instance/*",
+			"arn:aws:ssm:*::document/AWS-RunShellScript",
+		]);
+		expect(sid("DenySessions")).toMatchObject({ Effect: "Deny", Action: "ssm:StartSession", Resource: "*" });
+	});
+
+	it("has no permissions boundary reference (R5-B1)", () => {
+		expect(raw("deploy-permission-set.json")).not.toContain("memory-anywhere-boundary");
+	});
+});
+
+describe("operator permission set (§3.4)", () => {
+	const d = doc("operator-permission-set.json");
+
+	it("cannot schedule key deletion, touch IAM or write CloudFormation", () => {
+		const denied = actions(d, "Deny");
+		expect(denied).toEqual(expect.arrayContaining(["kms:ScheduleKeyDeletion", "iam:*"]));
+		const cfn = d.Statement.find((x) => x.Sid === "DenyCloudFormationWrites");
+		expect(cfn?.Effect).toBe("Deny");
+		expect(
+			list(cfn?.NotAction).every((a) => /^cloudformation:(Describe|Get|List|Detect|Validate|Estimate)\*$/.test(a)),
+		).toBe(true);
+	});
+
+	it("may delete backup versions only outside prod", () => {
+		const s = d.Statement.find((x) => x.Sid === "DeleteNonProdBackups");
+		for (const r of list(s?.Resource)) expect(r).toMatch(/-(spike|eval-\*)(\/\*)?$/);
+		const deny = d.Statement.find((x) => x.Sid === "DenyProdBackupVersionAndBucketDeletion");
+		expect(list(deny?.Action)).toEqual(["s3:DeleteObjectVersion", "s3:DeleteBucket"]);
+	});
+
+	it("reads the daily manifests but cannot change them (restore drill)", () => {
+		const s = d.Statement.find((x) => x.Sid === "ReadManifests");
+		expect(list(s?.Action)).toEqual(["s3:GetObject", "s3:ListBucket"]);
+		const writes = d.Statement.filter(
+			(x) => x.Effect === "Allow" && list(x.Resource).some((r) => r.includes("memory-anywhere-manifest-")),
+		);
+		expect(writes.flatMap((x) => list(x.Action)).every((a) => /^s3:(Get|List)/.test(a))).toBe(true);
+	});
+
+	it("runs commands only on instances carrying the stage tag", () => {
+		const s = d.Statement.find((x) => x.Sid === "SessionsAndRunCommandOnStageInstances");
+		expect(s?.Condition?.["Null"]?.["ssm:resourceTag/memory-anywhere:stage"]).toBe("false");
+	});
+});

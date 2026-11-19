@@ -1,0 +1,62 @@
+{
+  "about": "Suite I's scripted extractor (evals/harness/suite-i.ts): what it answers for each extract source of evals/datasets/i/imports. An item is answered in the call whose messages contain its anchor (its span unless given), quoting that message's id. `label` names the fact of labels.jsonl it states; null marks noise. Synthetic persona Alex only.",
+  "sources": {
+    "chatgpt-history": [
+      { "label": "Alex is training for the Lisbon half marathon in March", "content": "Is training for the Lisbon half marathon in March", "kind": "fact", "span": "I'm training for the Lisbon half marathon in March" },
+      { "label": "Alex runs on Sunday mornings", "content": "Runs on Sunday mornings", "kind": "fact", "span": "I run on Sunday mornings" },
+      { "label": "Alex is moving Orrery's star catalog loader to a worker thread", "content": "Is moving Orrery's star catalog loader to a worker thread", "kind": "fact", "span": "moving Orrery's star catalog loader to a worker thread" },
+      { "label": "Alex is vegetarian", "content": "Is vegetarian", "kind": "fact", "span": "I'm vegetarian" },
+      { "label": "Alex's partner Sam is a ceramicist", "content": "Partner Sam is a ceramicist", "kind": "fact", "span": "My partner Sam is a ceramicist" },
+      { "label": "Sam loves spicy food", "content": "Loves spicy food", "kind": "fact", "span": "loves spicy food", "entity": "Sam" },
+      { "label": null, "note": "from the regenerated branch, which the importer drops", "content": "Lives in Porto", "kind": "fact", "span": "I live in Porto.", "anchor": "I'm training for the Lisbon half marathon" },
+      { "label": null, "note": "from a conversation the importer dropped", "content": "Owns a Prusa 3D printer", "kind": "fact", "span": "my Prusa printer", "anchor": "I'm training for the Lisbon half marathon" },
+      { "label": null, "note": "a real span with a fact it does not support", "content": "Is training for a full marathon in Berlin", "kind": "fact", "span": "I'm training for the Lisbon half marathon", "anchor": "I'm training for the Lisbon half marathon" },
+      { "label": null, "note": "a task detail with a real span: passes the span check", "content": "Loader spends most of its time parsing coordinates", "kind": "fact", "span": "The loader spends most of its time parsing coordinates" }
+    ],
+    "gemini-history": [
+      { "label": "Alex is training for a half marathon in April", "content": "Is training for a half marathon in April", "kind": "fact", "span": "training for a half marathon in April" },
+      { "label": "Alex usually runs in the mornings before work", "content": "Usually runs in the mornings before work", "kind": "fact", "span": "I usually run in the mornings before work" },
+      { "label": "Alex runs about 30 km a week", "content": "Runs about 30 km a week", "kind": "fact", "span": "about 30 km a week" },
+      { "label": "Alex prefers quiet neighbourhoods", "content": "Prefers quiet neighbourhoods when travelling", "kind": "preference", "span": "I prefer quiet neighbourhoods" },
+      { "label": "Alex doesn't eat meat", "content": "Doesn't eat meat", "kind": "fact", "span": "I don't eat meat" },
+      { "label": null, "note": "from Gemini's reply, which the importer never reads", "content": "Owns a sailboat", "kind": "fact", "span": "also owns a sailboat", "anchor": "plan my long runs" }
+    ],
+    "claude-history": [
+      { "label": "Alex uses Neovim with a minimal config", "content": "Uses Neovim with a minimal config", "kind": "fact", "span": "I use Neovim with a minimal config" },
+      { "label": "Alex wants LSP for TypeScript", "content": "Wants LSP for TypeScript", "kind": "preference", "span": "want LSP for TypeScript" },
+      { "label": "Alex's laptop runs Fedora", "content": "Laptop runs Fedora", "kind": "fact", "span": "My laptop runs Fedora" },
+      { "label": "Alex plays chess on weekends", "content": "Plays chess on weekends", "kind": "fact", "span": "I play chess on weekends" },
+      { "label": "Alex plays rapid games online", "content": "Plays rapid chess games online", "kind": "fact", "span": "play rapid games online" },
+      { "label": "Alex's chess rating is around 1600", "content": "Chess rating is around 1600", "kind": "fact", "span": "rapid games online, around 1600" },
+      { "label": null, "note": "from an assistant message, which the importer drops", "content": "Secretly prefers Emacs", "kind": "preference", "span": "secretly prefers Emacs", "anchor": "I use Neovim with a minimal config" },
+      { "label": null, "note": "a task detail with a real span: passes the span check", "content": "Wants a sharper reply to 1.e4", "kind": "preference", "span": "want a sharper reply to 1.e4" }
+    ],
+    "chatgpt-memory-summary": [
+      { "label": "Alex is a backend engineer at Tidewell", "content": "Is a backend engineer at Tidewell", "kind": "fact", "span": "Alex is a backend engineer at Tidewell" },
+      { "label": "Alex writes most services in TypeScript", "content": "Writes most services in TypeScript", "kind": "fact", "span": "writes most services in TypeScript" },
+      { "label": "Alex prefers small, well-tested modules", "content": "Prefers small, well-tested modules", "kind": "preference", "span": "a strong preference for small, well-tested modules" },
+      { "label": "Alex uses Neovim", "content": "Edits code in Neovim", "kind": "fact", "span": "Alex edits in Neovim" },
+      { "label": "Alex uses pnpm", "content": "Uses pnpm for JavaScript work", "kind": "fact", "span": "uses pnpm for JavaScript work" },
+      { "label": "Alex is building Orrery, a star-map app", "content": "Is building Orrery, a star-map app for amateur astronomers", "kind": "fact", "span": "Alex is building Orrery, a star-map app for amateur astronomers" },
+      { "label": "Orrery's backend uses SQLite", "content": "Orrery's backend keeps everything in SQLite", "kind": "fact", "span": "Its backend keeps everything in SQLite" },
+      { "label": "Alex lives in Lisbon", "content": "Lives in Lisbon", "kind": "fact", "span": "Alex lives in Lisbon" },
+      { "label": "Alex's partner is Sam", "content": "Partner is Sam", "kind": "fact", "span": "with partner Sam" },
+      { "label": "Alex has a beagle named Pixel", "content": "Has a beagle named Pixel", "kind": "fact", "span": "a beagle named Pixel" },
+      { "label": "Alex is learning Portuguese", "content": "Is learning Portuguese with a tutor", "kind": "fact", "span": "is learning Portuguese with a tutor" },
+      { "label": null, "note": "a real span with a fact it does not support", "content": "Has two cats", "kind": "fact", "span": "a beagle named Pixel" },
+      { "label": null, "note": "from the page's own suggestions, which the importer drops", "content": "Wants offline maps in Orrery", "kind": "preference", "span": "Ask how Orrery could add offline maps", "anchor": "Alex is building Orrery" },
+      { "label": null, "note": "a real span with a fact it does not support", "content": "Works at Google", "kind": "fact", "span": "Alex is a backend engineer at Tidewell" }
+    ],
+    "gemini-memory-summary": [
+      { "label": "Alex is a backend engineer in Lisbon", "content": "Is a backend engineer in Lisbon", "kind": "fact", "span": "A backend engineer in Lisbon" },
+      { "label": "Alex works at Tidewell", "content": "Works at Tidewell", "kind": "fact", "span": "Alex works at Tidewell" },
+      { "label": "Alex prefers TypeScript for new services", "content": "Prefers TypeScript for new services", "kind": "preference", "span": "prefers TypeScript for new services" },
+      { "label": "Alex is vegetarian", "content": "Is vegetarian", "kind": "fact", "span": "A vegetarian who cooks" },
+      { "label": "Alex cooks most evenings", "content": "Cooks most evenings", "kind": "fact", "span": "cooks most evenings" },
+      { "label": "Alex drinks oolong tea in the afternoon", "content": "Drinks oolong tea in the afternoon", "kind": "fact", "span": "drinks oolong tea in the afternoon" },
+      { "label": "Alex avoids coffee after noon", "content": "Avoids coffee after noon", "kind": "preference", "span": "avoids coffee after noon" },
+      { "label": null, "note": "a real span with a fact it does not support", "content": "Drinks coffee every morning", "kind": "fact", "span": "avoids coffee after noon" },
+      { "label": null, "note": "a redacted value", "content": "Work email is [REDACTED:email]", "kind": "fact", "span": "Alex works at Tidewell" }
+    ]
+  }
+}

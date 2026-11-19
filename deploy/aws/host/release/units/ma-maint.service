@@ -1,0 +1,7 @@
+[Unit]
+Description=memory-anywhere nightly maintenance: compaction after purges (deployment-aws.md §4)
+After=memory-anywhere.service litestream.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/memory-anywhere/ma-maint.sh

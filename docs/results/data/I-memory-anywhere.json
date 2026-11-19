@@ -1,0 +1,740 @@
+{
+  "suite": "I",
+  "system": "memory-anywhere",
+  "dataset": "i-synthetic-alex-19-files",
+  "labels": "author-labelled",
+  "llm": "scripted-extractor",
+  "embedding_model": "onnx-community/embeddinggemma-300m-ONNX@5090578d9565bb06545b4552f76e6bc2c93e4a66:q4",
+  "gate": {
+    "reimport": {
+      "fixtures": 17,
+      "unchanged": 17,
+      "pass": true
+    },
+    "duplicates": {
+      "k": 0,
+      "n": 20,
+      "rate": 0,
+      "ci95": [
+        0,
+        0.16112516018512965
+      ],
+      "max": 0.05,
+      "pass": true
+    },
+    "false_merges": {
+      "k": 0,
+      "n": 22,
+      "upper95": 0.14865487660514556,
+      "pass": true
+    },
+    "pass": true
+  },
+  "thresholds": {
+    "dup_threshold": 0.92,
+    "import_dup_threshold": 0.85,
+    "reworded_min_cosine": 0.95,
+    "extension_min_cosine": 0.8
+  },
+  "reimport": [
+    {
+      "fixture": "chatgpt-history",
+      "source_type": "chatgpt-history",
+      "items": 2,
+      "first": {
+        "accepted": 2,
+        "queued": 2,
+        "status": "done"
+      },
+      "second": {
+        "accepted": 0,
+        "already": 2,
+        "status": "done"
+      },
+      "content_hash_equal": true
+    },
+    {
+      "fixture": "chatgpt-memory",
+      "source_type": "chatgpt-memory",
+      "items": 7,
+      "first": {
+        "accepted": 7,
+        "queued": 0,
+        "status": "done"
+      },
+      "second": {
+        "accepted": 0,
+        "already": 7,
+        "status": "done"
+      },
+      "content_hash_equal": true
+    },
+    {
+      "fixture": "chatgpt-memory-summary",
+      "source_type": "chatgpt-memory-summary",
+      "items": 3,
+      "first": {
+        "accepted": 3,
+        "queued": 3,
+        "status": "done"
+      },
+      "second": {
+        "accepted": 0,
+        "already": 3,
+        "status": "done"
+      },
+      "content_hash_equal": true
+    },
+    {
+      "fixture": "claude-code-auto-memory",
+      "source_type": "claude-code-auto-memory",
+      "items": 3,
+      "first": {
+        "accepted": 3,
+        "queued": 0,
+        "status": "done"
+      },
+      "second": {
+        "accepted": 0,
+        "already": 3,
+        "status": "done"
+      },
+      "content_hash_equal": true
+    },
+    {
+      "fixture": "claude-history",
+      "source_type": "claude-history",
+      "items": 2,
+      "first": {
+        "accepted": 2,
+        "queued": 2,
+        "status": "done"
+      },
+      "second": {
+        "accepted": 0,
+        "already": 2,
+        "status": "done"
+      },
+      "content_hash_equal": true
+    },
+    {
+      "fixture": "claude-memory",
+      "source_type": "claude-memory",
+      "items": 11,
+      "first": {
+        "accepted": 11,
+        "queued": 0,
+        "status": "done"
+      },
+      "second": {
+        "accepted": 0,
+        "already": 11,
+        "status": "done"
+      },
+      "content_hash_equal": true
+    },
+    {
+      "fixture": "claude-user-md",
+      "source_type": "claude-user-md",
+      "items": 5,
+      "first": {
+        "accepted": 5,
+        "queued": 0,
+        "status": "done"
+      },
+      "second": {
+        "accepted": 0,
+        "already": 5,
+        "status": "done"
+      },
+      "content_hash_equal": true
+    },
+    {
+      "fixture": "codex-memories",
+      "source_type": "codex-memories",
+      "items": 2,
+      "first": {
+        "accepted": 2,
+        "queued": 0,
+        "status": "done"
+      },
+      "second": {
+        "accepted": 0,
+        "already": 2,
+        "status": "done"
+      },
+      "content_hash_equal": true
+    },
+    {
+      "fixture": "codex-user-md",
+      "source_type": "codex-user-md",
+      "items": 1,
+      "first": {
+        "accepted": 1,
+        "queued": 0,
+        "status": "done"
+      },
+      "second": {
+        "accepted": 0,
+        "already": 1,
+        "status": "done"
+      },
+      "content_hash_equal": true
+    },
+    {
+      "fixture": "gemini-history",
+      "source_type": "gemini-history",
+      "items": 2,
+      "first": {
+        "accepted": 2,
+        "queued": 2,
+        "status": "done"
+      },
+      "second": {
+        "accepted": 0,
+        "already": 2,
+        "status": "done"
+      },
+      "content_hash_equal": true
+    },
+    {
+      "fixture": "gemini-memory-summary",
+      "source_type": "gemini-memory-summary",
+      "items": 2,
+      "first": {
+        "accepted": 2,
+        "queued": 2,
+        "status": "done"
+      },
+      "second": {
+        "accepted": 0,
+        "already": 2,
+        "status": "done"
+      },
+      "content_hash_equal": true
+    },
+    {
+      "fixture": "gemini-saved-info",
+      "source_type": "gemini-saved-info",
+      "items": 2,
+      "first": {
+        "accepted": 2,
+        "queued": 0,
+        "status": "done"
+      },
+      "second": {
+        "accepted": 0,
+        "already": 2,
+        "status": "done"
+      },
+      "content_hash_equal": true
+    },
+    {
+      "fixture": "neg-chatgpt-memory.txt",
+      "source_type": "chatgpt-memory",
+      "items": 22,
+      "first": {
+        "accepted": 22,
+        "queued": 0,
+        "status": "done"
+      },
+      "second": {
+        "accepted": 0,
+        "already": 22,
+        "status": "done"
+      },
+      "content_hash_equal": true
+    },
+    {
+      "fixture": "neg-claude-memory.txt",
+      "source_type": "claude-memory",
+      "items": 22,
+      "first": {
+        "accepted": 22,
+        "queued": 0,
+        "status": "done"
+      },
+      "second": {
+        "accepted": 0,
+        "already": 22,
+        "status": "done"
+      },
+      "content_hash_equal": true
+    },
+    {
+      "fixture": "pair-chatgpt-memory.txt",
+      "source_type": "chatgpt-memory",
+      "items": 20,
+      "first": {
+        "accepted": 20,
+        "queued": 0,
+        "status": "done"
+      },
+      "second": {
+        "accepted": 0,
+        "already": 20,
+        "status": "done"
+      },
+      "content_hash_equal": true
+    },
+    {
+      "fixture": "pair-claude-memory.txt",
+      "source_type": "claude-memory",
+      "items": 20,
+      "first": {
+        "accepted": 20,
+        "queued": 0,
+        "status": "done"
+      },
+      "second": {
+        "accepted": 0,
+        "already": 20,
+        "status": "done"
+      },
+      "content_hash_equal": true
+    },
+    {
+      "fixture": "paste",
+      "source_type": "paste",
+      "items": 2,
+      "first": {
+        "accepted": 2,
+        "queued": 0,
+        "status": "done"
+      },
+      "second": {
+        "accepted": 0,
+        "already": 2,
+        "status": "done"
+      },
+      "content_hash_equal": true
+    }
+  ],
+  "duplicates": {
+    "pair": "alex-lists",
+    "facts": 20,
+    "stored": 20,
+    "duplicates": 0,
+    "rate": 0,
+    "ci95": [
+      0,
+      0.16112516018512965
+    ],
+    "duplicated": [],
+    "outcomes": {
+      "active.already_stored": 18,
+      "active.update": 2
+    },
+    "lines": [
+      {
+        "fact": "Alex is vegetarian",
+        "first": "Is vegetarian",
+        "second": "Is a vegetarian.",
+        "cosine": 0.924,
+        "merged": true
+      },
+      {
+        "fact": "Alex drinks oolong tea in the afternoon",
+        "first": "Drinks oolong tea in the afternoon",
+        "second": "Drinks oolong tea every afternoon.",
+        "cosine": 0.944,
+        "merged": true
+      },
+      {
+        "fact": "Alex is a backend engineer at Tidewell",
+        "first": "Works as a backend engineer at Tidewell",
+        "second": "Is a backend engineer at Tidewell.",
+        "cosine": 0.959,
+        "merged": true
+      },
+      {
+        "fact": "Alex prefers TypeScript over Python for new services",
+        "first": "Prefers TypeScript over Python for new services",
+        "second": "Prefers TypeScript to Python when starting a new service.",
+        "cosine": 0.899,
+        "merged": true
+      },
+      {
+        "fact": "Alex uses Neovim",
+        "first": "Uses Neovim as the main editor",
+        "second": "Uses Neovim as the main code editor.",
+        "cosine": 0.957,
+        "merged": true
+      },
+      {
+        "fact": "Alex uses pnpm for JavaScript projects",
+        "first": "Uses pnpm for every JavaScript project",
+        "second": "Uses pnpm for all JavaScript projects.",
+        "cosine": 0.964,
+        "merged": true
+      },
+      {
+        "fact": "Alex is building Orrery, a star-map app",
+        "first": "Is building Orrery, a star-map app for amateur astronomers",
+        "second": "Is building a star-map app for amateur astronomers called Orrery.",
+        "cosine": 0.909,
+        "merged": true
+      },
+      {
+        "fact": "Orrery's backend runs on SQLite",
+        "first": "Orrery's backend runs on SQLite",
+        "second": "Orrery's backend uses SQLite.",
+        "cosine": 0.981,
+        "merged": true
+      },
+      {
+        "fact": "Alex lives in Lisbon",
+        "first": "Lives in Lisbon",
+        "second": "Lives in Lisbon, Portugal.",
+        "cosine": 0.929,
+        "merged": true
+      },
+      {
+        "fact": "Alex's partner is Sam",
+        "first": "Partner is Sam",
+        "second": "Has a partner named Sam.",
+        "cosine": 0.886,
+        "merged": true
+      },
+      {
+        "fact": "Alex has a beagle named Pixel",
+        "first": "Has a beagle named Pixel",
+        "second": "Has a beagle called Pixel.",
+        "cosine": 0.977,
+        "merged": true
+      },
+      {
+        "fact": "Alex is learning Portuguese with a tutor",
+        "first": "Is learning Portuguese with a tutor",
+        "second": "Is learning Portuguese with a tutor twice a week.",
+        "cosine": 0.913,
+        "merged": true
+      },
+      {
+        "fact": "Alex plays chess on weekends",
+        "first": "Plays chess on weekends",
+        "second": "Plays chess on the weekends.",
+        "cosine": 0.981,
+        "merged": true
+      },
+      {
+        "fact": "Alex is training for the Lisbon half marathon",
+        "first": "Is training for the Lisbon half marathon",
+        "second": "Is training for the Lisbon half marathon in March.",
+        "cosine": 0.877,
+        "merged": true
+      },
+      {
+        "fact": "Alex runs on Sunday mornings",
+        "first": "Runs on Sunday mornings",
+        "second": "Goes running on Sunday mornings.",
+        "cosine": 0.89,
+        "merged": true
+      },
+      {
+        "fact": "Alex prefers short, direct answers",
+        "first": "Prefers short, direct answers",
+        "second": "Prefers answers that are short and direct.",
+        "cosine": 0.97,
+        "merged": true
+      },
+      {
+        "fact": "Alex wants code examples in TypeScript",
+        "first": "Wants code examples in TypeScript",
+        "second": "Wants code examples written in TypeScript.",
+        "cosine": 0.951,
+        "merged": true
+      },
+      {
+        "fact": "Alex's laptop runs Fedora",
+        "first": "Laptop runs Fedora",
+        "second": "Has a laptop that runs Fedora.",
+        "cosine": 0.858,
+        "merged": true
+      },
+      {
+        "fact": "Alex reads science fiction before bed",
+        "first": "Reads science fiction before bed",
+        "second": "Reads science fiction books before bed.",
+        "cosine": 0.973,
+        "merged": true
+      },
+      {
+        "fact": "Alex follows Formula 1",
+        "first": "Follows Formula 1",
+        "second": "Follows Formula 1 racing.",
+        "cosine": 0.908,
+        "merged": true
+      }
+    ]
+  },
+  "false_merges": {
+    "pair": "alex-near-distinct",
+    "n": 22,
+    "false_merges": 0,
+    "upper95": 0.14865487660514556,
+    "max_cosine": 0.928,
+    "merged": [],
+    "lines": [
+      {
+        "first": "Likes green tea",
+        "second": "Likes black coffee.",
+        "cosine": 0.729,
+        "merged": false
+      },
+      {
+        "first": "Has visited Kyoto",
+        "second": "Has visited Osaka.",
+        "cosine": 0.77,
+        "merged": false
+      },
+      {
+        "first": "Ran the Lisbon half marathon in 2024",
+        "second": "Ran the Lisbon half marathon in 2025.",
+        "cosine": 0.899,
+        "merged": false
+      },
+      {
+        "first": "Sister Maya is a nurse",
+        "second": "Sister Lena is a nurse.",
+        "cosine": 0.721,
+        "merged": false
+      },
+      {
+        "first": "Plays chess on weekends",
+        "second": "Plays tennis on weekends.",
+        "cosine": 0.803,
+        "merged": false
+      },
+      {
+        "first": "Reads science fiction before bed",
+        "second": "Reads history books before bed.",
+        "cosine": 0.786,
+        "merged": false
+      },
+      {
+        "first": "Wants code examples in TypeScript",
+        "second": "Wants code examples in Rust.",
+        "cosine": 0.808,
+        "merged": false
+      },
+      {
+        "first": "Owns a beagle named Pixel",
+        "second": "Owns a cat named Pixel.",
+        "cosine": 0.861,
+        "merged": false
+      },
+      {
+        "first": "Is learning Portuguese with a tutor",
+        "second": "Is learning Japanese with a tutor.",
+        "cosine": 0.822,
+        "merged": false
+      },
+      {
+        "first": "Drinks oolong tea in the afternoon",
+        "second": "Drinks oolong tea in the morning.",
+        "cosine": 0.911,
+        "merged": false
+      },
+      {
+        "first": "Cooks vegetarian food most evenings",
+        "second": "Cooks vegetarian food on Sundays.",
+        "cosine": 0.881,
+        "merged": false
+      },
+      {
+        "first": "Works from home on Fridays",
+        "second": "Works from the office on Mondays.",
+        "cosine": 0.755,
+        "merged": false
+      },
+      {
+        "first": "Follows Formula 1",
+        "second": "Follows MotoGP.",
+        "cosine": 0.9,
+        "merged": false
+      },
+      {
+        "first": "Prefers dark mode in every editor",
+        "second": "Prefers light mode in every editor.",
+        "cosine": 0.928,
+        "merged": false
+      },
+      {
+        "first": "Listens to jazz while coding",
+        "second": "Listens to podcasts while running.",
+        "cosine": 0.57,
+        "merged": false
+      },
+      {
+        "first": "Has a brother named Tomas",
+        "second": "Has a brother named Diogo.",
+        "cosine": 0.76,
+        "merged": false
+      },
+      {
+        "first": "Started Orrery in 2023",
+        "second": "Started Orrery in 2025.",
+        "cosine": 0.909,
+        "merged": false
+      },
+      {
+        "first": "Keeps Orrery's data in SQLite",
+        "second": "Keeps Orrery's data in PostgreSQL.",
+        "cosine": 0.853,
+        "merged": false
+      },
+      {
+        "first": "Bikes to work in summer",
+        "second": "Bikes to work in winter.",
+        "cosine": 0.849,
+        "merged": false
+      },
+      {
+        "first": "Prefers window seats on flights",
+        "second": "Prefers aisle seats on flights.",
+        "cosine": 0.897,
+        "merged": false
+      },
+      {
+        "first": "Runs 10 km on Sundays",
+        "second": "Runs 5 km on Sundays.",
+        "cosine": 0.925,
+        "merged": false
+      },
+      {
+        "first": "Uses Neovim for writing code",
+        "second": "Uses Obsidian for writing notes.",
+        "cosine": 0.673,
+        "merged": false
+      }
+    ]
+  },
+  "extraction": {
+    "precision": {
+      "k": 35,
+      "n": 37,
+      "p": 0.9459459459459459,
+      "ci95": [
+        0.822953455158113,
+        0.9850490233016582
+      ]
+    },
+    "recall": {
+      "k": 35,
+      "n": 35,
+      "p": 1,
+      "ci95": [
+        0.901099006269668,
+        1
+      ]
+    },
+    "per_source": [
+      {
+        "source_type": "chatgpt-history",
+        "stored": 7,
+        "stored_labelled": 6,
+        "labelled_facts": 6,
+        "facts_found": 6,
+        "missed": [],
+        "unlabelled_stored": [
+          "Loader spends most of its time parsing coordinates"
+        ],
+        "counts": {
+          "items.accepted": 2,
+          "extract.calls": 2,
+          "observation.imported_observation": 7,
+          "extract.unsupported_span": 2,
+          "extract.low_support": 1,
+          "extract.facts": 7
+        },
+        "llm_calls": {
+          "extract": 2
+        }
+      },
+      {
+        "source_type": "chatgpt-memory-summary",
+        "stored": 11,
+        "stored_labelled": 11,
+        "labelled_facts": 11,
+        "facts_found": 11,
+        "missed": [],
+        "unlabelled_stored": [],
+        "counts": {
+          "items.accepted": 3,
+          "extract.calls": 3,
+          "active.imported": 11,
+          "extract.low_support": 2,
+          "extract.facts": 11,
+          "extract.unsupported_span": 1
+        },
+        "llm_calls": {
+          "extract": 3
+        }
+      },
+      {
+        "source_type": "claude-history",
+        "stored": 7,
+        "stored_labelled": 6,
+        "labelled_facts": 6,
+        "facts_found": 6,
+        "missed": [],
+        "unlabelled_stored": [
+          "Wants a sharper reply to 1.e4"
+        ],
+        "counts": {
+          "items.accepted": 2,
+          "extract.calls": 2,
+          "observation.imported_observation": 7,
+          "extract.unsupported_span": 1,
+          "extract.facts": 7
+        },
+        "llm_calls": {
+          "extract": 2
+        }
+      },
+      {
+        "source_type": "gemini-history",
+        "stored": 5,
+        "stored_labelled": 5,
+        "labelled_facts": 5,
+        "facts_found": 5,
+        "missed": [],
+        "unlabelled_stored": [],
+        "counts": {
+          "items.accepted": 2,
+          "extract.calls": 2,
+          "observation.imported_observation": 5,
+          "extract.facts": 5,
+          "extract.unsupported_span": 1
+        },
+        "llm_calls": {
+          "extract": 2
+        }
+      },
+      {
+        "source_type": "gemini-memory-summary",
+        "stored": 7,
+        "stored_labelled": 7,
+        "labelled_facts": 7,
+        "facts_found": 7,
+        "missed": [],
+        "unlabelled_stored": [],
+        "counts": {
+          "items.accepted": 2,
+          "extract.calls": 2,
+          "active.imported": 7,
+          "extract.redacted": 1,
+          "extract.facts": 7,
+          "extract.low_support": 1
+        },
+        "llm_calls": {
+          "extract": 2
+        }
+      }
+    ]
+  },
+  "git_sha": "4641b50bd391c924b5d36adb65c56d742f34fbb2",
+  "policy_version": "P1",
+  "started_at": "2026-11-16T15:01:53.999Z"
+}

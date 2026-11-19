@@ -1,0 +1,17 @@
+# Override phrases for the action-instruction screen (memory-policy.md §3.2 clause 1). Policy P1.
+# Matched as substrings of norm(content).
+ignore previous
+ignore all
+disregard
+system prompt
+developer message
+jailbreak
+you are now
+always send
+always include
+always add
+always call
+do not tell
+don't tell the user
+without asking
+exfiltrate

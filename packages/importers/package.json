@@ -1,0 +1,14 @@
+{
+	"name": "@memory-anywhere/importers",
+	"version": "0.4.1",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./zip": "./src/zip.ts"
+	},
+	"dependencies": {
+		"@memory-anywhere/contracts": "workspace:*",
+		"zod": "4.6.7"
+	}
+}

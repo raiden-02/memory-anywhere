@@ -1,0 +1,26 @@
+{
+  "type": "object",
+  "properties": {
+    "approve": {
+      "maxItems": 100,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^rev_[0-9A-HJKMNP-TV-Z]{26}$"
+      }
+    },
+    "reject": {
+      "maxItems": 100,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^rev_[0-9A-HJKMNP-TV-Z]{26}$"
+      }
+    }
+  },
+  "required": [
+    "approve",
+    "reject"
+  ],
+  "additionalProperties": false
+}

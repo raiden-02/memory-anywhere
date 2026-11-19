@@ -1,0 +1,22 @@
+Likes black coffee.
+Has visited Osaka.
+Ran the Lisbon half marathon in 2025.
+Sister Lena is a nurse.
+Plays tennis on weekends.
+Reads history books before bed.
+Wants code examples in Rust.
+Owns a cat named Pixel.
+Is learning Japanese with a tutor.
+Drinks oolong tea in the morning.
+Cooks vegetarian food on Sundays.
+Works from the office on Mondays.
+Follows MotoGP.
+Prefers light mode in every editor.
+Listens to podcasts while running.
+Has a brother named Diogo.
+Started Orrery in 2025.
+Keeps Orrery's data in PostgreSQL.
+Bikes to work in winter.
+Prefers aisle seats on flights.
+Runs 5 km on Sundays.
+Uses Obsidian for writing notes.

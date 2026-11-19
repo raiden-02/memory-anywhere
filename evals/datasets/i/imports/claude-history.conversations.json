@@ -1,0 +1,120 @@
+[
+ {
+  "uuid": "cl-conv-1",
+  "name": "Neovim config",
+  "summary": "",
+  "created_at": "2026-04-02T09:00:00.000000Z",
+  "updated_at": "2026-04-02T09:30:00.000000Z",
+  "account": {
+   "uuid": "acct-alex"
+  },
+  "chat_messages": [
+   {
+    "uuid": "cm1",
+    "text": "I use Neovim with a minimal config and want LSP for TypeScript.",
+    "content": [
+     {
+      "type": "text",
+      "text": "I use Neovim with a minimal config and want LSP for TypeScript."
+     }
+    ],
+    "sender": "human",
+    "created_at": "2026-04-02T09:00:00.000000Z",
+    "updated_at": "2026-04-02T09:00:00.000000Z",
+    "attachments": [
+     {
+      "file_name": "init.lua",
+      "file_type": "text/plain",
+      "file_size": 40,
+      "extracted_content": "Alex secretly prefers Emacs."
+     }
+    ],
+    "files": []
+   },
+   {
+    "uuid": "cm2",
+    "text": "Here is a config.",
+    "content": [
+     {
+      "type": "text",
+      "text": "Here is a config."
+     }
+    ],
+    "sender": "assistant",
+    "created_at": "2026-04-02T09:00:20.000000Z",
+    "updated_at": "2026-04-02T09:00:20.000000Z",
+    "attachments": [],
+    "files": []
+   },
+   {
+    "uuid": "cm3",
+    "text": "My laptop runs Fedora, if that matters.",
+    "content": [],
+    "sender": "human",
+    "created_at": "2026-04-02T09:02:00.000000Z",
+    "updated_at": "2026-04-02T09:02:00.000000Z",
+    "attachments": [],
+    "files": []
+   },
+   {
+    "uuid": "cm4",
+    "text": "Thanks!",
+    "content": [],
+    "sender": "human",
+    "created_at": "2026-04-02T09:03:00.000000Z",
+    "updated_at": "2026-04-02T09:03:00.000000Z",
+    "attachments": [],
+    "files": []
+   }
+  ]
+ },
+ {
+  "uuid": "cl-conv-2",
+  "name": "Chess openings",
+  "created_at": "2026-05-20T20:00:00.000000Z",
+  "updated_at": "2026-05-20T20:10:00.000000Z",
+  "chat_messages": [
+   {
+    "uuid": "cn1",
+    "text": "",
+    "content": [
+     {
+      "type": "text",
+      "text": "I play chess on weekends and want a sharper reply to 1.e4."
+     },
+     {
+      "type": "tool_use",
+      "name": "web_search",
+      "input": {}
+     }
+    ],
+    "sender": "human",
+    "created_at": "2026-05-20T20:00:00.000000Z"
+   },
+   {
+    "uuid": "cn2",
+    "text": "",
+    "content": [
+     {
+      "type": "text",
+      "text": "Try the Sicilian."
+     }
+    ],
+    "sender": "assistant",
+    "created_at": "2026-05-20T20:00:30.000000Z"
+   },
+   {
+    "uuid": "cn3",
+    "text": "",
+    "content": [
+     {
+      "type": "text",
+      "text": "I usually play rapid games online, around 1600."
+     }
+    ],
+    "sender": "human",
+    "created_at": "2026-05-20T20:02:00.000000Z"
+   }
+  ]
+ }
+]

@@ -1,0 +1,196 @@
+{
+  "suite": "OAuth conformance (m0-spike.md §5, tests 1–20)",
+  "target": "eval stack eval-m2b, release 0.2.2",
+  "origin": "https://eval.{host}",
+  "git_sha": "d922765",
+  "run_on": "2026-11-14",
+  "summary": {
+    "pass": 26,
+    "fail": 0,
+    "skipped_local_only": 5
+  },
+  "tests": [
+    {
+      "group": "discovery",
+      "name": "1. unauthenticated /mcp: 401 with the resource metadata challenge",
+      "result": "pass",
+      "ms": 151
+    },
+    {
+      "group": "discovery",
+      "name": "2. PRM resource is the MCP URL exactly; one authorization server",
+      "result": "pass",
+      "ms": 144
+    },
+    {
+      "group": "discovery",
+      "name": "3. AS metadata advertises CIMD, `none`, iss and S256 only",
+      "result": "pass",
+      "ms": 51
+    },
+    {
+      "group": "discovery",
+      "name": "4. authorization responses include iss",
+      "result": "pass",
+      "ms": 378
+    },
+    {
+      "group": "discovery",
+      "name": "5. /token takes form encoding; a dead refresh token is invalid_grant",
+      "result": "pass",
+      "ms": 570
+    },
+    {
+      "group": "discovery",
+      "name": "6. a cold server answers discovery, registration and token within 10 s, refresh within 30 s",
+      "result": "skipped (local only)"
+    },
+    {
+      "group": "discovery",
+      "name": "6. the deployed stage answers discovery, registration and token within 10 s, refresh within 30 s",
+      "result": "pass",
+      "ms": 519
+    },
+    {
+      "group": "clients",
+      "name": "7. the PC client's loopback redirect matches any port on localhost and 127.0.0.1",
+      "result": "pass",
+      "ms": 41612
+    },
+    {
+      "group": "clients",
+      "name": "8a. static clients: authorize inside their window only",
+      "result": "pass",
+      "ms": 20658
+    },
+    {
+      "group": "clients",
+      "name": "8b. DCR: the vendor's exact redirect registers inside a window, never outside; a foreign redirect closes it",
+      "result": "pass",
+      "ms": 30235
+    },
+    {
+      "group": "clients",
+      "name": "8e. DCR as Grok sends it (no application_type) registers inside a Grok window",
+      "result": "pass",
+      "ms": 18312
+    },
+    {
+      "group": "clients",
+      "name": "8f. a request with the openid scope (as Grok sends) completes after one consent",
+      "result": "pass",
+      "ms": 17325
+    },
+    {
+      "group": "clients",
+      "name": "8g. a vendor asking for every advertised scope (as Grok does) gets read and write after one consent",
+      "result": "pass",
+      "ms": 18366
+    },
+    {
+      "group": "clients",
+      "name": "8c. CIMD: the vendor's document works inside its window only, with its exact redirect",
+      "result": "skipped (local only)"
+    },
+    {
+      "group": "clients",
+      "name": "8d. Claude Code (direct): CIMD with a loopback redirect on any port",
+      "result": "skipped (local only)"
+    },
+    {
+      "group": "clients",
+      "name": "9. PKCE plain and a missing challenge are refused with the error page",
+      "result": "pass",
+      "ms": 9184
+    },
+    {
+      "group": "clients",
+      "name": "10. reusing an authorization code fails and revokes what it issued",
+      "result": "pass",
+      "ms": 17567
+    },
+    {
+      "group": "clients",
+      "name": "11. refresh reuse within 30 s returns the same pair; after 30 s it revokes the grant",
+      "result": "pass",
+      "ms": 50880
+    },
+    {
+      "group": "clients",
+      "name": "11c. without offline_access (as ChatGPT asks) the grant outlives the owner's consent session",
+      "result": "skipped (local only)"
+    },
+    {
+      "group": "clients",
+      "name": "11b. Gemini: its per-user redirect is matched by rule and pinned, and its refresh token is fixed (§4.5, §5.3)",
+      "result": "pass",
+      "ms": 60725
+    },
+    {
+      "group": "clients",
+      "name": "12. an invalid redirect_uri or client_id yields the error page, not a redirect",
+      "result": "pass",
+      "ms": 513
+    },
+    {
+      "group": "clients",
+      "name": "13. CIMD URL shapes and targets outside the rules are refused",
+      "result": "pass",
+      "ms": 476
+    },
+    {
+      "group": "clients",
+      "name": "14. DCR fields outside the allow-list are refused; RFC 7592 endpoints are 404",
+      "result": "pass",
+      "ms": 24375
+    },
+    {
+      "group": "surfaces",
+      "name": "15. route inventory: nothing outside routes.allow.txt answers on {host}",
+      "result": "pass",
+      "ms": 20701,
+      "note": "first run: fail after 60012 ms (the test's fixed 60 s limit, after earlier tests had used the rate limit); re-run alone after the limit took the deployed timeout (d922765)"
+    },
+    {
+      "group": "surfaces",
+      "name": "15b. route inventory: nothing outside routes.admin.allow.txt answers on admin.{host}",
+      "result": "pass",
+      "ms": 12958
+    },
+    {
+      "group": "surfaces",
+      "name": "16. /mcp ignores cookies and rejects a browser Origin",
+      "result": "pass",
+      "ms": 17426
+    },
+    {
+      "group": "surfaces",
+      "name": "17. both discovery paths return the same metadata with the host's issuer",
+      "result": "pass",
+      "ms": 85
+    },
+    {
+      "group": "surfaces",
+      "name": "18. failures on reg, auth and token are byte-identical with and without an open window",
+      "result": "pass",
+      "ms": 691126
+    },
+    {
+      "group": "surfaces",
+      "name": "19. consent needs the window's pair cookie or its pair code",
+      "result": "pass",
+      "ms": 21311
+    },
+    {
+      "group": "surfaces",
+      "name": "20. MRTR requestState: tampered, expired, replayed, other-grant or other-argument state falls back",
+      "result": "skipped (local only)"
+    },
+    {
+      "group": "surfaces",
+      "name": "20b. MRTR through /mcp: only a fresh, untampered state for this grant and these arguments is an answer",
+      "result": "pass",
+      "ms": 322531
+    }
+  ]
+}

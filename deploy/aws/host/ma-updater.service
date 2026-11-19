@@ -1,0 +1,10 @@
+[Unit]
+Description=memory-anywhere updater (deployment-aws.md 7.3)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/ma-updater
+# Root: it installs releases and restarts units. It has no EC2 permissions.
+TimeoutStartSec=15min

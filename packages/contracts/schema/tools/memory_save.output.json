@@ -1,0 +1,75 @@
+{
+  "type": "object",
+  "properties": {
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "active",
+        "observation",
+        "review",
+        "rejected",
+        "queued"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string",
+      "maxLength": 300
+    },
+    "id": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^mem_[0-9A-HJKMNP-TV-Z]{26}$"
+        },
+        {
+          "type": "string",
+          "pattern": "^obs_[0-9A-HJKMNP-TV-Z]{26}$"
+        }
+      ]
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "T0",
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "section": {
+      "type": "string"
+    },
+    "memory_status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "contested",
+        "pending_review",
+        "superseded"
+      ]
+    },
+    "contested_with": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^mem_[0-9A-HJKMNP-TV-Z]{26}$"
+      }
+    },
+    "idempotency_key": {
+      "type": "string"
+    },
+    "policy_version": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "outcome",
+    "reason",
+    "message",
+    "policy_version"
+  ],
+  "additionalProperties": false
+}

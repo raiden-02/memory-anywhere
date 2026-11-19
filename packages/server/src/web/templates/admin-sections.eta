@@ -1,0 +1,22 @@
+<% layout("./admin") %>
+<h1>Sections</h1>
+<ul class="list">
+<% for (const s of it.sections) { %>
+  <li><strong><%= s.name %></strong> <span class="muted"><%= s.origin %> · <%= s.memories %> memories<% if (!s.approved) { %> · new<% } %></span>
+    <div class="actions">
+      <% if (!s.approved) { %><form class="act inline" data-action="section.approve"><input type="hidden" name="id" value="<%= s.id %>"><button type="submit">Keep</button></form><% } %>
+      <form class="act inline" data-action="section.rename"><input type="hidden" name="id" value="<%= s.id %>"><input name="name" value="<%= s.name %>" maxlength="32" aria-label="New name"><button type="submit" class="secondary">Rename</button></form>
+      <% if (s.origin === "dynamic") { %><form class="act inline" data-action="section.undo"><input type="hidden" name="id" value="<%= s.id %>"><button type="submit" class="secondary">Undo</button></form><% } %>
+      <form class="act inline" data-action="section.merge"><input type="hidden" name="from" value="<%= s.id %>"><select name="into" aria-label="Merge into"><% for (const t of it.sections) { if (t.id !== s.id) { %><option value="<%= t.id %>"><%= t.name %></option><% } } %></select><button type="submit" class="secondary">Merge into</button></form>
+    </div></li>
+<% } %>
+</ul>
+<h1>Attributes</h1>
+<form class="act stack" data-action="attribute.add">
+  <label>Name <input name="name" placeholder="self.coffee_order" required></label>
+  <select name="cardinality" aria-label="Values"><option value="one">One value</option><option value="many">Many values</option></select>
+  <select name="section" aria-label="Section"><% for (const s of it.sections) { %><option value="<%= s.id %>"><%= s.name %></option><% } %></select>
+  <label>Description <input name="description" maxlength="200" required></label>
+  <button type="submit">Add attribute</button>
+</form>
+<ul class="list"><% for (const a of it.attributes) { %><li><span class="code"><%= a.name %></span> <span class="muted"><%= a.cardinality %> · <%= a.section %> · <%= a.origin %></span></li><% } %></ul>

@@ -1,0 +1,51 @@
+{
+  "type": "object",
+  "properties": {
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "claude-memory",
+        "chatgpt-memory",
+        "gemini-saved-info",
+        "paste",
+        "claude-user-md",
+        "codex-user-md",
+        "claude-code-auto-memory",
+        "codex-memories",
+        "chatgpt-history",
+        "claude-history",
+        "chatgpt-memory-summary",
+        "gemini-memory-summary",
+        "gemini-history"
+      ]
+    },
+    "file_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "item_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000000
+    },
+    "estimate_usd": {
+      "type": "number",
+      "minimum": 0
+    },
+    "chars": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "resume_batch_id": {
+      "type": "string",
+      "pattern": "^imb_[0-9A-HJKMNP-TV-Z]{26}$"
+    }
+  },
+  "required": [
+    "source_type",
+    "file_sha256",
+    "item_count",
+    "estimate_usd"
+  ],
+  "additionalProperties": false
+}

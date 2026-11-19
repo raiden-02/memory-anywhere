@@ -1,0 +1,87 @@
+{
+  "suite": "S",
+  "part": "eval-stack",
+  "cases": [
+    {
+      "id": "S-PURGE-23",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "maint.compacted pass (no compaction pending); purge.raw-device:/dev/nvme0n1 pass (clean); purge.data-dir pass (11 files clean)"
+    },
+    {
+      "id": "S-PURGE-24",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "purge.swap:/swapfile pass (clean)"
+    },
+    {
+      "id": "S-PURGE-25",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "litestream.no-staging-on-volume pass (0 Litestream file(s) under the data directory)"
+    },
+    {
+      "id": "S-PURGE-26",
+      "family": "S-PURGE",
+      "verdict": "pass",
+      "evidence": "canary gone from every file 3 min after the purge (purge, then ma-maint, then the scan)"
+    },
+    {
+      "id": "S-AWS-01",
+      "family": "S-AWS",
+      "verdict": "pass",
+      "evidence": "imds.denied.memory-anywhere pass (curl exit 7)"
+    },
+    {
+      "id": "S-AWS-02",
+      "family": "S-AWS",
+      "verdict": "pass",
+      "evidence": "imds.denied.caddy pass (curl exit 7)"
+    },
+    {
+      "id": "S-AWS-03",
+      "family": "S-AWS",
+      "verdict": "pass",
+      "evidence": "anonymous 403; deploy role AccessDenied"
+    },
+    {
+      "id": "S-AWS-04",
+      "family": "S-AWS",
+      "verdict": "pass",
+      "evidence": "CAA at its parent: 0 issue \"letsencrypt.org\""
+    },
+    {
+      "id": "S-AWS-05",
+      "family": "S-AWS",
+      "verdict": "pass",
+      "evidence": "both names: ready, ready (ready = the Elastic IP, not a proxy)"
+    },
+    {
+      "id": "S-AWS-06",
+      "family": "S-AWS",
+      "verdict": "pass",
+      "evidence": "port 80 refused or silent"
+    },
+    {
+      "id": "S-AWS-07",
+      "family": "S-AWS",
+      "verdict": "pass",
+      "evidence": "prod secret AccessDeniedException; session AccessDeniedException"
+    },
+    {
+      "id": "S-AWS-08",
+      "family": "S-AWS",
+      "verdict": "pass",
+      "evidence": "put ok; through SSM decrypted; direct KMS AccessDeniedException; prod: see S-AWS-07"
+    },
+    {
+      "id": "S-AWS-09",
+      "family": "S-AWS",
+      "verdict": "pass",
+      "evidence": "mema destroy waited while the stage records still resolved to its Elastic IP and released it only after they stopped (eval-m2a 2026-11-14, eval-m2b 2026-11-15): evidence/M2/s-aws-09-destroy.txt"
+    }
+  ],
+  "git_sha": "140e41a49cf9e3fc067cdc1a69f690b90222fc07",
+  "policy_version": "P1",
+  "started_at": "2026-11-15T02:37:11.671Z"
+}

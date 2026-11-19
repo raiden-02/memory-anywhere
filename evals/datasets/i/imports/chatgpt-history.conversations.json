@@ -1,0 +1,418 @@
+[
+ {
+  "title": "Half marathon plan",
+  "create_time": 1769932800,
+  "update_time": 1769936400,
+  "conversation_id": "cg-conv-1",
+  "id": "cg-conv-1",
+  "current_node": "n6",
+  "mapping": {
+   "root": {
+    "id": "root",
+    "parent": null,
+    "children": [
+     "n1"
+    ],
+    "message": null
+   },
+   "n1": {
+    "id": "n1",
+    "parent": "root",
+    "children": [
+     "n2"
+    ],
+    "message": {
+     "id": "m1",
+     "author": {
+      "role": "system",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": null,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "You are ChatGPT."
+      ]
+     },
+     "metadata": {},
+     "recipient": "all"
+    }
+   },
+   "n2": {
+    "id": "n2",
+    "parent": "n1",
+    "children": [
+     "n3",
+     "n3b"
+    ],
+    "message": {
+     "id": "m2",
+     "author": {
+      "role": "user",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1769932800,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "I'm training for the Lisbon half marathon in March and I run on Sunday mornings."
+      ]
+     },
+     "metadata": {},
+     "recipient": "all"
+    }
+   },
+   "n3b": {
+    "id": "n3b",
+    "parent": "n2",
+    "children": [
+     "n4b"
+    ],
+    "message": {
+     "id": "m3b",
+     "author": {
+      "role": "assistant",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1769932830,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "An earlier answer the owner regenerated."
+      ]
+     },
+     "metadata": {},
+     "recipient": "all"
+    }
+   },
+   "n4b": {
+    "id": "n4b",
+    "parent": "n3b",
+    "children": [],
+    "message": {
+     "id": "m4b",
+     "author": {
+      "role": "user",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1769932860,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "I live in Porto."
+      ]
+     },
+     "metadata": {},
+     "recipient": "all"
+    }
+   },
+   "n3": {
+    "id": "n3",
+    "parent": "n2",
+    "children": [
+     "n4"
+    ],
+    "message": {
+     "id": "m3",
+     "author": {
+      "role": "assistant",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1769932840,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "Great goal! Here is a plan."
+      ]
+     },
+     "metadata": {},
+     "recipient": "all"
+    }
+   },
+   "n4": {
+    "id": "n4",
+    "parent": "n3",
+    "children": [
+     "n5"
+    ],
+    "message": {
+     "id": "m4",
+     "author": {
+      "role": "tool",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1769932870,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "search results"
+      ]
+     },
+     "metadata": {},
+     "recipient": "all"
+    }
+   },
+   "n5": {
+    "id": "n5",
+    "parent": "n4",
+    "children": [
+     "n6"
+    ],
+    "message": {
+     "id": "m5",
+     "author": {
+      "role": "user",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1769933100,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "I'm moving Orrery's star catalog loader to a worker thread because the main thread stalls on start.\n\n```ts\nfunction load(catalog: Catalog) {\n  const star0 = catalog.lookup(\"HD 1000\"); // magnitude 1\n  const star1 = catalog.lookup(\"HD 1001\"); // magnitude 2\n  const star2 = catalog.lookup(\"HD 1002\"); // magnitude 3\n  const star3 = catalog.lookup(\"HD 1003\"); // magnitude 4\n  const star4 = catalog.lookup(\"HD 1004\"); // magnitude 5\n  const star5 = catalog.lookup(\"HD 1005\"); // magnitude 6\n  const star6 = catalog.lookup(\"HD 1006\"); // magnitude 7\n  const star7 = catalog.lookup(\"HD 1007\"); // magnitude 1\n  const star8 = catalog.lookup(\"HD 1008\"); // magnitude 2\n  const star9 = catalog.lookup(\"HD 1009\"); // magnitude 3\n  const star10 = catalog.lookup(\"HD 1010\"); // magnitude 4\n  const star11 = catalog.lookup(\"HD 1011\"); // magnitude 5\n  const star12 = catalog.lookup(\"HD 1012\"); // magnitude 6\n  const star13 = catalog.lookup(\"HD 1013\"); // magnitude 7\n  const star14 = catalog.lookup(\"HD 1014\"); // magnitude 1\n  const star15 = catalog.lookup(\"HD 1015\"); // magnitude 2\n  const star16 = catalog.lookup(\"HD 1016\"); // magnitude 3\n  const star17 = catalog.lookup(\"HD 1017\"); // magnitude 4\n  const star18 = catalog.lookup(\"HD 1018\"); // magnitude 5\n  const star19 = catalog.lookup(\"HD 1019\"); // magnitude 6\n  const star20 = catalog.lookup(\"HD 1020\"); // magnitude 7\n  const star21 = catalog.lookup(\"HD 1021\"); // magnitude 1\n  const star22 = catalog.lookup(\"HD 1022\"); // magnitude 2\n  const star23 = catalog.lookup(\"HD 1023\"); // magnitude 3\n  const star24 = catalog.lookup(\"HD 1024\"); // magnitude 4\n  const star25 = catalog.lookup(\"HD 1025\"); // magnitude 5\n  const star26 = catalog.lookup(\"HD 1026\"); // magnitude 6\n  const star27 = catalog.lookup(\"HD 1027\"); // magnitude 7\n  const star28 = catalog.lookup(\"HD 1028\"); // magnitude 1\n  const star29 = catalog.lookup(\"HD 1029\"); // magnitude 2\n  const star30 = catalog.lookup(\"HD 1030\"); // magnitude 3\n  const star31 = catalog.lookup(\"HD 1031\"); // magnitude 4\n  const star32 = catalog.lookup(\"HD 1032\"); // magnitude 5\n  const star33 = catalog.lookup(\"HD 1033\"); // magnitude 6\n  const star34 = catalog.lookup(\"HD 1034\"); // magnitude 7\n  const star35 = catalog.lookup(\"HD 1035\"); // magnitude 1\n  const star36 = catalog.lookup(\"HD 1036\"); // magnitude 2\n  const star37 = catalog.lookup(\"HD 1037\"); // magnitude 3\n  const star38 = catalog.lookup(\"HD 1038\"); // magnitude 4\n  const star39 = catalog.lookup(\"HD 1039\"); // magnitude 5\n  const star40 = catalog.lookup(\"HD 1040\"); // magnitude 6\n  const star41 = catalog.lookup(\"HD 1041\"); // magnitude 7\n  const star42 = catalog.lookup(\"HD 1042\"); // magnitude 1\n  const star43 = catalog.lookup(\"HD 1043\"); // magnitude 2\n  const star44 = catalog.lookup(\"HD 1044\"); // magnitude 3\n  const star45 = catalog.lookup(\"HD 1045\"); // magnitude 4\n  const star46 = catalog.lookup(\"HD 1046\"); // magnitude 5\n  const star47 = catalog.lookup(\"HD 1047\"); // magnitude 6\n  const star48 = catalog.lookup(\"HD 1048\"); // magnitude 7\n  const star49 = catalog.lookup(\"HD 1049\"); // magnitude 1\n  const star50 = catalog.lookup(\"HD 1050\"); // magnitude 2\n  const star51 = catalog.lookup(\"HD 1051\"); // magnitude 3\n  const star52 = catalog.lookup(\"HD 1052\"); // magnitude 4\n  const star53 = catalog.lookup(\"HD 1053\"); // magnitude 5\n  const star54 = catalog.lookup(\"HD 1054\"); // magnitude 6\n  const star55 = catalog.lookup(\"HD 1055\"); // magnitude 7\n  const star56 = catalog.lookup(\"HD 1056\"); // magnitude 1\n  const star57 = catalog.lookup(\"HD 1057\"); // magnitude 2\n  const star58 = catalog.lookup(\"HD 1058\"); // magnitude 3\n  const star59 = catalog.lookup(\"HD 1059\"); // magnitude 4\n  const star60 = catalog.lookup(\"HD 1060\"); // magnitude 5\n  const star61 = catalog.lookup(\"HD 1061\"); // magnitude 6\n  const star62 = catalog.lookup(\"HD 1062\"); // magnitude 7\n  const star63 = catalog.lookup(\"HD 1063\"); // magnitude 1\n  const star64 = catalog.lookup(\"HD 1064\"); // magnitude 2\n  const star65 = catalog.lookup(\"HD 1065\"); // magnitude 3\n  const star66 = catalog.lookup(\"HD 1066\"); // magnitude 4\n  const star67 = catalog.lookup(\"HD 1067\"); // magnitude 5\n  const star68 = catalog.lookup(\"HD 1068\"); // magnitude 6\n  const star69 = catalog.lookup(\"HD 1069\"); // magnitude 7\n  const star70 = catalog.lookup(\"HD 1070\"); // magnitude 1\n  const star71 = catalog.lookup(\"HD 1071\"); // magnitude 2\n  const star72 = catalog.lookup(\"HD 1072\"); // magnitude 3\n  const star73 = catalog.lookup(\"HD 1073\"); // magnitude 4\n  const star74 = catalog.lookup(\"HD 1074\"); // magnitude 5\n  const star75 = catalog.lookup(\"HD 1075\"); // magnitude 6\n  const star76 = catalog.lookup(\"HD 1076\"); // magnitude 7\n  const star77 = catalog.lookup(\"HD 1077\"); // magnitude 1\n  const star78 = catalog.lookup(\"HD 1078\"); // magnitude 2\n  const star79 = catalog.lookup(\"HD 1079\"); // magnitude 3\n}\n```\n\n> Line 1 of the error log the build server printed last night.\n> Line 2 of the error log the build server printed last night.\n> Line 3 of the error log the build server printed last night.\n> Line 4 of the error log the build server printed last night.\n> Line 5 of the error log the build server printed last night.\n> Line 6 of the error log the build server printed last night.\n> Line 7 of the error log the build server printed last night.\n> Line 8 of the error log the build server printed last night.\n> Line 9 of the error log the build server printed last night.\n> Line 10 of the error log the build server printed last night.\n> Line 11 of the error log the build server printed last night.\n> Line 12 of the error log the build server printed last night.\n\nHere is the profile summary again. The loader spends most of its time parsing coordinates. The loader spends most of its time parsing coordinates. The loader spends most of its time parsing coordinates. The loader spends most of its time parsing coordinates. The loader spends most of its time parsing coordinates. The loader spends most of its time parsing coordinates. The loader spends most of its time parsing coordinates. The loader spends most of its time parsing coordinates. The loader spends most of its time parsing coordinates. The loader spends most of its time parsing coordinates. The loader spends most of its time parsing coordinates. The loader spends most of its time parsing coordinates. The loader spends most of its time parsing coordinates. The loader spends most of its time parsing coordinates. The loader spends most of its time parsing coordinates. The loader spends most of its time parsing coordinates. The loader spends most of its time parsing coordinates. The loader spends most of its time parsing coordinates. The loader spends most of its time parsing coordinates. The loader spends most of its time parsing coordinates. "
+      ]
+     },
+     "metadata": {},
+     "recipient": "all"
+    }
+   },
+   "n6": {
+    "id": "n6",
+    "parent": "n5",
+    "children": [],
+    "message": {
+     "id": "m6",
+     "author": {
+      "role": "assistant",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1769933160,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "Moving the loader to a worker makes sense."
+      ]
+     },
+     "metadata": {},
+     "recipient": "all"
+    }
+   }
+  }
+ },
+ {
+  "title": "3D printer",
+  "create_time": 1773136800,
+  "conversation_id": "cg-conv-2",
+  "current_node": "p2",
+  "mapping": {
+   "p1": {
+    "id": "p1",
+    "parent": null,
+    "children": [
+     "p2"
+    ],
+    "message": {
+     "id": "q1",
+     "author": {
+      "role": "user",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1773136800,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "I own a Prusa 3D printer."
+      ]
+     },
+     "metadata": {},
+     "recipient": "all"
+    }
+   },
+   "p2": {
+    "id": "p2",
+    "parent": "p1",
+    "children": [],
+    "message": {
+     "id": "q2",
+     "author": {
+      "role": "assistant",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1773136820,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "Nice printer."
+      ]
+     },
+     "metadata": {},
+     "recipient": "all"
+    }
+   }
+  }
+ },
+ {
+  "title": "Dinner ideas",
+  "create_time": 1749146400,
+  "conversation_id": "cg-conv-3",
+  "current_node": "r5",
+  "mapping": {
+   "r0": {
+    "id": "r0",
+    "parent": null,
+    "children": [
+     "r1"
+    ],
+    "message": {
+     "id": "s0",
+     "author": {
+      "role": "user",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1749146340,
+     "content": {
+      "content_type": "user_editable_context",
+      "parts": [
+       "The user wants concise answers."
+      ]
+     },
+     "metadata": {
+      "is_visually_hidden_from_conversation": true
+     },
+     "recipient": "all"
+    }
+   },
+   "r1": {
+    "id": "r1",
+    "parent": "r0",
+    "children": [
+     "r2"
+    ],
+    "message": {
+     "id": "s1",
+     "author": {
+      "role": "user",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1749146400,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "I'm vegetarian, so no fish either."
+      ]
+     },
+     "metadata": {},
+     "recipient": "all"
+    }
+   },
+   "r2": {
+    "id": "r2",
+    "parent": "r1",
+    "children": [
+     "r3"
+    ],
+    "message": {
+     "id": "s2",
+     "author": {
+      "role": "assistant",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1749146410,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "Noted."
+      ]
+     },
+     "metadata": {},
+     "recipient": "all"
+    }
+   },
+   "r3": {
+    "id": "r3",
+    "parent": "r2",
+    "children": [
+     "r4"
+    ],
+    "message": {
+     "id": "s3",
+     "author": {
+      "role": "user",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1749146460,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "My partner Sam is a ceramicist and loves spicy food."
+      ]
+     },
+     "metadata": {},
+     "recipient": "all"
+    }
+   },
+   "r4": {
+    "id": "r4",
+    "parent": "r3",
+    "children": [
+     "r5"
+    ],
+    "message": {
+     "id": "s4",
+     "author": {
+      "role": "assistant",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1749146490,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "Here are three spicy vegetarian dinners."
+      ]
+     },
+     "metadata": {},
+     "recipient": "all"
+    }
+   },
+   "r5": {
+    "id": "r5",
+    "parent": "r4",
+    "children": [],
+    "message": {
+     "id": "s5",
+     "author": {
+      "role": "user",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1749146520,
+     "content": {
+      "content_type": "multimodal_text",
+      "parts": [
+       {
+        "content_type": "image_asset_pointer",
+        "asset_pointer": "file-service://synthetic"
+       }
+      ]
+     },
+     "metadata": {},
+     "recipient": "all"
+    }
+   }
+  }
+ }
+]
