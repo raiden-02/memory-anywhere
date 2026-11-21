@@ -1,20 +1,19 @@
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterAll, describe, expect, it } from "vitest";
 import { ROOT } from "./build.ts";
 import { packServer, serverDependencies } from "./pack-server.ts";
 
-const dir = mkdtempSync(join(tmpdir(), "ma pack server "));
+// Packed inside packages/server, so Node finds the server's dependencies there by walking up from the
+// bundle, as it would find them in the package's own node_modules after `npm install`.
+const dir = mkdtempSync(join(ROOT, "packages", "server", ".pack test "));
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
 describe("the memory-anywhere-server npm package", () => {
 	it("runs from its bundle: migrates a new store with the bundled data step and seeds", async () => {
 		const out = await packServer(join(dir, "package"));
-		// What npm would install next to it: the server's own dependencies, borrowed from the workspace.
-		symlinkSync(join(ROOT, "packages", "server", "node_modules"), join(out, "node_modules"), "junction");
 		const data = join(dir, "data");
 		mkdirSync(data);
 		const config = join(dir, "server.toml");

@@ -14,3 +14,6 @@ evals/embed/out/
 
 # The M1 gate run's test repository (P10); never committed.
 /.gate/
+
+# Left behind only if the server package test is interrupted
+packages/server/.pack test */
