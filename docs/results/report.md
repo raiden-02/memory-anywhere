@@ -181,7 +181,8 @@ the embedding model and tune thresholds, so the headline uses only the other 400
 runs here had the sensitive-topic filters off: they would hide rounds about health or money, which
 measures the policy, not retrieval (chapter 8).
 
-**Result on the 400 unseen questions** ([data](data/R-unseen.json)), nDCG@10 with its interval:
+**Result on the 400 unseen questions** ([data](data/R-unseen.json); the two other memory servers in
+[R-baselines-unseen.json](data/R-baselines-unseen.json)), nDCG@10 with its interval:
 
 ```
 both, Gemma q8                                             ├────●────┤      0.750
@@ -192,6 +193,8 @@ meaning, Gemma q4                                  ├─────●──�
 meaning, Gemma q8                                  ├─────●────┤             0.715
 both, bge-small q8                                 ├─────●─────┤            0.713
 words (BM25)                                      ├─────●─────┤             0.711
+mem0 (raw mode)                            ├─────●─────┤                    0.676
+mcp-memory-service                  ├──────●─────┤                          0.643
 meaning, bge-small q8            ├──────●─────┤                             0.628
 meaning, e5-small q8             ├─────●─────┤                              0.626
                         |                   |                   |         |
@@ -208,6 +211,27 @@ Two more things the shape shows. memory-anywhere sits level with plain "both, Ge
 and date handling neither help nor hurt here (no paired comparison between the two was recorded). And
 the q8 and q4 versions of Gemma score the same; q4 was chosen because it fits the small server's
 memory (chapter 8).
+
+**Against other memory servers.** Two open-source memory servers indexed the same rounds and answered
+the same 400 questions, each in a local Docker container with its own search:
+
+- **mem0** 2.2.1 merges search by meaning (the nomic-embed-text model), by words and by named
+  entities. It ran in its **raw mode**, storing each round as given. Its usual mode has a model
+  extract facts first, which over these 99,590 rounds would take days of local inference, and would
+  no longer index the same documents as the others.
+- **mcp-memory-service** 12.7.0 searches by meaning (all-MiniLM-L6-v2), its tool's default, driven
+  only through its MCP tools as a chat app would.
+
+Paired question by question, memory-anywhere leads mem0 by +0.069 nDCG@10 [0.049, 0.089] and +0.062
+R@5 [0.035, 0.089], and mcp-memory-service by +0.102 nDCG@10 [0.079, 0.125] and +0.091 R@5
+[0.056, 0.126]. Neither beats words alone: BM25 leads mem0 by +0.034 nDCG@10 [0.010, 0.058] and
+mcp-memory-service by +0.067 [0.038, 0.097]. All three lose most on the same kinds of question: across
+sessions memory-anywhere scores 0.645 and both others 0.57, while on a single fact it scores 0.855,
+mem0 0.808 and mcp-memory-service 0.729. Neither said "nothing found" on any of the 24 questions with no
+answer either.
+
+This compares retrieval only, on one benchmark, with each server's search as shipped. It says nothing
+about what each server chooses to store, and mem0's extraction mode, its main feature, is untested.
 
 **By kind of question** (all 500, [data](data/R-full.json)):
 
@@ -230,8 +254,8 @@ alone. The earlier 200-question test subset ([data](data/R-memory-anywhere.json)
 The embedding-model comparison on that subset is in
 [R-baselines-test.json](data/R-baselines-test.json).
 
-**Not yet measured:** the same benchmark against mem0 and mcp-memory-service, a second public
-benchmark (BEAM-small), and a test set written in this store's own memory format (seed-r).
+**Not yet measured:** mem0 with its fact extraction on, a second public benchmark (BEAM-small), and a
+test set written in this store's own memory format (seed-r).
 
 ## 4. Does every app behave? (A, X, conformance)
 
@@ -521,7 +545,8 @@ shapes the author expected.
 
 Collected from the chapters, so nothing above reads as more complete than it is:
 
-- **Other memory servers**: mem0 and mcp-memory-service on any suite, and a no-memory baseline.
+- **Other memory servers** beyond recall: mem0 and mcp-memory-service on W, P and S, mem0 with its
+  fact extraction on, and a no-memory baseline.
 - **Full size**: larger W, P and A sets, and repeated runs for A, which ran once.
 - **Independent labels**: cross-vendor labelling and the owner's spot-check agreement; every P, A and I
   number above is author- or mechanically labelled.
