@@ -1,0 +1,33 @@
+# Deterministic attribute matcher (write-path.md §6.1 step 2.2). Policy P1.
+#
+# Patterns run in order against norm(content) (data-model.md §1: lowercase, a leading "user " or
+# "i " removed); the first match names the attribute, which must exist in the registry and pass the
+# entity-type check. Only the patterns the spec lists; everything else stays unslotted until the
+# LLM slot proposal (not used in no-LLM mode).
+
+- attribute: city
+  pattern: '^(?:lives|living|based|moved) (?:in|to) '
+- attribute: title
+  pattern: '^(?:is|works as) (?:a|an) [a-z ]{2,40} (?:at|for) '
+- attribute: employer
+  pattern: '^works (?:at|for) '
+- attribute: employer
+  pattern: '^employed by '
+- attribute: os
+  pattern: '^(?:uses|runs|is on) (?:windows|macos|linux|ubuntu)'
+- attribute: project.status
+  pattern: '^(?:status|is) (?:idea|active|paused|shipped|archived)'
+- attribute: person.relation
+  pattern: "^is (?:my|the user's) "
+- attribute: likes
+  pattern: '^(?:likes|loves|enjoys) '
+- attribute: watched
+  pattern: '^watched '
+- attribute: plays
+  pattern: '^plays '
+- attribute: reads
+  pattern: '^reads '
+- attribute: collects
+  pattern: '^collects '
+- attribute: interested_in
+  pattern: '^is interested in '

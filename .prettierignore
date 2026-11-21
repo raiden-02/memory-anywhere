@@ -1,0 +1,20 @@
+# Written by `pnpm gen`; the generator owns their layout and `pnpm gen --check` compares them byte for byte.
+packages/contracts/schema/
+packages/contracts/src/generated/
+packages/server/src/policy/generated.ts
+plugins/claude-code/skills/
+plugins/cursor/rules/
+
+# Data and prose: datasets, results and docs keep their own layout; YAML cannot use tabs.
+evals/datasets/
+docs/
+*.md
+*.yml
+*.yaml
+deploy/aws/cdk.context.json
+
+# Build output and other checkouts.
+**/dist/
+**/cdk.out/
+.claude/
+pnpm-lock.yaml

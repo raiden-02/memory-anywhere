@@ -1,0 +1,31 @@
+{
+  "type": "object",
+  "properties": {
+    "repo_key": {
+      "type": "string",
+      "pattern": "^rk_[0-9a-f]{32}$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "repo_url": {
+      "anyOf": [
+        {
+          "type": "string",
+          "maxLength": 400
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "repo_key",
+    "name",
+    "repo_url"
+  ],
+  "additionalProperties": false
+}

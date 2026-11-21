@@ -1,0 +1,19 @@
+node_modules/
+dist/
+coverage/
+cdk.out/
+*.tsbuildinfo
+.env
+.env.*
+# Never commit private keys (the dev release key lives outside the repo).
+*.key
+# Public datasets are fetched by script, never committed (evals.md §2).
+evals/datasets/public/data/
+# Downloaded models and cached document vectors of the embedding benchmark.
+evals/embed/out/
+
+# A scratch test repository created by local gate runs; never committed.
+/.gate/
+
+# Left behind only if the server package test is interrupted
+packages/server/.pack test */

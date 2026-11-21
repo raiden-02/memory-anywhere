@@ -1,0 +1,36 @@
+{
+	"tool": "cursor",
+	"version": "3.29.9",
+	"event": "sessionStart",
+	"source": "Cursor Hooks output channel",
+	"command": "node \"<recorder>\\record.mjs\" cursor sessionStart",
+	"exit_code": 1,
+	"payload": {
+		"conversation_id": "00000000-0000-4000-8000-000000000007",
+		"generation_id": "",
+		"model": "<model>",
+		"model_id": "<model>",
+		"model_params": [
+			{
+				"id": "context",
+				"value": "256k"
+			},
+			{
+				"id": "reasoning_effort",
+				"value": "high"
+			},
+			{
+				"id": "fast",
+				"value": "true"
+			}
+		],
+		"is_background_agent": false,
+		"composer_mode": "agent",
+		"session_id": "00000000-0000-4000-8000-000000000007",
+		"hook_event_name": "sessionStart",
+		"cursor_version": "3.29.9",
+		"workspace_roots": ["<tmp>/work dir"],
+		"user_email": "<user email>",
+		"transcript_path": null
+	}
+}

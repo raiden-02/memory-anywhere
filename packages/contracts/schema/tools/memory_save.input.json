@@ -1,0 +1,88 @@
+{
+  "type": "object",
+  "properties": {
+    "content": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 400
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "fact",
+        "preference",
+        "instruction",
+        "event"
+      ]
+    },
+    "why_durable": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "user_words": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "explicit_request": {
+      "default": false,
+      "type": "boolean"
+    },
+    "section": {
+      "type": "string",
+      "maxLength": 32,
+      "description": "Where it belongs, by name, e.g. Preferences; the store places it when omitted"
+    },
+    "entity": {
+      "default": "self",
+      "type": "string",
+      "maxLength": 80,
+      "description": "Who or what the fact is about: \"self\" for the user, else a person, project or organization by name"
+    },
+    "attribute": {
+      "type": "string",
+      "maxLength": 48,
+      "description": "The property the fact sets, e.g. city, so that a later value replaces it"
+    },
+    "scope": {
+      "default": "global",
+      "type": "string",
+      "enum": [
+        "global",
+        "repo"
+      ],
+      "description": "repo for a fact about the current repository only"
+    },
+    "supersedes": {
+      "type": "string",
+      "pattern": "^mem_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "change": {
+      "default": "update",
+      "type": "string",
+      "enum": [
+        "update",
+        "correction"
+      ]
+    },
+    "valid_from": {
+      "type": "string",
+      "pattern": "^\\d{4}(-\\d{2}(-\\d{2})?)?$",
+      "description": "When it became true: YYYY, YYYY-MM or YYYY-MM-DD"
+    },
+    "expires_on": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "policy_version": {
+      "type": "string",
+      "maxLength": 16
+    }
+  },
+  "required": [
+    "content",
+    "kind",
+    "why_durable"
+  ],
+  "additionalProperties": false
+}

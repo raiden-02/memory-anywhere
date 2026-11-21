@@ -1,0 +1,72 @@
+{
+  "type": "object",
+  "properties": {
+    "batch_id": {
+      "type": "string"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "claude-memory",
+        "chatgpt-memory",
+        "gemini-saved-info",
+        "paste",
+        "claude-user-md",
+        "codex-user-md",
+        "claude-code-auto-memory",
+        "codex-memories",
+        "chatgpt-history",
+        "claude-history",
+        "chatgpt-memory-summary",
+        "gemini-memory-summary",
+        "gemini-history"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "running",
+        "done",
+        "failed",
+        "aborted_budget"
+      ]
+    },
+    "pending": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "counts": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "cost_usd": {
+      "type": "number",
+      "minimum": 0
+    },
+    "estimate_usd": {
+      "type": "number",
+      "minimum": 0
+    },
+    "budget_usd": {
+      "type": "number",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "batch_id",
+    "source_type",
+    "status",
+    "pending",
+    "counts",
+    "cost_usd",
+    "estimate_usd",
+    "budget_usd"
+  ],
+  "additionalProperties": false
+}

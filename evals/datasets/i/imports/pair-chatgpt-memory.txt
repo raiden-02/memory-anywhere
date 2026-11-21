@@ -1,0 +1,20 @@
+Is a vegetarian.
+Drinks oolong tea every afternoon.
+Is a backend engineer at Tidewell.
+Prefers TypeScript to Python when starting a new service.
+Uses Neovim as the main code editor.
+Uses pnpm for all JavaScript projects.
+Is building a star-map app for amateur astronomers called Orrery.
+Orrery's backend uses SQLite.
+Lives in Lisbon, Portugal.
+Has a partner named Sam.
+Has a beagle called Pixel.
+Is learning Portuguese with a tutor twice a week.
+Plays chess on the weekends.
+Is training for the Lisbon half marathon in March.
+Goes running on Sunday mornings.
+Prefers answers that are short and direct.
+Wants code examples written in TypeScript.
+Has a laptop that runs Fedora.
+Reads science fiction books before bed.
+Follows Formula 1 racing.

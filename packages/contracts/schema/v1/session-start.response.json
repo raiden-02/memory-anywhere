@@ -1,0 +1,40 @@
+{
+  "type": "object",
+  "properties": {
+    "context": {
+      "type": "string"
+    },
+    "profile_etag": {
+      "type": "string"
+    },
+    "profile": {
+      "type": "string",
+      "maxLength": 6000
+    },
+    "repo_enabled": {
+      "type": "boolean"
+    },
+    "capture_enabled": {
+      "type": "boolean"
+    },
+    "policy_version": {
+      "type": "string"
+    },
+    "notices": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "context",
+    "profile_etag",
+    "profile",
+    "repo_enabled",
+    "capture_enabled",
+    "policy_version",
+    "notices"
+  ],
+  "additionalProperties": false
+}

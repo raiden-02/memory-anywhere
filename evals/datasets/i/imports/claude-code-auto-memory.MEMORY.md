@@ -1,0 +1,1 @@
+- [Prefers pnpm](prefers-pnpm.md) — Alex uses pnpm, never npm

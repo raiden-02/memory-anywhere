@@ -1,0 +1,10 @@
+{
+	"session_id": "00000000-0000-4000-8000-000000000001",
+	"transcript_path": "<home>\\.claude\\projects\\<project>\\<transcript>.jsonl",
+	"cwd": "<tmp>\\work dir",
+	"scratchpad_dir": "<home>\\AppData\\Local\\Temp\\claude\\<hash>\\00000000-0000-4000-8000-000000000001\\scratchpad",
+	"prompt_id": "00000000-0000-4000-8000-000000000002",
+	"permission_mode": "default",
+	"hook_event_name": "UserPromptSubmit",
+	"prompt": "What is the session canary? Reply with only the canary."
+}

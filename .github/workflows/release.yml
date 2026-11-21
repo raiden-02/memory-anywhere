@@ -1,0 +1,144 @@
+name: release
+
+# A release (deployment-aws.md §7.4): pushing a tag v<version> builds the linux-arm64
+# tarball, checks it runs, signs it with the release key and publishes it as a GitHub release
+# with its SHA-256 and ma-operator.sh, then publishes the two npm packages. The signing and npm
+# jobs run in the `release` environment, which requires a maintainer's manual approval and holds
+# RELEASE_MINISIGN_KEY (and, until npm trusted publishing is set up, NPM_TOKEN).
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    defaults:
+      run:
+        working-directory: work space
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: work space
+      - uses: ./work space/.github/actions/setup
+      - id: version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version=${TAG#v}
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]{1,32})?$ ]] || { echo "tag $TAG is not v<semver>"; exit 1; }
+          # The server serves clients of its own minor version and the one before (topology-and-ipc.md §11),
+          # so the PC client must carry the release's major.minor, or a new server refuses it.
+          for pkg in packages/client/package.json packages/server/package.json packages/importers/package.json; do
+            have=$(node -p "require('./$pkg').version")
+            [[ "${have%.*}" == "${version%.*}" ]] || { echo "$pkg is $have; bump it to ${version%.*}.x before tagging $TAG"; exit 1; }
+          done
+          echo "version=$version" >>"$GITHUB_OUTPUT"
+      - run: pnpm typecheck && pnpm lint && pnpm test
+      - run: node scripts/build-server-release.ts "${{ steps.version.outputs.version }}" --out "$RUNNER_TEMP/release"
+      - run: bash scripts/smoke-server-release.sh "$RUNNER_TEMP/release/memory-anywhere-server-${{ steps.version.outputs.version }}.tar.gz" "${{ steps.version.outputs.version }}"
+      - run: bash scripts/audit-release-signatures.sh "$RUNNER_TEMP/release/memory-anywhere-server-${{ steps.version.outputs.version }}.tar.gz"
+      - run: cp deploy/aws/ma-operator.sh "$RUNNER_TEMP/release/"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: unsigned
+          path: ${{ runner.temp }}/release
+          if-no-files-found: error
+
+  sign-and-publish:
+    needs: build
+    runs-on: ubuntu-24.04-arm
+    environment: release
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: unsigned
+          path: release
+      - name: minisign (pinned, as on the instance)
+        run: |
+          # shellcheck source=/dev/null
+          . deploy/aws/host/pins.env
+          curl -fsSL --proto '=https' --retry 5 -o "$RUNNER_TEMP/minisign.tar.gz" "$MINISIGN_URL"
+          echo "$MINISIGN_SHA256  $RUNNER_TEMP/minisign.tar.gz" | sha256sum -c --quiet -
+          tar -xzf "$RUNNER_TEMP/minisign.tar.gz" -C "$RUNNER_TEMP" minisign-linux/aarch64/minisign
+          install -m 0755 "$RUNNER_TEMP/minisign-linux/aarch64/minisign" /usr/local/bin/minisign
+      - name: sign
+        env:
+          RELEASE_MINISIGN_KEY: ${{ secrets.RELEASE_MINISIGN_KEY }}
+        run: |
+          [ -n "$RELEASE_MINISIGN_KEY" ] || { echo "RELEASE_MINISIGN_KEY is not set in the release environment"; exit 1; }
+          umask 077
+          printf '%s\n' "$RELEASE_MINISIGN_KEY" >"$RUNNER_TEMP/release.key"
+          tarball="release/memory-anywhere-server-$VERSION.tar.gz"
+          sha=$(sha256sum "$tarball" | cut -d' ' -f1)
+          minisign -S -s "$RUNNER_TEMP/release.key" -m "$tarball" -x "$tarball.minisig" -t "memory-anywhere $VERSION sha256 $sha" </dev/null
+          rm -f "$RUNNER_TEMP/release.key"
+          # The committed public half must verify what was just signed.
+          minisign -V -q -p deploy/aws/release-keys/release.pub -m "$tarball" -x "$tarball.minisig"
+          (cd release && sha256sum "memory-anywhere-server-$VERSION.tar.gz" ma-operator.sh >SHA256SUMS)
+      - name: publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v$VERSION" --verify-tag --title "memory-anywhere server $VERSION" \
+            --notes "Server release $VERSION for linux-arm64, signed with deploy/aws/release-keys/release.pub. Deploy with: mema deploy aws --update --release $VERSION" \
+            "release/memory-anywhere-server-$VERSION.tar.gz" "release/memory-anywhere-server-$VERSION.tar.gz.minisig" \
+            release/ma-operator.sh release/SHA256SUMS
+
+  npm:
+    # The two npm packages, after the signed server release exists: memory-anywhere-server (local
+    # mode) first, because a client of this version installs the server of the same version, then
+    # the client memory-anywhere. Both carry npm provenance from this workflow's OIDC identity.
+    # Publishing uses npm trusted publishing once it is configured for both packages; until then
+    # (a package's first publish) an NPM_TOKEN secret in the release environment is used.
+    needs: [build, sign-and-publish]
+    runs-on: ubuntu-24.04
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        working-directory: work space
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: work space
+      - uses: ./work space/.github/actions/setup
+      - name: pack
+        run: |
+          node scripts/pack-server.ts
+          node scripts/pack.ts
+          for pkg in dist/npm/memory-anywhere-server dist/npm/memory-anywhere; do
+            have=$(node -p "require('./$pkg/package.json').version")
+            [ "$have" = "$VERSION" ] || { echo "$pkg is $have; local mode needs client and server at exactly $VERSION"; exit 1; }
+          done
+      - name: publish
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -n "$NPM_TOKEN" ]; then
+            umask 077
+            printf '//registry.npmjs.org/:_authToken=%s\n' "$NPM_TOKEN" >"$RUNNER_TEMP/.npmrc"
+            export NPM_CONFIG_USERCONFIG="$RUNNER_TEMP/.npmrc"
+          fi
+          for pkg in dist/npm/memory-anywhere-server dist/npm/memory-anywhere; do
+            name=$(node -p "require('./$pkg/package.json').name")
+            if npm view "$name@$VERSION" version >/dev/null 2>&1; then
+              echo "$name@$VERSION is already published"
+            else
+              npm publish "./$pkg" --provenance --access public
+            fi
+          done

@@ -1,0 +1,12 @@
+Saved memories
+
+Let ChatGPT personalize your experience based on your chats, files, and connected apps
+
+This is a legacy version of memory, which is no longer used. ChatGPT's improved memory automatically stays up to date, leading to more relevant and useful replies. Learn more
+Revert to this experience
+Search memories
+Is learning Portuguese with a tutor twice a week.
+Plays chess on weekends, mostly rapid games online.
+Is training for the Lisbon half marathon in March and runs on Sunday mornings.
+Prefers short, direct answers without long introductions. Wants code examples in TypeScript unless another language is named. Likes a one-line summary at the top of long answers, followed by the details, and dislikes bullet lists that only restate the question. When comparing tools, wants a table with the trade-offs rather than a recommendation alone, and wants the reasons for any recommendation spelled out in a sentence or two.
+Close dialog

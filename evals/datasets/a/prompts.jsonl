@@ -1,0 +1,200 @@
+{"id": "A-P001", "prompt": "What should I get my partner for our anniversary?", "personal": true, "expects": "recall"}
+{"id": "A-P002", "prompt": "Plan a weekend trip from where I live.", "personal": true, "expects": "recall"}
+{"id": "A-P003", "prompt": "Which editor extensions would help me most?", "personal": true, "expects": "recall"}
+{"id": "A-P004", "prompt": "Recommend a book to help with the language I'm learning.", "personal": true, "expects": "recall"}
+{"id": "A-P005", "prompt": "Write a short bio for my conference badge.", "personal": true, "expects": "recall"}
+{"id": "A-P006", "prompt": "What should my morning routine look like this week?", "personal": true, "expects": "recall"}
+{"id": "A-P007", "prompt": "Suggest a dinner I could cook tonight.", "personal": true, "expects": "recall"}
+{"id": "A-P008", "prompt": "How should I format my answers to you?", "personal": true, "expects": "recall"}
+{"id": "A-P009", "prompt": "Draft a message to my manager asking for Friday off.", "personal": true, "expects": "recall"}
+{"id": "A-P010", "prompt": "What's a good side project for me to start?", "personal": true, "expects": "recall"}
+{"id": "A-P011", "prompt": "Which laptop should I buy next?", "personal": true, "expects": "recall"}
+{"id": "A-P012", "prompt": "How long would my commute be by bike?", "personal": true, "expects": "recall"}
+{"id": "A-P013", "prompt": "Remind me what stack my main project uses.", "personal": true, "expects": "recall"}
+{"id": "A-P014", "prompt": "Suggest a podcast I would like.", "personal": true, "expects": "recall"}
+{"id": "A-P015", "prompt": "Write my LinkedIn headline.", "personal": true, "expects": "recall"}
+{"id": "A-P016", "prompt": "What should I study next for my career?", "personal": true, "expects": "recall"}
+{"id": "A-P017", "prompt": "Plan my reading list for next month.", "personal": true, "expects": "recall"}
+{"id": "A-P018", "prompt": "Pick a restaurant near me for Saturday.", "personal": true, "expects": "recall"}
+{"id": "A-P019", "prompt": "What time is it where I live right now?", "personal": true, "expects": "recall"}
+{"id": "A-P020", "prompt": "Help me prepare for my next one-on-one.", "personal": true, "expects": "recall"}
+{"id": "A-P021", "prompt": "What did I decide about the database for my project?", "personal": true, "expects": "recall"}
+{"id": "A-P022", "prompt": "What units should you use when giving me distances?", "personal": true, "expects": "recall"}
+{"id": "A-P023", "prompt": "Recommend a running route for me.", "personal": true, "expects": "recall"}
+{"id": "A-P024", "prompt": "Which of my projects should I work on today?", "personal": true, "expects": "recall"}
+{"id": "A-P025", "prompt": "Write a thank-you note to my partner.", "personal": true, "expects": "recall"}
+{"id": "A-P026", "prompt": "Suggest a hobby that fits my week.", "personal": true, "expects": "recall"}
+{"id": "A-P027", "prompt": "Which shell should I configure on my computer?", "personal": true, "expects": "recall"}
+{"id": "A-P028", "prompt": "What's my usual coffee order?", "personal": true, "expects": "recall"}
+{"id": "A-P029", "prompt": "Help me answer this recruiter in my usual style.", "personal": true, "expects": "recall"}
+{"id": "A-P030", "prompt": "Plan a birthday surprise for my partner.", "personal": true, "expects": "recall"}
+{"id": "A-P031", "prompt": "What should I name my new repository?", "personal": true, "expects": "recall"}
+{"id": "A-P032", "prompt": "Recommend a keyboard for how I work.", "personal": true, "expects": "recall"}
+{"id": "A-P033", "prompt": "Write a weekly status update for my team.", "personal": true, "expects": "recall"}
+{"id": "A-P034", "prompt": "What conferences should I attend this year?", "personal": true, "expects": "recall"}
+{"id": "A-P035", "prompt": "What should I pack for a trip home?", "personal": true, "expects": "recall"}
+{"id": "A-P036", "prompt": "Suggest a flashcard deck for my studies.", "personal": true, "expects": "recall"}
+{"id": "A-P037", "prompt": "Help me set goals for this quarter.", "personal": true, "expects": "recall"}
+{"id": "A-P038", "prompt": "What tool should I use for my project's CI?", "personal": true, "expects": "recall"}
+{"id": "A-P039", "prompt": "How do I usually like code reviews written?", "personal": true, "expects": "recall"}
+{"id": "A-P040", "prompt": "Pick a gift for my manager's farewell.", "personal": true, "expects": "recall"}
+{"id": "A-P041", "prompt": "Which programming language should I use for my next script?", "personal": true, "expects": "recall"}
+{"id": "A-P042", "prompt": "Write an out-of-office reply for me.", "personal": true, "expects": "recall"}
+{"id": "A-P043", "prompt": "Suggest stretches for after my run.", "personal": true, "expects": "recall"}
+{"id": "A-P044", "prompt": "What were my notes about the API design?", "personal": true, "expects": "recall"}
+{"id": "A-P045", "prompt": "Plan my week around my training schedule.", "personal": true, "expects": "recall"}
+{"id": "A-P046", "prompt": "Recommend a monitor setup for my desk.", "personal": true, "expects": "recall"}
+{"id": "A-P047", "prompt": "What should I cook for my partner's birthday?", "personal": true, "expects": "recall"}
+{"id": "A-P048", "prompt": "Explain this error the way I like explanations.", "personal": true, "expects": "recall"}
+{"id": "A-P049", "prompt": "Draft my answer to 'tell me about yourself' for an interview.", "personal": true, "expects": "recall"}
+{"id": "A-P050", "prompt": "Suggest a name for my running club.", "personal": true, "expects": "recall"}
+{"id": "A-P051", "prompt": "What's the best way for me to learn kanji?", "personal": true, "expects": "recall"}
+{"id": "A-P052", "prompt": "Remind me which cloud provider I chose and why.", "personal": true, "expects": "recall"}
+{"id": "A-P053", "prompt": "Plan a day off for me.", "personal": true, "expects": "recall"}
+{"id": "A-P054", "prompt": "Write a toast for my friend's wedding in my voice.", "personal": true, "expects": "recall"}
+{"id": "A-P055", "prompt": "Help me pick a tea for the evening.", "personal": true, "expects": "recall"}
+{"id": "A-P056", "prompt": "Which time zone should I schedule the meeting in?", "personal": true, "expects": "recall"}
+{"id": "A-P057", "prompt": "Set up a study plan around my job.", "personal": true, "expects": "recall"}
+{"id": "A-P058", "prompt": "Suggest a weekend project with my partner.", "personal": true, "expects": "recall"}
+{"id": "A-P059", "prompt": "How should I organize my project's docs?", "personal": true, "expects": "recall"}
+{"id": "A-P060", "prompt": "Write a short intro for my personal website.", "personal": true, "expects": "recall"}
+{"id": "A-P061", "prompt": "What music should I listen to while I code?", "personal": true, "expects": "recall"}
+{"id": "A-P062", "prompt": "Recommend a city break for us this autumn.", "personal": true, "expects": "recall"}
+{"id": "A-P063", "prompt": "Draft a note to my team about my vacation.", "personal": true, "expects": "recall"}
+{"id": "A-P064", "prompt": "What should I put in my project's README?", "personal": true, "expects": "recall"}
+{"id": "A-P065", "prompt": "Suggest a gift for myself after the release.", "personal": true, "expects": "recall"}
+{"id": "A-P066", "prompt": "Pick an exercise plan that fits my mornings.", "personal": true, "expects": "recall"}
+{"id": "A-P067", "prompt": "Which deadlines do I have coming up?", "personal": true, "expects": "recall"}
+{"id": "A-P068", "prompt": "Help me reply to my landlord politely.", "personal": true, "expects": "recall"}
+{"id": "A-P069", "prompt": "What should I learn to grow in my role?", "personal": true, "expects": "recall"}
+{"id": "A-P070", "prompt": "Write the commit message the way I prefer.", "personal": true, "expects": "recall"}
+{"id": "A-P071", "prompt": "Suggest a weekend breakfast spot near home.", "personal": true, "expects": "recall"}
+{"id": "A-P072", "prompt": "How should I set up my terminal theme?", "personal": true, "expects": "recall"}
+{"id": "A-P073", "prompt": "Plan my next language exchange session.", "personal": true, "expects": "recall"}
+{"id": "A-P074", "prompt": "What's a good first task for my new project?", "personal": true, "expects": "recall"}
+{"id": "A-P075", "prompt": "Write my profile summary for the team wiki.", "personal": true, "expects": "recall"}
+{"id": "A-P076", "prompt": "Suggest a birthday cake flavour for my partner.", "personal": true, "expects": "recall"}
+{"id": "A-P077", "prompt": "Help me prepare my talk the way I usually do.", "personal": true, "expects": "recall"}
+{"id": "A-P078", "prompt": "Which notebook app fits my habits?", "personal": true, "expects": "recall"}
+{"id": "A-P079", "prompt": "Recommend a running shoe for me.", "personal": true, "expects": "recall"}
+{"id": "A-P080", "prompt": "What's the next milestone in my project?", "personal": true, "expects": "recall"}
+{"id": "A-S001", "prompt": "From now on, answer me in British English.", "personal": true, "expects": "save", "save_label": "From now on, answer me in British English."}
+{"id": "A-S002", "prompt": "Please remember that I moved to Porto last month.", "personal": true, "expects": "save", "save_label": "Please remember that I moved to Porto last month."}
+{"id": "A-S003", "prompt": "I prefer tabs over spaces in all my code. Remember that.", "personal": true, "expects": "save", "save_label": "I prefer tabs over spaces in all my code. Remember that."}
+{"id": "A-S004", "prompt": "Remember that my partner's name is Alex.", "personal": true, "expects": "save", "save_label": "Remember that my partner's name is Alex."}
+{"id": "A-S005", "prompt": "I'm vegetarian now, keep that in mind for recipes.", "personal": true, "expects": "save", "save_label": "I'm vegetarian now, keep that in mind for recipes."}
+{"id": "A-S006", "prompt": "From now on keep your answers under five sentences.", "personal": true, "expects": "save", "save_label": "From now on keep your answers under five sentences."}
+{"id": "A-S007", "prompt": "Remember: I switched my main editor to Neovim.", "personal": true, "expects": "save", "save_label": "Remember: I switched my main editor to Neovim."}
+{"id": "A-S008", "prompt": "My new manager is Priya; please remember that.", "personal": true, "expects": "save", "save_label": "My new manager is Priya; please remember that."}
+{"id": "A-S009", "prompt": "I've started learning Korean instead of Japanese. Remember it.", "personal": true, "expects": "save", "save_label": "I've started learning Korean instead of Japanese. Remember it."}
+{"id": "A-S010", "prompt": "Always give me temperatures in Celsius from now on.", "personal": true, "expects": "save", "save_label": "Always give me temperatures in Celsius from now on."}
+{"id": "A-S011", "prompt": "Remember that my project memory-anywhere is now in beta.", "personal": true, "expects": "save", "save_label": "Remember that my project memory-anywhere is now in beta."}
+{"id": "A-S012", "prompt": "Please note for the future that I work remotely on Fridays.", "personal": true, "expects": "save", "save_label": "Please note for the future that I work remotely on Fridays."}
+{"id": "A-S013", "prompt": "From now on, don't use emojis in your answers to me.", "personal": true, "expects": "save", "save_label": "From now on, don't use emojis in your answers to me."}
+{"id": "A-S014", "prompt": "Remember that I prefer pnpm over npm.", "personal": true, "expects": "save", "save_label": "Remember that I prefer pnpm over npm."}
+{"id": "A-S015", "prompt": "I run three times a week now; remember that for planning.", "personal": true, "expects": "save", "save_label": "I run three times a week now; remember that for planning."}
+{"id": "A-S016", "prompt": "Remember that I'm allergic to cats.", "personal": true, "expects": "save", "save_label": "Remember that I'm allergic to cats."}
+{"id": "A-S017", "prompt": "Please remember my preferred meeting length is 25 minutes.", "personal": true, "expects": "save", "save_label": "Please remember my preferred meeting length is 25 minutes."}
+{"id": "A-S018", "prompt": "Remember that I use Arch Linux on my laptop.", "personal": true, "expects": "save", "save_label": "Remember that I use Arch Linux on my laptop."}
+{"id": "A-S019", "prompt": "From now on, call me Sam.", "personal": true, "expects": "save", "save_label": "From now on, call me Sam."}
+{"id": "A-S020", "prompt": "Remember that my team switched to Postgres.", "personal": true, "expects": "save", "save_label": "Remember that my team switched to Postgres."}
+{"id": "A-N001", "prompt": "What is the capital of Australia?", "personal": false, "expects": "none"}
+{"id": "A-N002", "prompt": "Explain recursion with an example.", "personal": false, "expects": "none"}
+{"id": "A-N003", "prompt": "How do I reverse a list in Python?", "personal": false, "expects": "none"}
+{"id": "A-N004", "prompt": "What causes the seasons on Earth?", "personal": false, "expects": "none"}
+{"id": "A-N005", "prompt": "Convert 72 Fahrenheit to Celsius.", "personal": false, "expects": "none"}
+{"id": "A-N006", "prompt": "What does HTTP 418 mean?", "personal": false, "expects": "none"}
+{"id": "A-N007", "prompt": "Summarize the plot of Hamlet in three sentences.", "personal": false, "expects": "none"}
+{"id": "A-N008", "prompt": "How do vaccines train the immune system?", "personal": false, "expects": "none"}
+{"id": "A-N009", "prompt": "What is a monad, simply?", "personal": false, "expects": "none"}
+{"id": "A-N010", "prompt": "Write a haiku about autumn.", "personal": false, "expects": "none"}
+{"id": "A-N011", "prompt": "How many bytes are in a kibibyte?", "personal": false, "expects": "none"}
+{"id": "A-N012", "prompt": "Explain the CAP theorem.", "personal": false, "expects": "none"}
+{"id": "A-N013", "prompt": "What's the difference between TCP and UDP?", "personal": false, "expects": "none"}
+{"id": "A-N014", "prompt": "Who wrote 'One Hundred Years of Solitude'?", "personal": false, "expects": "none"}
+{"id": "A-N015", "prompt": "How do I center a div in CSS?", "personal": false, "expects": "none"}
+{"id": "A-N016", "prompt": "What is the speed of light in a vacuum?", "personal": false, "expects": "none"}
+{"id": "A-N017", "prompt": "Explain big-O notation.", "personal": false, "expects": "none"}
+{"id": "A-N018", "prompt": "Translate 'good morning' into German.", "personal": false, "expects": "none"}
+{"id": "A-N019", "prompt": "What is photosynthesis?", "personal": false, "expects": "none"}
+{"id": "A-N020", "prompt": "How does a hash map work?", "personal": false, "expects": "none"}
+{"id": "A-N021", "prompt": "What year did the Berlin Wall fall?", "personal": false, "expects": "none"}
+{"id": "A-N022", "prompt": "Give me a regex for an ISO date.", "personal": false, "expects": "none"}
+{"id": "A-N023", "prompt": "What is the Pythagorean theorem?", "personal": false, "expects": "none"}
+{"id": "A-N024", "prompt": "Explain what DNS does.", "personal": false, "expects": "none"}
+{"id": "A-N025", "prompt": "How do I undo the last git commit?", "personal": false, "expects": "none"}
+{"id": "A-N026", "prompt": "What's the boiling point of water at sea level?", "personal": false, "expects": "none"}
+{"id": "A-N027", "prompt": "Define 'opportunity cost'.", "personal": false, "expects": "none"}
+{"id": "A-N028", "prompt": "How does public-key cryptography work?", "personal": false, "expects": "none"}
+{"id": "A-N029", "prompt": "List the planets in order from the Sun.", "personal": false, "expects": "none"}
+{"id": "A-N030", "prompt": "What is a closure in JavaScript?", "personal": false, "expects": "none"}
+{"id": "A-N031", "prompt": "Explain supply and demand.", "personal": false, "expects": "none"}
+{"id": "A-N032", "prompt": "What's the square root of 144?", "personal": false, "expects": "none"}
+{"id": "A-N033", "prompt": "How do I read a CSV file in Node.js?", "personal": false, "expects": "none"}
+{"id": "A-N034", "prompt": "What is the difference between weather and climate?", "personal": false, "expects": "none"}
+{"id": "A-N035", "prompt": "Explain the Monty Hall problem.", "personal": false, "expects": "none"}
+{"id": "A-N036", "prompt": "What is Rust's borrow checker?", "personal": false, "expects": "none"}
+{"id": "A-N037", "prompt": "How tall is Mount Everest?", "personal": false, "expects": "none"}
+{"id": "A-N038", "prompt": "What does 'idempotent' mean in APIs?", "personal": false, "expects": "none"}
+{"id": "A-N039", "prompt": "Explain how a transistor works.", "personal": false, "expects": "none"}
+{"id": "A-N040", "prompt": "What's the difference between a process and a thread?", "personal": false, "expects": "none"}
+{"id": "A-N041", "prompt": "Who painted the Mona Lisa?", "personal": false, "expects": "none"}
+{"id": "A-N042", "prompt": "How does compound interest work?", "personal": false, "expects": "none"}
+{"id": "A-N043", "prompt": "What's a good way to name boolean variables?", "personal": false, "expects": "none"}
+{"id": "A-N044", "prompt": "Explain the difference between let and const.", "personal": false, "expects": "none"}
+{"id": "A-N045", "prompt": "What is entropy in physics?", "personal": false, "expects": "none"}
+{"id": "A-N046", "prompt": "How do I make a GET request with curl?", "personal": false, "expects": "none"}
+{"id": "A-N047", "prompt": "What is the tallest building in the world?", "personal": false, "expects": "none"}
+{"id": "A-N048", "prompt": "Explain gradient descent.", "personal": false, "expects": "none"}
+{"id": "A-N049", "prompt": "What is the Turing test?", "personal": false, "expects": "none"}
+{"id": "A-N050", "prompt": "How do I sort a dictionary by value in Python?", "personal": false, "expects": "none"}
+{"id": "A-N051", "prompt": "What is a black hole?", "personal": false, "expects": "none"}
+{"id": "A-N052", "prompt": "Explain REST vs GraphQL.", "personal": false, "expects": "none"}
+{"id": "A-N053", "prompt": "How many continents are there?", "personal": false, "expects": "none"}
+{"id": "A-N054", "prompt": "What's a race condition?", "personal": false, "expects": "none"}
+{"id": "A-N055", "prompt": "What is the Fibonacci sequence?", "personal": false, "expects": "none"}
+{"id": "A-N056", "prompt": "Explain what a VPN does.", "personal": false, "expects": "none"}
+{"id": "A-N057", "prompt": "How do I write a unit test in Jest?", "personal": false, "expects": "none"}
+{"id": "A-N058", "prompt": "What is inflation?", "personal": false, "expects": "none"}
+{"id": "A-N059", "prompt": "What does SQL JOIN do?", "personal": false, "expects": "none"}
+{"id": "A-N060", "prompt": "Who discovered penicillin?", "personal": false, "expects": "none"}
+{"id": "A-N061", "prompt": "Explain how WebAuthn passkeys work.", "personal": false, "expects": "none"}
+{"id": "A-N062", "prompt": "What's the difference between RAM and storage?", "personal": false, "expects": "none"}
+{"id": "A-N063", "prompt": "How do tides work?", "personal": false, "expects": "none"}
+{"id": "A-N064", "prompt": "What is a prime number?", "personal": false, "expects": "none"}
+{"id": "A-N065", "prompt": "Explain the observer pattern.", "personal": false, "expects": "none"}
+{"id": "A-N066", "prompt": "How does garbage collection work?", "personal": false, "expects": "none"}
+{"id": "A-N067", "prompt": "What language is spoken in Brazil?", "personal": false, "expects": "none"}
+{"id": "A-N068", "prompt": "What is a Docker container?", "personal": false, "expects": "none"}
+{"id": "A-N069", "prompt": "Explain Bayes' theorem.", "personal": false, "expects": "none"}
+{"id": "A-N070", "prompt": "How do I find large files on Linux?", "personal": false, "expects": "none"}
+{"id": "A-N071", "prompt": "What is the GDP?", "personal": false, "expects": "none"}
+{"id": "A-N072", "prompt": "Explain eventual consistency.", "personal": false, "expects": "none"}
+{"id": "A-N073", "prompt": "What is the chemical formula for table salt?", "personal": false, "expects": "none"}
+{"id": "A-N074", "prompt": "How does a binary search work?", "personal": false, "expects": "none"}
+{"id": "A-N075", "prompt": "Write a limerick about a cat.", "personal": false, "expects": "none"}
+{"id": "A-N076", "prompt": "What is quantum entanglement, simply?", "personal": false, "expects": "none"}
+{"id": "A-N077", "prompt": "How do I format a date in JavaScript?", "personal": false, "expects": "none"}
+{"id": "A-N078", "prompt": "What is the largest ocean?", "personal": false, "expects": "none"}
+{"id": "A-N079", "prompt": "Explain what an API rate limit is.", "personal": false, "expects": "none"}
+{"id": "A-N080", "prompt": "What's the difference between HTTP/1.1 and HTTP/2?", "personal": false, "expects": "none"}
+{"id": "A-N081", "prompt": "What is a Merkle tree?", "personal": false, "expects": "none"}
+{"id": "A-N082", "prompt": "How do bees make honey?", "personal": false, "expects": "none"}
+{"id": "A-N083", "prompt": "Explain the difference between git merge and rebase.", "personal": false, "expects": "none"}
+{"id": "A-N084", "prompt": "What is the half-life of carbon-14?", "personal": false, "expects": "none"}
+{"id": "A-N085", "prompt": "How does a refrigerator keep food cold?", "personal": false, "expects": "none"}
+{"id": "A-N086", "prompt": "What is a linked list?", "personal": false, "expects": "none"}
+{"id": "A-N087", "prompt": "Explain what OAuth is for.", "personal": false, "expects": "none"}
+{"id": "A-N088", "prompt": "What is a haiku?", "personal": false, "expects": "none"}
+{"id": "A-N089", "prompt": "How do I create a virtual environment in Python?", "personal": false, "expects": "none"}
+{"id": "A-N090", "prompt": "What is the Doppler effect?", "personal": false, "expects": "none"}
+{"id": "A-N091", "prompt": "Explain CSS flexbox in brief.", "personal": false, "expects": "none"}
+{"id": "A-N092", "prompt": "What is the population of Tokyo, roughly?", "personal": false, "expects": "none"}
+{"id": "A-N093", "prompt": "How do I convert a string to a number in Go?", "personal": false, "expects": "none"}
+{"id": "A-N094", "prompt": "What is machine learning?", "personal": false, "expects": "none"}
+{"id": "A-N095", "prompt": "Explain how solar panels work.", "personal": false, "expects": "none"}
+{"id": "A-N096", "prompt": "What's the difference between an array and a set?", "personal": false, "expects": "none"}
+{"id": "A-N097", "prompt": "What is the Great Barrier Reef?", "personal": false, "expects": "none"}
+{"id": "A-N098", "prompt": "How do I measure execution time in Python?", "personal": false, "expects": "none"}
+{"id": "A-N099", "prompt": "Explain the Two Generals' problem.", "personal": false, "expects": "none"}
+{"id": "A-N100", "prompt": "What does 'O(n log n)' mean?", "personal": false, "expects": "none"}

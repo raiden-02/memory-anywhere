@@ -1,0 +1,116 @@
+{
+  "type": "object",
+  "properties": {
+    "store": {
+      "type": "string",
+      "enum": [
+        "aws",
+        "local",
+        "offline"
+      ]
+    },
+    "health": {
+      "type": "string",
+      "enum": [
+        "ok",
+        "degraded",
+        "offline"
+      ]
+    },
+    "degraded_reasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "llm_unavailable",
+          "llm_cap",
+          "backup_lag",
+          "disk_low",
+          "jobs_failing"
+        ]
+      }
+    },
+    "client": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "class": {
+          "type": "string",
+          "enum": [
+            "chat",
+            "coding"
+          ]
+        },
+        "read": {
+          "type": "boolean"
+        },
+        "write": {
+          "type": "boolean"
+        },
+        "repo_enabled": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "class",
+        "read",
+        "write"
+      ],
+      "additionalProperties": false
+    },
+    "counts_order_of_magnitude": {
+      "type": "object",
+      "properties": {
+        "memories": {
+          "type": "string",
+          "enum": [
+            "0",
+            "1-9",
+            "10-99",
+            "100-999",
+            "1000+"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "policy_version_server": {
+      "type": "string"
+    },
+    "policy_version_reported": {
+      "type": "string"
+    },
+    "server_version": {
+      "type": "string"
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 200
+      }
+    },
+    "last_contact_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "spool_count": {
+      "type": "integer"
+    }
+  },
+  "required": [
+    "store",
+    "health",
+    "client",
+    "policy_version_server",
+    "policy_version_reported",
+    "server_version"
+  ],
+  "additionalProperties": false
+}

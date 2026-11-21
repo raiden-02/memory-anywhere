@@ -1,0 +1,5 @@
+#!/bin/sh
+# Refuse a commit whose staged files contain personal data: cloud ids, IPs, user paths, emails,
+# and the hostname and private words in MA_DOMAIN and MA_PRIVATE_TERMS (scripts/check-repo.ts).
+. "$(dirname "$0")/ma-domain.sh"
+exec node scripts/check-repo.ts --staged

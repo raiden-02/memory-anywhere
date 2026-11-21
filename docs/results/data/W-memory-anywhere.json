@@ -1,0 +1,100 @@
+{
+  "suite": "W",
+  "system": "memory-anywhere",
+  "dataset": "w-factconsolidation-550",
+  "split": "test",
+  "llm": "none",
+  "labels": "public",
+  "n": 260,
+  "gate": {
+    "eligible": 130,
+    "wrong_supersedes": 0,
+    "upper95": 0.0227806070912292,
+    "pass": true
+  },
+  "confusion": {
+    "update": {
+      "new": 98,
+      "reject": 17,
+      "dup": 1
+    },
+    "new": {
+      "new": 136,
+      "reject": 8
+    }
+  },
+  "accuracy": {
+    "k": 136,
+    "n": 260,
+    "ci95": [
+      0.46247244472874416,
+      0.5830094141530281
+    ]
+  },
+  "capture": {
+    "n": 60,
+    "labels": "author-labelled",
+    "capture_support_min": 0.6,
+    "gate": {
+      "k": 0,
+      "n": 40,
+      "rate": 0,
+      "ci95": [
+        0,
+        0.08762160245846368
+      ],
+      "max": 0.05,
+      "pass": true
+    },
+    "caught": {
+      "k": 20,
+      "n": 20,
+      "ci95": [
+        0.8388748398148705,
+        1
+      ]
+    },
+    "sweep": [
+      {
+        "min": 0.3,
+        "correct_dropped": 0,
+        "wrong_caught": 15
+      },
+      {
+        "min": 0.4,
+        "correct_dropped": 0,
+        "wrong_caught": 16
+      },
+      {
+        "min": 0.5,
+        "correct_dropped": 0,
+        "wrong_caught": 17
+      },
+      {
+        "min": 0.6,
+        "correct_dropped": 0,
+        "wrong_caught": 20
+      },
+      {
+        "min": 0.7,
+        "correct_dropped": 0,
+        "wrong_caught": 20
+      },
+      {
+        "min": 0.8,
+        "correct_dropped": 0,
+        "wrong_caught": 20
+      },
+      {
+        "min": 0.9,
+        "correct_dropped": 0,
+        "wrong_caught": 20
+      }
+    ],
+    "dropped_correct": [],
+    "missed_wrong": []
+  },
+  "git_sha": "af17767161fdd428645820af4628486c06d7b235",
+  "policy_version": "P1",
+  "started_at": "2026-11-16T22:01:38.161Z"
+}

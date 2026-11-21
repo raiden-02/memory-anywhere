@@ -1,0 +1,14 @@
+packages:
+  - packages/*
+  - deploy/aws
+  - evals
+
+# Which dependencies may run install scripts (auth-and-security.md §10). The client has none.
+allowBuilds:
+  # Server password hashing: its install script picks the prebuilt native binding, or builds one.
+  argon2: true
+  # The package already carries its prebuilt binaries; the script is not needed.
+  onnxruntime-node: false
+  # Dev-only bundler for the client (dist/memory-anywhere.mjs). Its binary comes from the
+  # per-platform optional package; the postinstall script only re-checks it.
+  esbuild: false

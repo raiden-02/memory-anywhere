@@ -1,0 +1,16 @@
+{
+	"tool": "codex",
+	"version": "0.167.0",
+	"event": "session-start",
+	"argv": ["<recorder>\\record.mjs", "codex", "session-start"],
+	"cwd": "<tmp>\\work dir",
+	"payload": {
+		"session_id": "00000000-0000-4000-8000-000000000003",
+		"transcript_path": "<home>\\.codex\\sessions\\<transcript>.jsonl",
+		"cwd": "<tmp>\\work dir",
+		"hook_event_name": "SessionStart",
+		"model": "<model>",
+		"permission_mode": "bypassPermissions",
+		"source": "startup"
+	}
+}

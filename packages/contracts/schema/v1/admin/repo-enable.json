@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "properties": {
+    "repo_key": {
+      "type": "string",
+      "pattern": "^rk_[0-9a-f]{32}$"
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "capture": {
+      "type": "boolean"
+    },
+    "track": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "repo_url": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 400
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "repo_url"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "repo_key",
+    "display_name",
+    "capture"
+  ],
+  "additionalProperties": false
+}

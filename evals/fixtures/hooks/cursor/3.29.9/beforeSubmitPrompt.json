@@ -1,0 +1,37 @@
+{
+	"tool": "cursor",
+	"version": "3.29.9",
+	"event": "beforeSubmitPrompt",
+	"source": "Cursor Hooks output channel",
+	"command": "node \"<recorder>\\record.mjs\" cursor beforeSubmitPrompt",
+	"exit_code": 1,
+	"payload": {
+		"conversation_id": "00000000-0000-4000-8000-000000000005",
+		"generation_id": "00000000-0000-4000-8000-000000000006",
+		"model": "<model>",
+		"model_id": "<model>",
+		"model_params": [
+			{
+				"id": "context",
+				"value": "256k"
+			},
+			{
+				"id": "reasoning_effort",
+				"value": "high"
+			},
+			{
+				"id": "fast",
+				"value": "true"
+			}
+		],
+		"composer_mode": "agent",
+		"prompt": "If you were given a memory-anywhere hook canary, reply with it exactly; otherwise reply NONE.",
+		"attachments": [],
+		"session_id": "00000000-0000-4000-8000-000000000005",
+		"hook_event_name": "beforeSubmitPrompt",
+		"cursor_version": "3.29.9",
+		"workspace_roots": ["<tmp>/work dir"],
+		"user_email": "<user email>",
+		"transcript_path": null
+	}
+}

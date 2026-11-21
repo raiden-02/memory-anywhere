@@ -1,0 +1,227 @@
+{
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "string",
+      "const": "memory-anywhere-projects"
+    },
+    "format_version": {
+      "type": "number",
+      "const": 1
+    },
+    "exported_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "projects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "entity_id": {
+            "type": "string",
+            "pattern": "^ent_"
+          },
+          "name": {
+            "type": "string"
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "idea",
+                  "active",
+                  "paused",
+                  "shipped",
+                  "archived"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "goal": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contested_fields": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "memory_id": {
+                    "type": "string",
+                    "pattern": "^mem_[0-9A-HJKMNP-TV-Z]{26}$"
+                  }
+                },
+                "required": [
+                  "value",
+                  "memory_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "role": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "repo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "stack": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "decisions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^mem_[0-9A-HJKMNP-TV-Z]{26}$"
+                },
+                "content": {
+                  "type": "string",
+                  "maxLength": 400
+                },
+                "valid_from": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "content"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "constraints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^mem_[0-9A-HJKMNP-TV-Z]{26}$"
+                },
+                "content": {
+                  "type": "string",
+                  "maxLength": 400
+                },
+                "valid_from": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "content"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "outcomes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^mem_[0-9A-HJKMNP-TV-Z]{26}$"
+                },
+                "content": {
+                  "type": "string",
+                  "maxLength": 400
+                },
+                "valid_from": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "content"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "portfolio_relevance": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "last_activity_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "entity_id",
+          "name",
+          "aliases",
+          "status",
+          "goal",
+          "contested_fields",
+          "role",
+          "repo",
+          "stack",
+          "decisions",
+          "constraints",
+          "outcomes",
+          "portfolio_relevance",
+          "last_activity_at"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "format",
+    "format_version",
+    "exported_at",
+    "projects"
+  ],
+  "additionalProperties": false
+}

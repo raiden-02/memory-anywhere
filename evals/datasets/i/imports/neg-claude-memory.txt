@@ -1,0 +1,22 @@
+- Likes green tea
+- Has visited Kyoto
+- Ran the Lisbon half marathon in 2024
+- Sister Maya is a nurse
+- Plays chess on weekends
+- Reads science fiction before bed
+- Wants code examples in TypeScript
+- Owns a beagle named Pixel
+- Is learning Portuguese with a tutor
+- Drinks oolong tea in the afternoon
+- Cooks vegetarian food most evenings
+- Works from home on Fridays
+- Follows Formula 1
+- Prefers dark mode in every editor
+- Listens to jazz while coding
+- Has a brother named Tomas
+- Started Orrery in 2023
+- Keeps Orrery's data in SQLite
+- Bikes to work in summer
+- Prefers window seats on flights
+- Runs 10 km on Sundays
+- Uses Neovim for writing code

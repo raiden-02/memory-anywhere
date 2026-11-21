@@ -1,0 +1,25 @@
+name: setup
+description: pnpm, the pinned Node and the workspace's dependencies, for a checkout at `path`.
+
+inputs:
+  path:
+    description: Where the repository was checked out (a path with a space on every runner, operations.md §9).
+    default: work space
+  node-version:
+    description: Node to run; the pinned release unless a job tests another.
+    default: "24.22.2"
+
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      with:
+        package_json_file: ${{ inputs.path }}/package.json
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: pnpm
+        cache-dependency-path: ${{ inputs.path }}/pnpm-lock.yaml
+    - run: pnpm install --frozen-lockfile
+      shell: bash
+      working-directory: ${{ inputs.path }}

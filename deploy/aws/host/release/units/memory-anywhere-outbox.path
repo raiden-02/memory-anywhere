@@ -1,0 +1,9 @@
+[Unit]
+Description=memory-anywhere outbox: act on files the server writes (deployment-aws.md §4)
+
+[Path]
+DirectoryNotEmpty=/run/memory-anywhere/outbox
+MakeDirectory=no
+
+[Install]
+WantedBy=multi-user.target

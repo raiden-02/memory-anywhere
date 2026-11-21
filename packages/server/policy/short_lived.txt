@@ -1,0 +1,33 @@
+# Short-lived wording (memory-policy.md §3.6, row D9). Policy P1.
+# Matched on word boundaries against norm(content); D9 rejects only when kind is not event.
+today
+tonight
+this morning
+this afternoon
+this evening
+right now
+at the moment
+for now
+currently debugging
+this bug
+this error
+this pr
+this pull request
+this commit
+this branch
+this ticket
+this task
+this file
+this function
+this draft
+this email
+this meeting
+in this chat
+in this conversation
+this time
+just now
+this week
+this weekend
+this sprint
+tomorrow
+next week

@@ -1,0 +1,17 @@
+{
+	"tool": "codex",
+	"version": "0.167.0",
+	"event": "prompt",
+	"argv": ["<recorder>\\record.mjs", "codex", "prompt"],
+	"cwd": "<tmp>\\work dir",
+	"payload": {
+		"session_id": "00000000-0000-4000-8000-000000000003",
+		"turn_id": "00000000-0000-4000-8000-000000000004",
+		"transcript_path": "<home>\\.codex\\sessions\\<transcript>.jsonl",
+		"cwd": "<tmp>\\work dir",
+		"hook_event_name": "UserPromptSubmit",
+		"model": "<model>",
+		"permission_mode": "bypassPermissions",
+		"prompt": "If you were given a memory-anywhere hook canary, reply with it exactly; otherwise reply NONE."
+	}
+}

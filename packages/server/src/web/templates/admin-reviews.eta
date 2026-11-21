@@ -1,0 +1,31 @@
+<% layout("./admin") %>
+<h1>Review</h1>
+<% for (const b of it.imports) { %>
+<form class="act" data-action="review.approve_import" data-confirm="Store all <%= b.n %> sensitive items from this <%= b.source_type %> import? Every connected app may recall them.">
+  <input type="hidden" name="batch_id" value="<%= b.batch_id %>">
+  <button type="submit">Approve all <%= b.n %> from <%= b.source_type %></button>
+</form>
+<% } %>
+<% for (const group of [{ rows: it.rows, title: "" }, { rows: it.oneByOne, title: "Name someone else: decide one by one" }]) { %>
+<% if (group.rows.length > 0) { %>
+<% if (group.title) { %><h2><%= group.title %></h2><% } %>
+<ul class="list">
+<% for (const r of group.rows) { %>
+  <li><span class="muted"><%= it.fmt.review(r.kind) %><% if (r.category) { %> · <%= r.category %><% } %> · <%= r.client %> · <%~ it.fmt.time(r.created_at) %></span><br><%= r.content %>
+    <div class="actions">
+      <form class="act inline" data-action="review.decide">
+        <input type="hidden" name="id" value="<%= r.id %>"><input type="hidden" name="approve" value="true" data-type="bool">
+        <% if (r.kind === "sensitive" || r.kind === "import_sensitive") { %>
+        <fieldset class="choices"><legend class="muted">Apps that may recall it</legend>
+          <% for (const a of it.apps) { %><label><input type="checkbox" name="clients" value="<%= a.client_id %>" data-type="list"> <%= a.display_name %></label><% } %>
+        </fieldset>
+        <% } %>
+        <button type="submit">Approve</button>
+      </form>
+      <form class="act inline" data-action="review.decide"><input type="hidden" name="id" value="<%= r.id %>"><input type="hidden" name="approve" value="false" data-type="bool"><button type="submit" class="secondary">Reject</button></form>
+    </div></li>
+<% } %>
+</ul>
+<% } %>
+<% } %>
+<% if (it.rows.length === 0 && it.oneByOne.length === 0) { %><p class="muted">Nothing waiting.</p><% } %>

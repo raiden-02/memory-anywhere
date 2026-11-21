@@ -1,0 +1,37 @@
+{
+  "suite": "C",
+  "target": "remote",
+  "session_start_warm_ms": {
+    "n": 100,
+    "p50": 43,
+    "p95": 45,
+    "max": 147
+  },
+  "session_start_cold_ms": {
+    "n": 20,
+    "p50": 143,
+    "p95": 149,
+    "max": 153
+  },
+  "recall_ms": {
+    "n": 100,
+    "p50": 45,
+    "p95": 48,
+    "max": 50
+  },
+  "save_ms": {
+    "n": 30,
+    "p50": 45,
+    "p95": 47,
+    "max": 48
+  },
+  "pass": {
+    "session_start_warm": true,
+    "session_start_cold": true,
+    "recall": true,
+    "save": true
+  },
+  "git_sha": "140e41a49cf9e3fc067cdc1a69f690b90222fc07",
+  "policy_version": "P1",
+  "started_at": "2026-11-15T02:41:04.509Z"
+}

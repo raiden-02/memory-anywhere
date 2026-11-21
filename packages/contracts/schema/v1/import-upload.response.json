@@ -1,0 +1,27 @@
+{
+  "type": "object",
+  "properties": {
+    "batch_id": {
+      "type": "string"
+    },
+    "accepted": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "already": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "queued": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "batch_id",
+    "accepted",
+    "already",
+    "queued"
+  ],
+  "additionalProperties": false
+}

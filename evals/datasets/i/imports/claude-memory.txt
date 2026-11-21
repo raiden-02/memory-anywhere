@@ -1,0 +1,45 @@
+- [stated] Is vegetarian
+- Drinks oolong tea in the afternoon
+
+## Work and career
+Last updated
+Nov 9, 2026
+Summary
+
+Alex's job, team and the tools Alex works with — employer, role, stack
+
+Details
+Works as a backend engineer at Tidewell, a logistics startup
+Prefers TypeScript over Python for new services
+Uses Neovim as the main editor
+Package manager
+Uses pnpm for every JavaScript project
+
+
+## Orrery
+Project
+Orrery
+Last updated
+Oct 21, 2026
+Summary
+
+The side project Alex is building
+
+Details
+Building Orrery, a star-map app for amateur astronomers
+Orrery's backend runs on SQLite
+
+
+## Home and family
+Last updated
+Sep 3, 2026
+Summary
+
+Where Alex lives and who Alex lives with
+
+Details
+Lives in Lisbon
+Partner is Sam
+Pixel
+Alex's dog is a beagle named Pixel
+

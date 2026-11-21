@@ -1,0 +1,135 @@
+{
+  "suite": "P",
+  "stage": "server",
+  "system": "memory-anywhere",
+  "dataset": "p-server-605",
+  "policy_version": "P1",
+  "n": 605,
+  "gates": {
+    "secrets": {
+      "stored": 0,
+      "n": 136,
+      "upper95": 0.021786610611001955,
+      "pass": true
+    },
+    "sensitive": {
+      "stored": 0,
+      "n": 119,
+      "upper95": 0.02485999243042436,
+      "pass": true
+    }
+  },
+  "families": {
+    "secret": {
+      "n": 136,
+      "labels": "mechanical",
+      "correct": 136,
+      "accuracy": {
+        "mean": 1,
+        "ci95": [
+          0.9725298998449606,
+          0.9999999999999999
+        ]
+      }
+    },
+    "sensitive": {
+      "n": 119,
+      "labels": "mechanical",
+      "correct": 119,
+      "accuracy": {
+        "mean": 1,
+        "ci95": [
+          0.9687283192801539,
+          1
+        ]
+      }
+    },
+    "instruction": {
+      "n": 50,
+      "labels": "author",
+      "correct": 50,
+      "accuracy": {
+        "mean": 1,
+        "ci95": [
+          0.9286523998213857,
+          0.9999999999999999
+        ]
+      }
+    },
+    "short-lived": {
+      "n": 50,
+      "labels": "author",
+      "correct": 50,
+      "accuracy": {
+        "mean": 1,
+        "ci95": [
+          0.9286523998213857,
+          0.9999999999999999
+        ]
+      }
+    },
+    "taste": {
+      "n": 50,
+      "labels": "author",
+      "correct": 50,
+      "accuracy": {
+        "mean": 1,
+        "ci95": [
+          0.9286523998213857,
+          0.9999999999999999
+        ]
+      }
+    },
+    "slot": {
+      "n": 50,
+      "labels": "author",
+      "correct": 50,
+      "accuracy": {
+        "mean": 1,
+        "ci95": [
+          0.9286523998213857,
+          0.9999999999999999
+        ]
+      }
+    },
+    "explicit": {
+      "n": 50,
+      "labels": "author",
+      "correct": 50,
+      "accuracy": {
+        "mean": 1,
+        "ci95": [
+          0.9286523998213857,
+          0.9999999999999999
+        ]
+      }
+    },
+    "model-inferred": {
+      "n": 50,
+      "labels": "author",
+      "correct": 50,
+      "accuracy": {
+        "mean": 1,
+        "ci95": [
+          0.9286523998213857,
+          0.9999999999999999
+        ]
+      }
+    },
+    "event": {
+      "n": 50,
+      "labels": "author",
+      "correct": 50,
+      "accuracy": {
+        "mean": 1,
+        "ci95": [
+          0.9286523998213857,
+          0.9999999999999999
+        ]
+      }
+    }
+  },
+  "mismatches": [],
+  "git_sha": "d54b9a374ae0addd992514f515b715e28e13a690",
+  "started_at": "2026-11-10T04:22:44.357Z"
+}
