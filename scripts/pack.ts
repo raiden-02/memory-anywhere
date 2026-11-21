@@ -49,6 +49,16 @@ export function packageJson(): Record<string, unknown> {
 	};
 }
 
+const REPO_BLOB = "https://github.com/raiden-02/memory-anywhere/blob/main/";
+
+/** The README as npm shows it: its relative links point into the repository on GitHub. */
+export function npmReadme(markdown: string): string {
+	return markdown.replaceAll(
+		/\]\((?![a-z][a-z0-9+.-]*:|#)([^)\s]+)\)/giu,
+		(_, target: string) => `](${REPO_BLOB}${target})`,
+	);
+}
+
 export async function packClient(): Promise<string> {
 	await buildClient();
 	rmSync(OUT, { recursive: true, force: true });
@@ -70,7 +80,7 @@ export async function packClient(): Promise<string> {
 		cpSync(join(DEPLOY, part), join(OUT, "deploy", part), { recursive: true });
 	for (const p of PLUGINS) cpSync(join(ROOT, "plugins", p), join(OUT, "plugins", p), { recursive: true });
 
-	cpSync(join(ROOT, "README.md"), join(OUT, "README.md"));
+	writeFileSync(join(OUT, "README.md"), npmReadme(readFileSync(join(ROOT, "README.md"), "utf8")));
 	if (existsSync(join(ROOT, "LICENSE"))) cpSync(join(ROOT, "LICENSE"), join(OUT, "LICENSE"));
 	writeFileSync(join(OUT, "package.json"), `${JSON.stringify(packageJson(), null, 2)}\n`);
 	return OUT;

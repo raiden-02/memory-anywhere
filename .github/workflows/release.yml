@@ -1,9 +1,10 @@
 name: release
 
-# A server release (deployment-aws.md §7.4): pushing a tag v<version> builds the linux-arm64
+# A release (deployment-aws.md §7.4): pushing a tag v<version> builds the linux-arm64
 # tarball, checks it runs, signs it with the release key and publishes it as a GitHub release
-# with its SHA-256 and ma-operator.sh. The signing job runs in the `release` environment, which
-# requires the owner's manual approval and holds RELEASE_MINISIGN_KEY.
+# with its SHA-256 and ma-operator.sh, then publishes the two npm packages. The signing and npm
+# jobs run in the `release` environment, which requires the owner's manual approval and holds
+# RELEASE_MINISIGN_KEY (and, until npm trusted publishing is set up, NPM_TOKEN).
 
 on:
   push:
@@ -93,3 +94,51 @@ jobs:
             --notes "Server release $VERSION for linux-arm64, signed with deploy/aws/release-keys/release.pub. Deploy with: mema deploy aws --update --release $VERSION" \
             "release/memory-anywhere-server-$VERSION.tar.gz" "release/memory-anywhere-server-$VERSION.tar.gz.minisig" \
             release/ma-operator.sh release/SHA256SUMS
+
+  npm:
+    # The two npm packages, after the signed server release exists: memory-anywhere-server (local
+    # mode) first, because a client of this version installs the server of the same version, then
+    # the client memory-anywhere. Both carry npm provenance from this workflow's OIDC identity.
+    # Publishing uses npm trusted publishing once it is configured for both packages; until then
+    # (a package's first publish) an NPM_TOKEN secret in the release environment is used.
+    needs: [build, sign-and-publish]
+    runs-on: ubuntu-24.04
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        working-directory: work space
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: work space
+      - uses: ./work space/.github/actions/setup
+      - name: pack
+        run: |
+          node scripts/pack-server.ts
+          node scripts/pack.ts
+          for pkg in dist/npm/memory-anywhere-server dist/npm/memory-anywhere; do
+            have=$(node -p "require('./$pkg/package.json').version")
+            [ "$have" = "$VERSION" ] || { echo "$pkg is $have; local mode needs client and server at exactly $VERSION"; exit 1; }
+          done
+      - name: publish
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -n "$NPM_TOKEN" ]; then
+            umask 077
+            printf '//registry.npmjs.org/:_authToken=%s\n' "$NPM_TOKEN" >"$RUNNER_TEMP/.npmrc"
+            export NPM_CONFIG_USERCONFIG="$RUNNER_TEMP/.npmrc"
+          fi
+          for pkg in dist/npm/memory-anywhere-server dist/npm/memory-anywhere; do
+            name=$(node -p "require('./$pkg/package.json').name")
+            if npm view "$name@$VERSION" version >/dev/null 2>&1; then
+              echo "$name@$VERSION is already published"
+            else
+              npm publish "./$pkg" --provenance --access public
+            fi
+          done

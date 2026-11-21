@@ -40,6 +40,22 @@ guard and every test. Two habits keep it green:
 Everything runs on Windows; CI tests it, with spaces in paths. Use Git Bash or PowerShell; the hooks run
 under Git's own `sh`.
 
+## Releasing
+
+A release is a tag: bump `packages/client`, `packages/server` and `packages/importers` to the same
+version, commit, and push `v<version>`. The release workflow tests and builds the server tarball, signs it
+with the release key, publishes it as a GitHub release, then publishes `memory-anywhere-server` and
+`memory-anywhere` to npm with provenance. Both signing and publishing wait for an approval in the
+`release` environment.
+
+The environment needs, once:
+
+- `RELEASE_MINISIGN_KEY`: the private half of `deploy/aws/release-keys/release.pub` (deployment-aws.md
+  §7.4).
+- `NPM_TOKEN`, for the first publish only: an npm granular token allowed to publish new packages. After
+  it, add this repository's `release.yml` as a trusted publisher on both packages' npm settings and
+  delete the token; later releases publish with GitHub's identity alone.
+
 ## Where things are
 
 [AGENTS.md](AGENTS.md) maps the packages and commands; [the architecture chapter](docs/design/architecture.md)
