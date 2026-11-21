@@ -1,0 +1,90 @@
+name: fresh install
+
+# What a new user does, on clean machines: install the npm package, `mema init --local`, and get a
+# server that answers. The packages are packed from this commit once; each runner then has only Node:
+# no repository, no pnpm, no build tools. The server package comes from that pack
+# (MA_SERVER_TARBALL) instead of the registry, so a release is tested before it is published.
+# The whole install, embedding model download included, must finish within 10 minutes.
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "packages/**"
+      - "deploy/aws/**"
+      - "plugins/**"
+      - "config/**"
+      - "scripts/pack*.ts"
+      - "scripts/build.ts"
+      - ".github/workflows/fresh-install.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  pack:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: work space
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: work space
+      - uses: ./work space/.github/actions/setup
+      - run: |
+          node scripts/pack-server.ts
+          node scripts/pack.ts
+          mkdir -p "$RUNNER_TEMP/packages"
+          for pkg in dist/npm/memory-anywhere-server dist/npm/memory-anywhere; do
+            npm pack "./$pkg" --pack-destination "$RUNNER_TEMP/packages"
+          done
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: packages
+          path: ${{ runner.temp }}/packages
+          if-no-files-found: error
+
+  install:
+    needs: pack
+    name: install (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-24.04]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: packages
+          path: ${{ runner.temp }}/packages
+      - name: user services (Linux)
+        # Local mode starts the server at login with a systemd user service; a runner has no login
+        # session, so keep the user's service manager running as a desktop login would.
+        if: runner.os == 'Linux'
+        run: |
+          sudo loginctl enable-linger "$USER"
+          echo "XDG_RUNTIME_DIR=/run/user/$(id -u)" >>"$GITHUB_ENV"
+          for _ in $(seq 1 20); do [ -S "/run/user/$(id -u)/bus" ] && break; sleep 1; done
+      - name: npm install -g memory-anywhere, mema init --local
+        run: |
+          start=$(date +%s)
+          npm install -g "$(ls "$RUNNER_TEMP"/packages/memory-anywhere-[0-9]*.tgz)"
+          mema --version
+          export MA_SERVER_TARBALL="$(ls "$RUNNER_TEMP"/packages/memory-anywhere-server-*.tgz)"
+          mema init --local --yes
+          seconds=$(( $(date +%s) - start ))
+          echo "install took ${seconds}s"
+          [ "$seconds" -le 600 ] || { echo "the install took longer than 10 minutes"; exit 1; }
+      - name: the server answers
+        run: |
+          node -e 'fetch("http://127.0.0.1:47821/v1/health").then(r => r.json()).then(h => { console.log(h); if (!h.ok) process.exit(1); })'
+          mema status
+          mema version
