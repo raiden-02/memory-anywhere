@@ -60,9 +60,61 @@ Facts the user states plainly are saved (32/39, [67.3, 91.0]) and chatter stays 
 the model mostly does not call the tool at all for a remark said once. The desk cannot hold what it is
 never sent.
 
-**Not yet measured:** how much the desk adds on top of the model (the ablation: model alone, model
-plus desk, plus a judge, no model), section placement accuracy, and repeated model-stage runs with
-independent labels.
+**What the desk adds** (the ablation). The same 40 conversations, three runs each (360 turns), with
+the same model in Claude Code, against four versions of the server:
+
+- **model only** ([data](data/P-ablation-a.json)): a test build that stores every save as the model
+  sent it, with no rules.
+- **desk** ([data](data/P-ablation-d.json)): the decision table alone, as in no-LLM mode.
+- **desk + server model** ([data](data/P-ablation-b.json)): the table, asking a local model (gpt-oss
+  20B) whether a save is sensitive and which slot it fills.
+- **desk + server model + judge** ([data](data/P-ablation-c.json)): as above, plus a model judging
+  whether a borderline save will still be true later.
+
+Each row is one version; the marks follow chapter 1's legend (1 mark = 2.5% of the row):
+
+```
+                  █ saved as a memory   ▒ held as an observation   ░ nothing stored
+
+should save (117)    model only     ██████████████████████████████████████░░   112 saved ·  0 held ·  5 missed
+                     desk           ██████████████████████████████████▒▒▒▒░░   100 saved · 10 held ·  7 missed
+                     + model        ██████████████████████████████████▒▒▒░░░   101 saved ·  8 held ·  8 missed
+                     + judge        ██████████████████████████████████▒▒▒░░░    99 saved ·  9 held ·  9 missed
+
+should hold (57)     model only     ███████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░    15 saved ·  0 held · 42 missed
+                     desk           ██████▒▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     8 saved ·  5 held · 44 missed
+                     + model        ██████▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     8 saved ·  8 held · 41 missed
+                     + judge        ████▒▒▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     6 saved ·  5 held · 46 missed
+
+should skip (186)    model only     ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     7 saved · 179 kept out
+                     desk           █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     4 saved · 182 kept out
+                     + model        █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     3 saved · 183 kept out
+                     + judge        █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     3 saved · 183 kept out
+```
+
+The desk trades one kind of mistake for a milder one:
+
+- **Fewer wrong memories.** Of the 243 turns that should not become a memory, the model alone stored
+  22 as memories (9.1%, [6.1, 13.3]); with the desk, 12 (4.9%, [2.8, 8.4]). Paired by conversation,
+  the drop is 4.1 points [−9.2, 0.0] for the desk alone (the interval just reaches zero) and 5.3
+  [−10.0, −1.6] with the judge.
+- **Some real facts held back.** The desk holds 8 to 10 of the 117 facts the user stated as
+  observations instead of saving them: +8.5 points [1.7, 17.1] over the model alone. An observation
+  is not lost: it becomes a memory when the fact comes up again.
+- **The same total.** Right outcomes are 287 to 292 of 360 in every version; no difference from the
+  model alone has an interval that excludes zero.
+
+The server model and the judge add nothing measurable over the table alone: every row is within five
+turns of the desk's. They answered every call in time (0 timeouts; p95 under 1 s), so this is their
+real effect, not a fallback to the rules. Passing mentions stay the weak spot in every version: the
+model does not call the tool for 41 to 46 of the 57, and no server stage can hold what it never
+receives.
+
+Each turn ran three times, and the three runs of one conversation are not independent, so the pooled
+intervals are narrower than the evidence; the paired differences resample whole conversations and do
+not have this problem.
+
+**Not yet measured:** section placement accuracy, and the model stage with independent labels.
 
 ## 2. Does it ever overwrite a true fact? (W)
 
@@ -374,7 +426,8 @@ A broken harness produces confident wrong numbers, so these come first.
 
 | What went wrong | What changed |
 | --- | --- |
-| Single mentions of a taste were mostly not saved at all: of 19 meant to become observations, 2 did, 2 became memories, 15 were missed (chapter 1). | Reported; no rule changed. The model, not the desk, decides whether to call the tool. |
+| Single mentions of a taste were mostly not saved at all: of 19 meant to become observations, 2 did, 2 became memories, 15 were missed (chapter 1). The three-run ablation confirmed it in every server version (41 to 46 of 57 missed). | Reported; no rule changed. The model, not the desk, decides whether to call the tool. |
+| The server model and the durability judge were expected to improve the desk's decisions. In the ablation they changed no outcome count by more than five turns of 360, with every call answered in time (chapter 1). | Reported; nothing changed. On this set no-LLM mode loses nothing measurable. |
 | Without a model, the store recognises no true update as an update (chapter 2). The first run also merged 15 of 116 true updates into the old value as near duplicates, losing the new value's text. | Merging now checks words as well as vectors (see Imports); the latest run merges 1. Storing beside the old value remains the safe failure. |
 | A Claude save wrote "His test city is Lisbon": the model guessed a pronoun. | The memory policy requires pronoun-free saved text. |
 | ChatGPT desktop's save became an observation: the owner's confirmation ("Yes, it's olive now") did not restate the fact. | Working as specified: a reply that names no fact is not a stated fact. Noted for the cross-app test instructions. |
@@ -469,9 +522,7 @@ shapes the author expected.
 Collected from the chapters, so nothing above reads as more complete than it is:
 
 - **Other memory servers**: mem0 and mcp-memory-service on any suite, and a no-memory baseline.
-- **Full size**: larger W, P and A sets, and repeated runs for every model-driven suite (the P model
-  stage and A ran once).
-- **Ablation**: how much the desk adds over the model alone.
+- **Full size**: larger W, P and A sets, and repeated runs for A, which ran once.
 - **Independent labels**: cross-vendor labelling and the owner's spot-check agreement; every P, A and I
   number above is author- or mechanically labelled.
 - **Other clients** in A and in model-driven S: Codex, Cursor, and the chat apps through their APIs.

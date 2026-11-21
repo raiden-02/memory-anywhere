@@ -1,0 +1,2712 @@
+{
+  "suite": "P",
+  "stage": "model",
+  "ablation": {
+    "arm": "b",
+    "label": "model + rules",
+    "rules": true,
+    "judge": false,
+    "server_model": "ollama/gpt-oss:20b"
+  },
+  "client": "claude-code-headless",
+  "model": "claude-haiku-5-5",
+  "labels": "author",
+  "n_conversations": 40,
+  "runs": 3,
+  "rates": {
+    "save": {
+      "k": 101,
+      "n": 117,
+      "ci95": [
+        0.7893619451733698,
+        0.9140390298471033
+      ]
+    },
+    "observe": {
+      "k": 8,
+      "n": 57,
+      "ci95": [
+        0.07287276105928868,
+        0.25324464713776723
+      ]
+    },
+    "skip": {
+      "k": 183,
+      "n": 186,
+      "ci95": [
+        0.9536598201636657,
+        0.9944997707956007
+      ]
+    }
+  },
+  "outcomes": {
+    "skip": {
+      "stored": 0,
+      "observed": 0,
+      "over_saved": 0,
+      "missed": 0,
+      "kept_out": 183,
+      "false_save": 3
+    },
+    "save": {
+      "stored": 101,
+      "observed": 8,
+      "over_saved": 0,
+      "missed": 8,
+      "kept_out": 0,
+      "false_save": 0
+    },
+    "observe": {
+      "stored": 0,
+      "observed": 8,
+      "over_saved": 8,
+      "missed": 41,
+      "kept_out": 0,
+      "false_save": 0
+    }
+  },
+  "per_run": [
+    {
+      "run": 1,
+      "rates": {
+        "save": {
+          "k": 34,
+          "n": 39,
+          "ci95": [
+            0.7329425648904853,
+            0.9439718249848092
+          ]
+        },
+        "observe": {
+          "k": 4,
+          "n": 19,
+          "ci95": [
+            0.08507676573617337,
+            0.43334278630883716
+          ]
+        },
+        "skip": {
+          "k": 61,
+          "n": 62,
+          "ci95": [
+            0.9141327965227978,
+            0.997147132862919
+          ]
+        }
+      }
+    },
+    {
+      "run": 2,
+      "rates": {
+        "save": {
+          "k": 32,
+          "n": 39,
+          "ci95": [
+            0.6733195420678146,
+            0.9102273457557151
+          ]
+        },
+        "observe": {
+          "k": 2,
+          "n": 19,
+          "ci95": [
+            0.029358560033196812,
+            0.31394082911909027
+          ]
+        },
+        "skip": {
+          "k": 61,
+          "n": 62,
+          "ci95": [
+            0.9141327965227978,
+            0.997147132862919
+          ]
+        }
+      }
+    },
+    {
+      "run": 3,
+      "rates": {
+        "save": {
+          "k": 35,
+          "n": 39,
+          "ci95": [
+            0.7642114540654643,
+            0.9593866868357126
+          ]
+        },
+        "observe": {
+          "k": 2,
+          "n": 19,
+          "ci95": [
+            0.029358560033196812,
+            0.31394082911909027
+          ]
+        },
+        "skip": {
+          "k": 61,
+          "n": 62,
+          "ci95": [
+            0.9141327965227978,
+            0.997147132862919
+          ]
+        }
+      }
+    }
+  ],
+  "server_decisions": {
+    "active": {
+      "stated_preference": 31,
+      "slot_fact": 24,
+      "explicit": 37,
+      "user_stated": 17,
+      "event": 3
+    },
+    "observation": {
+      "single_mention": 8,
+      "model_inferred": 10
+    }
+  },
+  "server_model_calls": {
+    "sensitive_check": {
+      "ok": 130,
+      "timeout": 0,
+      "error": 0,
+      "p50_ms": 497,
+      "p95_ms": 941
+    },
+    "slot_proposal": {
+      "ok": 98,
+      "timeout": 0,
+      "error": 0,
+      "p50_ms": 518,
+      "p95_ms": 865
+    }
+  },
+  "errors": 0,
+  "turns": [
+    {
+      "conversation": "PM-001",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-001",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-001",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 1
+    },
+    {
+      "conversation": "PM-002",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-002",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-002",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-003",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-003",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-003",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 1
+    },
+    {
+      "conversation": "PM-004",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-004",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-004",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-005",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-005",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-005",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-006",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-006",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-006",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 1
+    },
+    {
+      "conversation": "PM-007",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-007",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-007",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-008",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-008",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-008",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "observed",
+      "run": 1
+    },
+    {
+      "conversation": "PM-009",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-009",
+      "turn": 2,
+      "label": "save",
+      "outcome": "missed",
+      "run": 1
+    },
+    {
+      "conversation": "PM-009",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-010",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-010",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-010",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 1
+    },
+    {
+      "conversation": "PM-011",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-011",
+      "turn": 2,
+      "label": "save",
+      "outcome": "missed",
+      "run": 1
+    },
+    {
+      "conversation": "PM-011",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-012",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-012",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-012",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 1
+    },
+    {
+      "conversation": "PM-013",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-013",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-013",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-014",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-014",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-014",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "observed",
+      "run": 1
+    },
+    {
+      "conversation": "PM-015",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-015",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-015",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-016",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-016",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-016",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-017",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-017",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-017",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "over_saved",
+      "run": 1
+    },
+    {
+      "conversation": "PM-018",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-018",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-018",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-019",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-019",
+      "turn": 2,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-019",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 1
+    },
+    {
+      "conversation": "PM-020",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-020",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-020",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-021",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-021",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-021",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 1
+    },
+    {
+      "conversation": "PM-022",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-022",
+      "turn": 2,
+      "label": "save",
+      "outcome": "observed",
+      "run": 1
+    },
+    {
+      "conversation": "PM-022",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-023",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-023",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-023",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 1
+    },
+    {
+      "conversation": "PM-024",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-024",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-024",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-025",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-025",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-025",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 1
+    },
+    {
+      "conversation": "PM-026",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-026",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-026",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-027",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-027",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-027",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 1
+    },
+    {
+      "conversation": "PM-028",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-028",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-028",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-029",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-029",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-029",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "observed",
+      "run": 1
+    },
+    {
+      "conversation": "PM-030",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-030",
+      "turn": 2,
+      "label": "save",
+      "outcome": "missed",
+      "run": 1
+    },
+    {
+      "conversation": "PM-030",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-031",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-031",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-031",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 1
+    },
+    {
+      "conversation": "PM-032",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-032",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-032",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-033",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-033",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-033",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "observed",
+      "run": 1
+    },
+    {
+      "conversation": "PM-034",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-034",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-034",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-035",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-035",
+      "turn": 2,
+      "label": "save",
+      "outcome": "observed",
+      "run": 1
+    },
+    {
+      "conversation": "PM-035",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 1
+    },
+    {
+      "conversation": "PM-036",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-036",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-036",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "false_save",
+      "run": 1
+    },
+    {
+      "conversation": "PM-037",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-037",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-037",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 1
+    },
+    {
+      "conversation": "PM-038",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-038",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-038",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-039",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-039",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-039",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "over_saved",
+      "run": 1
+    },
+    {
+      "conversation": "PM-040",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-040",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 1
+    },
+    {
+      "conversation": "PM-040",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 1
+    },
+    {
+      "conversation": "PM-001",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-001",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-001",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 2
+    },
+    {
+      "conversation": "PM-002",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-002",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-002",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-003",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-003",
+      "turn": 2,
+      "label": "save",
+      "outcome": "missed",
+      "run": 2
+    },
+    {
+      "conversation": "PM-003",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 2
+    },
+    {
+      "conversation": "PM-004",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-004",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-004",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-005",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-005",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-005",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-006",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-006",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-006",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 2
+    },
+    {
+      "conversation": "PM-007",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-007",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-007",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-008",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-008",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-008",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "over_saved",
+      "run": 2
+    },
+    {
+      "conversation": "PM-009",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-009",
+      "turn": 2,
+      "label": "save",
+      "outcome": "missed",
+      "run": 2
+    },
+    {
+      "conversation": "PM-009",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-010",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-010",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-010",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 2
+    },
+    {
+      "conversation": "PM-011",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-011",
+      "turn": 2,
+      "label": "save",
+      "outcome": "missed",
+      "run": 2
+    },
+    {
+      "conversation": "PM-011",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-012",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-012",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-012",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 2
+    },
+    {
+      "conversation": "PM-013",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-013",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-013",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-014",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-014",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-014",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 2
+    },
+    {
+      "conversation": "PM-015",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-015",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-015",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-016",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-016",
+      "turn": 2,
+      "label": "save",
+      "outcome": "observed",
+      "run": 2
+    },
+    {
+      "conversation": "PM-016",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-017",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-017",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-017",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "over_saved",
+      "run": 2
+    },
+    {
+      "conversation": "PM-018",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-018",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-018",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-019",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-019",
+      "turn": 2,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-019",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 2
+    },
+    {
+      "conversation": "PM-020",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-020",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-020",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-021",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-021",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-021",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 2
+    },
+    {
+      "conversation": "PM-022",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-022",
+      "turn": 2,
+      "label": "save",
+      "outcome": "observed",
+      "run": 2
+    },
+    {
+      "conversation": "PM-022",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-023",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-023",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-023",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 2
+    },
+    {
+      "conversation": "PM-024",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-024",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-024",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-025",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-025",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-025",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 2
+    },
+    {
+      "conversation": "PM-026",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-026",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-026",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-027",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-027",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-027",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 2
+    },
+    {
+      "conversation": "PM-028",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-028",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-028",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-029",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-029",
+      "turn": 2,
+      "label": "save",
+      "outcome": "observed",
+      "run": 2
+    },
+    {
+      "conversation": "PM-029",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "observed",
+      "run": 2
+    },
+    {
+      "conversation": "PM-030",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-030",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-030",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-031",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-031",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-031",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 2
+    },
+    {
+      "conversation": "PM-032",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-032",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-032",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-033",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-033",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-033",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "observed",
+      "run": 2
+    },
+    {
+      "conversation": "PM-034",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-034",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-034",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-035",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-035",
+      "turn": 2,
+      "label": "save",
+      "outcome": "observed",
+      "run": 2
+    },
+    {
+      "conversation": "PM-035",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 2
+    },
+    {
+      "conversation": "PM-036",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-036",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-036",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "false_save",
+      "run": 2
+    },
+    {
+      "conversation": "PM-037",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-037",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-037",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 2
+    },
+    {
+      "conversation": "PM-038",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-038",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-038",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-039",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-039",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-039",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "over_saved",
+      "run": 2
+    },
+    {
+      "conversation": "PM-040",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-040",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 2
+    },
+    {
+      "conversation": "PM-040",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 2
+    },
+    {
+      "conversation": "PM-001",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-001",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-001",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 3
+    },
+    {
+      "conversation": "PM-002",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-002",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-002",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-003",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-003",
+      "turn": 2,
+      "label": "save",
+      "outcome": "missed",
+      "run": 3
+    },
+    {
+      "conversation": "PM-003",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 3
+    },
+    {
+      "conversation": "PM-004",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-004",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-004",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-005",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-005",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-005",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-006",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-006",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-006",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 3
+    },
+    {
+      "conversation": "PM-007",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-007",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-007",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-008",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-008",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-008",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "over_saved",
+      "run": 3
+    },
+    {
+      "conversation": "PM-009",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-009",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-009",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-010",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-010",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-010",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 3
+    },
+    {
+      "conversation": "PM-011",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-011",
+      "turn": 2,
+      "label": "save",
+      "outcome": "missed",
+      "run": 3
+    },
+    {
+      "conversation": "PM-011",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-012",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-012",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-012",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 3
+    },
+    {
+      "conversation": "PM-013",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-013",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-013",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-014",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-014",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-014",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 3
+    },
+    {
+      "conversation": "PM-015",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-015",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-015",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-016",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-016",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-016",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-017",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-017",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-017",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "over_saved",
+      "run": 3
+    },
+    {
+      "conversation": "PM-018",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-018",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-018",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-019",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-019",
+      "turn": 2,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-019",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 3
+    },
+    {
+      "conversation": "PM-020",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-020",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-020",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-021",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-021",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-021",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 3
+    },
+    {
+      "conversation": "PM-022",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-022",
+      "turn": 2,
+      "label": "save",
+      "outcome": "observed",
+      "run": 3
+    },
+    {
+      "conversation": "PM-022",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-023",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-023",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-023",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 3
+    },
+    {
+      "conversation": "PM-024",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-024",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-024",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-025",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-025",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-025",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 3
+    },
+    {
+      "conversation": "PM-026",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-026",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-026",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-027",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-027",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-027",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 3
+    },
+    {
+      "conversation": "PM-028",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-028",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-028",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-029",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-029",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-029",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "observed",
+      "run": 3
+    },
+    {
+      "conversation": "PM-030",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-030",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-030",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-031",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-031",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-031",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 3
+    },
+    {
+      "conversation": "PM-032",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-032",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-032",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-033",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-033",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-033",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "observed",
+      "run": 3
+    },
+    {
+      "conversation": "PM-034",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-034",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-034",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-035",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-035",
+      "turn": 2,
+      "label": "save",
+      "outcome": "observed",
+      "run": 3
+    },
+    {
+      "conversation": "PM-035",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 3
+    },
+    {
+      "conversation": "PM-036",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-036",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-036",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "false_save",
+      "run": 3
+    },
+    {
+      "conversation": "PM-037",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-037",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-037",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "missed",
+      "run": 3
+    },
+    {
+      "conversation": "PM-038",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-038",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-038",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-039",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-039",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-039",
+      "turn": 3,
+      "label": "observe",
+      "outcome": "over_saved",
+      "run": 3
+    },
+    {
+      "conversation": "PM-040",
+      "turn": 1,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    },
+    {
+      "conversation": "PM-040",
+      "turn": 2,
+      "label": "save",
+      "outcome": "stored",
+      "run": 3
+    },
+    {
+      "conversation": "PM-040",
+      "turn": 3,
+      "label": "skip",
+      "outcome": "kept_out",
+      "run": 3
+    }
+  ],
+  "git_sha": "89557ab0be583a1bd4b2ceefdf861201caac839e",
+  "policy_version": "P1",
+  "started_at": "2026-11-21T04:20:18.176Z"
+}
