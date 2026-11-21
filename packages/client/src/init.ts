@@ -4,8 +4,9 @@
 //   1 ask for the git hosts where memory must never be used (the deny-list)
 //   2 show every change: client.toml (+ server.toml), each installed coding tool, the skill
 //   3 ask once, then make them (a checkout is built first)
-//   4 local mode: the server's init, its start at logon, health    remote: leave local mode if on,
-//                                                                   check health, sign this computer in
+//   4 local mode: install the matching server (from the package), stop the old one, the server's
+//     init (store, migrations, model), its start at logon, health
+//     remote: leave local mode if on, check health, sign this computer in
 //   5 what is left for you, then `mema doctor`
 //
 // `--dry-run` stops after step 2; `--yes` skips the questions.
@@ -19,7 +20,7 @@ import os from "node:os";
 import type { CommandDeps } from "./commands.ts";
 import { leaveLocalMode, printCustomInstruction } from "./commands.ts";
 import { login as pcLogin, readTokens } from "./auth.ts";
-import { clientToml, LOCAL_URL } from "./config.ts";
+import { CLIENT_VERSION, clientToml, LOCAL_URL } from "./config.ts";
 import { doctor } from "./doctor.ts";
 import {
 	applyPlan,
@@ -39,9 +40,17 @@ import {
 	serverArgv,
 	serverInit,
 	serverToml,
+	unregisterAndStop,
 	waitHealthy,
 	workspaceServerCli,
 } from "./local-server.ts";
+import {
+	installedServerCli,
+	installServer,
+	removeOtherVersions,
+	SERVER_PACKAGE,
+	serverAppDir,
+} from "./server-install.ts";
 import { packagedSources, type InstallSources } from "./package-root.ts";
 import { isYes } from "./prompt.ts";
 import { runTool } from "./tool-runner.ts";
@@ -99,10 +108,6 @@ export function sourcesFor(o: InitOptions, packaged: InstallSources | undefined)
 	}
 	if (!packaged)
 		throw new Error("run mema from the npm package (npm i -g memory-anywhere), or pass --from-workspace <checkout>");
-	if (o.local)
-		throw new Error(
-			"local mode needs --from-workspace <checkout> until the server release tarballs for every platform exist",
-		);
 	return { kind: "package", ...packaged };
 }
 
@@ -130,8 +135,10 @@ export async function init(
 			: "Your memories live in your store. This PC keeps a sign-in token readable only by you, caches and a spool.",
 	);
 	const { pluginsDir, bundle } = source;
-	// Local mode runs the checkout's server (sourcesFor refuses --local from the package for now).
-	const serverCli = source.kind === "workspace" ? source.serverCli : "";
+	// Local mode runs the checkout's server, or the matching server package installed beside this client.
+	const appDir = serverAppDir(d.paths, CLIENT_VERSION);
+	const serverCli = source.kind === "workspace" ? source.serverCli : installedServerCli(appDir);
+	const installsServer = o.local && source.kind === "package" && !existsSync(serverCli);
 
 	// 2. Config files.
 	// --yes keeps the current deny-list (edit client.toml [repos] deny_remotes later); otherwise ask.
@@ -144,7 +151,9 @@ export async function init(
 		],
 		folders: [],
 		commands: [],
-		notes: [],
+		notes: installsServer
+			? [`installs ${SERVER_PACKAGE}@${CLIENT_VERSION} with npm (no install scripts) into ${appDir}`]
+			: [],
 	};
 	const claudeServers = tools.includes("claude-code")
 		? runTool("claude", ["mcp", "list"], 30_000)
@@ -188,14 +197,18 @@ export async function init(
 	const problems = applyPlan(configPlan, { run: (c, a) => runTool(c, a), now: d.now });
 
 	if (o.local) {
-		// 3–5. Server: store and model, logon task, health.
+		// 3–5. Server: install, stop the one running, store and model, logon task, health.
+		if (installsServer) {
+			d.out(`installing ${SERVER_PACKAGE}@${CLIENT_VERSION}…`);
+			installServer(appDir, CLIENT_VERSION);
+		}
+		const launcher = path.join(d.paths.localServerDataDir, "start-hidden.js");
+		if (d.config.store.mode === "local") unregisterAndStop(launcher, d.paths.localServerConfigFile);
 		await serverInit(serverCli, d.paths.localServerConfigFile);
-		registerAndStart(
-			serverArgv(serverCli, d.paths.localServerConfigFile),
-			path.join(d.paths.localServerDataDir, "start-hidden.js"),
-		);
+		registerAndStart(serverArgv(serverCli, d.paths.localServerConfigFile), launcher);
 		if (!(await waitHealthy(LOCAL_URL, 60_000)))
 			throw new Error("the local server did not become healthy within 60 s; see `mema doctor`");
+		if (source.kind === "package") removeOtherVersions(d.paths, CLIENT_VERSION);
 		d.out(`server running at ${LOCAL_URL}`);
 	} else {
 		// 3–5. Leave local mode, check the store, sign in (unless already signed in to it).

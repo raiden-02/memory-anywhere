@@ -1,5 +1,5 @@
 // Schema migrations (operations.md §6). Forward only: `migrations/NNNN_name.sql`, plus an optional
-// `NNNN_name.ts` exporting `up(db)` for data steps, applied in order inside one transaction each.
+// `NNNN_name.ts` (`.mjs` in the npm package) exporting `up(db)` for data steps, applied in order inside one transaction each.
 // `meta.schema_version` holds the number of the last applied migration. Before migrating a store
 // that already has data, a copy is written next to it (`<store>.pre-migrate-<n>.db`; the `prune`
 // job deletes it after 24 hours). The server refuses to start on a schema it does not expect.
@@ -30,7 +30,8 @@ export function listMigrations(dir: string = MIGRATIONS_DIR): Migration[] {
 				version: Number(base.slice(0, 4)),
 				name: base,
 				sqlFile: join(dir, f),
-				dataFile: files.includes(`${base}.ts`) ? join(dir, `${base}.ts`) : undefined,
+				// The data step is TypeScript in a checkout and bundled JavaScript in the npm package.
+				dataFile: [`${base}.ts`, `${base}.mjs`].filter((f) => files.includes(f)).map((f) => join(dir, f))[0],
 			};
 		})
 		.sort((a, b) => a.version - b.version);

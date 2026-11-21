@@ -45,7 +45,7 @@ describe("where mema init takes its files from", () => {
 		expect(() => sourcesFor(options, undefined)).toThrow(/npm i -g memory-anywhere/u);
 	});
 
-	it("still needs a checkout for local mode", () => {
-		expect(() => sourcesFor({ ...options, local: true }, packaged)).toThrow(/--from-workspace/u);
+	it("sets up local mode from the package too: the server package is installed beside it", () => {
+		expect(sourcesFor({ ...options, local: true }, packaged)).toEqual({ kind: "package", ...packaged });
 	});
 });

@@ -21,7 +21,8 @@
 		"eval": "node evals/harness/cli.ts",
 		"gen": "node scripts/gen.ts",
 		"build": "node scripts/build.ts",
-		"pack:client": "node scripts/pack.ts"
+		"pack:client": "node scripts/pack.ts",
+		"pack:server": "node scripts/pack-server.ts"
 	},
 	"devDependencies": {
 		"@eslint/js": "10.0.1",

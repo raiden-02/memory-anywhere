@@ -24,8 +24,8 @@ npm install -g memory-anywhere
 mema init --local
 ```
 
-Until the server ships as its own package, local mode runs from a checkout of this repository:
-[Guide 02](docs/guide/02-local-mode.md) has the steps. `init` finds Claude Code, Codex and Cursor, shows every file it will change, and asks once. Open your
+`init` finds Claude Code, Codex and Cursor, shows every file it will change, installs the matching
+server package, and asks once. Open your
 coding tool in a repository, run `mema enable` there, and say something about yourself; a new session
 will know it. Local mode keeps everything on this PC, so phone and web apps cannot reach it.
 [Guide: local mode](docs/guide/02-local-mode.md).

@@ -7,7 +7,7 @@ Status: normative.
 | Artifact | Contents | Native modules | Distribution |
 | --- | --- | --- | --- |
 | npm `memory-anywhere` | Client: stdio proxy, hooks, CLI, spool, token cache, deploy commands (CDK app bundled; `aws-cdk-lib`, `constructs` and the CDK CLI are plain dependencies, since `aws-cdk-lib` loads files from its own folder; an install runs the CDK in `{config}/cdk/`, which holds its `cdk.json` and AMI pins, where a checkout uses `deploy/aws/` and commits them) | none | npm (trusted publishing, provenance); bins `memory-anywhere` and `mema` |
-| `memory-anywhere-server` | Server: MCP, `/v1`, OAuth, admin UI, write path, retrieval, embeddings, jobs | `onnxruntime-node` (SQLite is the built-in `node:sqlite`, ADR-0006) | GitHub release tarballs per platform (`linux-arm64`, `linux-x64`, `win32-x64`, `darwin-arm64`) with `node_modules` included; an npm package of the same name is planned if the name is free, else tarballs only |
+| `memory-anywhere-server` | Server: MCP, `/v1`, OAuth, admin UI, write path, retrieval, embeddings, jobs | `onnxruntime-node` (SQLite is the built-in `node:sqlite`, ADR-0006) | npm package `memory-anywhere-server` for local mode: the server bundled to `dist/server.mjs` (an installed package is inside `node_modules`, where Node does not strip types) with its migrations, seed, web files and config, and its npm dependencies at pinned versions (`scripts/pack-server.ts`); a signed `linux-arm64` release tarball for the AWS instance (deployment-aws.md §7.4) |
 | Plugins | `plugins/claude-code`, `plugins/codex`, `plugins/cursor`, each bundling `dist/memory-anywhere.mjs` (esbuild bundle of the client) | none | GitHub repo marketplace manifests pinned to tag + SHA |
 
 Workspace packages (private, never published): `@memory-anywhere/contracts` (schemas, normalization, redaction, reasons; shared), `@memory-anywhere/client`, `@memory-anywhere/server`, `@memory-anywhere/importers`, `@memory-anywhere/evals`, `@memory-anywhere/deploy-aws`.
@@ -50,7 +50,7 @@ Windows folder outside AppData: a shell started by a packaged (MSIX) desktop app
 
 | Command | Flags | Does |
 | --- | --- | --- |
-| `mema init` | `--clients <list>` (default: all detected of `claude-code,codex,cursor`), `--dry-run`, `--yes` (no questions: keeps the current deny-list and applies the changes), `--local`, `--print-custom-instruction`, `--from-workspace <path>` (hidden) | clients.md §6. Without `--from-workspace`, init takes the plugins and the client bundle from the installed npm package; with it, it builds them from that repository checkout. `--local` sets up local mode, which for now needs `--from-workspace <path>`: it runs the server built in that checkout (`pnpm build` output), downloads the model and starts the server. Local mode has no upgrade command yet |
+| `mema init` | `--clients <list>` (default: all detected of `claude-code,codex,cursor`), `--dry-run`, `--yes` (no questions: keeps the current deny-list and applies the changes), `--local`, `--print-custom-instruction`, `--from-workspace <path>` (hidden) | clients.md §6. Without `--from-workspace`, init takes the plugins and the client bundle from the installed npm package; with it, it builds them from that repository checkout. `--local` sets up local mode. From the package, it installs `memory-anywhere-server` at exactly the client's version with npm (`--ignore-scripts`) into `{data}/server/app/<version>/` unless that version is there; with `--from-workspace <path>` it runs that checkout's server instead. Then it stops a local server already running, runs the server's `init` (store, migrations, model), registers the start at logon, waits for health, and removes other versions' folders. Running it again after updating the client is the upgrade |
 | `mema connect <url>` | | Sets `store.url` and `store.mode`, checks `/v1/health`. A remote store must be `https`. Connecting a local-mode PC to a remote store leaves local mode: the start at logon is removed and the local server stopped; its store is kept |
 | `mema login` | `--no-browser` | PC grant (auth-and-security.md §5.6) |
 | `mema logout` | | Revokes and deletes the PC grant |
@@ -240,6 +240,7 @@ level = "info"                   # error | warn | info | debug (debug never logs
 | Variable | Used by | Meaning |
 | --- | --- | --- |
 | `MA_HOME` | client, local server | Root for data and config |
+| `MA_SERVER_TARBALL` | `mema init --local` | A packed `memory-anywhere-server` (`.tgz`) to install instead of the registry's version: for testing a release on a clean machine before it is published |
 | `MA_LLM_API_KEY` | local server | LLM key in local mode (provider `anthropic`; `ollama` needs none) |
 | `MA_STORE_URL` | client | Overrides `store.url` (evals) |
 | `MA_TOKEN_FILE` | client | Overrides the token file path (evals) |

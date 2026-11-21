@@ -98,7 +98,7 @@ One worker loop in the server process polls `job` every 1 s (`status = queued AN
 
 ## 7. Upgrades
 
-- Server: deployment-aws.md §7.3 (aws). Local mode has no upgrade command yet.
+- Server: deployment-aws.md §7.3 (aws); in local mode, `mema init --local` again after updating the client (config-and-cli.md §4.1).
 - Client: `npm i -g memory-anywhere@<ver>`; plugins update through their marketplace (auto-update off; the owner updates). Version skew: topology-and-ipc.md §11.
 - Policy versions ship with server releases. Activating one (admin UI) changes `tools/list`, which clients pick up per `ttlMs` or a manual refresh (clients.md §4.3).
 

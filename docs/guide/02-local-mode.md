@@ -33,10 +33,7 @@ program running as you.
 
 - Windows, macOS on Apple silicon, or Linux. Intel Macs are not supported: the runtime of the embedding
   model (the one that places memories by meaning, [01 §7](01-how-it-works.md)) has no build for them.
-- Node 24 or newer.
-- git and pnpm. For now, local mode runs the server from a copy of the repository: released server
-  packages exist only for the AWS instance, so `mema init --local` without a repository copy stops with
-  "local mode needs --from-workspace <checkout>".
+- Node 24 or newer, with npm (it comes with Node).
 - Any of Claude Code, Codex or Cursor. `init` sets up the ones it finds; with none, the store still
   works from the `mema` command.
 
@@ -50,31 +47,25 @@ program running as you.
 
    `mema --version` now prints a version number.
 
-2. Get a copy of the repository and its dependencies (the server and its embedding runtime):
+2. See what `init` would change, without changing anything. It prints every file it would write, each
+   as a diff, notes that it will install the server package `memory-anywhere-server` at the same
+   version, and ends with `dry run: would run the server's init, …`.
 
    ```shell
-   git clone https://github.com/<repo>.git memory-anywhere
-   cd memory-anywhere
-   pnpm install
+   mema init --local --dry-run
    ```
 
-3. See what `init` would change, without changing anything. It prints every file it would write, each
-   as a diff, and ends with `dry run: would run the server's init, …`.
+3. Run it for real:
 
    ```shell
-   mema init --local --from-workspace . --dry-run
-   ```
-
-4. Run it for real:
-
-   ```shell
-   mema init --local --from-workspace .
+   mema init --local
    ```
 
    It first asks for your **deny-list**: Git hosts, or host/path prefixes, where memory must never be
    used, such as your employer's Git server. Repositories cloned from there can never be turned on. Then
    it shows the same diffs and asks `Make these changes? [y/N]`. Answer `y`. You see, in order:
-   - `building the client bundle…`;
+   - `installing memory-anywhere-server@<version>…`: npm installs the server, with its embedding
+     runtime, into its own folder, and runs no install scripts;
    - the server's own setup: it creates the store and downloads and verifies the embedding model (a few
      minutes the first time);
    - `server running at http://127.0.0.1:47821`;
@@ -109,6 +100,7 @@ Inside it:
 | `server.toml` | the local server's settings |
 | `local.token` | the owner credential; readable only by you |
 | `server/` | the store itself (`store.db`) and the server's log (`server.log`) |
+| `server/app/<version>/` | the installed server package, one folder per version |
 | `models/` | the embedding model |
 | `cache/`, `spool/`, `logs/` | session-start context, saves waiting for the server, client logs (never prompt text) |
 | `plugins/`, `bin/` | the installed plugin copies and the bundle the hooks call |
@@ -126,6 +118,15 @@ in `~/.cursor/plugins/local/memory-anywhere/` with its hooks in `~/.cursor/hooks
 in `~/.codex/config.toml` for the Codex IDE extension, and one shared skill in
 `~/.agents/skills/memory-anywhere/`. Each file it changes keeps its previous content next to it as
 `<file>.ma-bak-<timestamp>`.
+
+To update later, update the command line tool, then run `init` again. It installs the server of the new
+version beside the old one, stops the old server, upgrades the store (a copy of it is kept first), starts
+the new server and removes the old version's folder:
+
+```shell
+npm install -g memory-anywhere@latest
+mema init --local
+```
 
 ## 5. Check it: `mema doctor`
 
