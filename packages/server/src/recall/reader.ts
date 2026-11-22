@@ -7,6 +7,8 @@ import { prepared } from "../store/db.ts";
 import type { SensitiveCategory } from "../policy/generated.ts";
 import type { ClientClass } from "../write/types.ts";
 import { clientPolicy } from "../store/client-policy.ts";
+import { privateCategories } from "../store/meta.ts";
+import type { ServerConfigT } from "../config/schema.ts";
 
 export interface Reader {
 	readonly clientId: string;
@@ -22,6 +24,8 @@ export interface ReadPolicy {
 	readonly displayName: string;
 	readonly sectionAllow: ReadonlySet<string> | "all";
 	readonly sensitiveAllow: ReadonlySet<SensitiveCategory>;
+	/** The store's private categories (memory-policy.md §7.1); a memory in any other category reads like any memory. */
+	readonly private: readonly SensitiveCategory[];
 	readonly profileEligible: boolean;
 	readonly budget1h: number;
 	readonly budget24h: number;
@@ -30,7 +34,7 @@ export interface ReadPolicy {
 		{ readonly key: string; readonly projectEntityId: string | null; readonly capture: boolean } | undefined;
 }
 
-export function readPolicy(db: DatabaseSync, reader: Reader): ReadPolicy {
+export function readPolicy(db: DatabaseSync, config: ServerConfigT, reader: Reader): ReadPolicy {
 	const row = clientPolicy(db, reader.clientId);
 	const p = row?.revoked_at === null ? row : undefined;
 	const repoRow =
@@ -45,6 +49,7 @@ export function readPolicy(db: DatabaseSync, reader: Reader): ReadPolicy {
 		displayName: p?.display_name ?? reader.clientId,
 		sectionAllow: allow.includes("*") ? "all" : new Set(allow),
 		sensitiveAllow: new Set(p ? (JSON.parse(p.sensitive_allow_json) as SensitiveCategory[]) : []),
+		private: privateCategories(db, config),
 		profileEligible: p?.profile_eligible === 1,
 		budget1h: p?.read_budget_1h ?? 0,
 		budget24h: p?.read_budget_24h ?? 0,
@@ -79,8 +84,8 @@ export interface Visibility {
 
 /**
  * Hard filters 3–7 of retrieval.md §2 step 5: scope, section allow-list, the projects rule,
- * restricted attributes, and sensitivity. `mentions` says whether the query names a category
- * (recall only; the profile and session-start never show a sensitive memory).
+ * restricted attributes, and sensitivity. Only a memory in a private category is gated: `mentions`
+ * says whether the query names it (recall only; the profile and session-start never show one).
  */
 export function visible(
 	reader: Reader,
@@ -99,7 +104,7 @@ export function visible(
 	)
 		return false;
 	if (v.restricted && !reader.admin) return false;
-	if (v.sensitivity !== null)
+	if (v.sensitivity !== null && policy.private.includes(v.sensitivity))
 		return mentions !== undefined && policy.sensitiveAllow.has(v.sensitivity) && mentions(v.sensitivity);
 	return true;
 }

@@ -108,7 +108,7 @@ export async function rank(
 ): Promise<Ranking> {
 	const { ctx, config } = env;
 	const { db } = ctx;
-	const policy = readPolicy(db, reader);
+	const policy = readPolicy(db, config, reader);
 	const notice = (n: string, renderHits: readonly string[] = []): Ranking => ({
 		kind: "notice",
 		notice: n,
@@ -150,7 +150,7 @@ export async function rank(
 		if (!statusOk || (!row.current && !includePast)) return false;
 		if (row.kind === "event" && row.expiresAt !== null && row.expiresAt <= now && !includePast) return false;
 		if (!visible(reader, policy, scopes, row, mentions)) return false;
-		if (newlySensitive(row.content, row.sensitivity, config.sensitive.blocked)) {
+		if (newlySensitive(row.content, row.sensitivity, policy.private)) {
 			renderHits.push(row.memoryId);
 			return false;
 		}
@@ -201,7 +201,7 @@ export async function recall(env: ReadEnv, reader: Reader, input: RecallInputT):
 	const { ctx } = env;
 	const { db } = ctx;
 	const started = ctx.clock.now();
-	const policy = readPolicy(db, reader);
+	const policy = readPolicy(db, env.config, reader);
 	const empty = (notice: string, extra: Partial<RecallOutputT> = {}, ids: readonly string[] = []): RecallResult => ({
 		output: { notice, items: [], truncated: false, budget_exhausted: false, offline: false, ...extra },
 		text: notice,

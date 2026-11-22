@@ -11,7 +11,7 @@
 <% if (group.title) { %><h2><%= group.title %></h2><% } %>
 <ul class="list">
 <% for (const r of group.rows) { %>
-  <li><span class="muted"><%= it.fmt.review(r.kind) %><% if (r.category) { %> · <%= r.category %><% } %> · <%= r.client %> · <%~ it.fmt.time(r.created_at) %></span><br><%= r.content %>
+  <li><span class="muted"><%= it.fmt.review(r.kind) %><% if (r.category) { %> · <%= it.fmt.topic(r.category) %><% } %> · <%= r.client %> · <%~ it.fmt.time(r.created_at) %></span><br><%= r.content %>
     <div class="actions">
       <form class="act inline" data-action="review.decide">
         <input type="hidden" name="id" value="<%= r.id %>"><input type="hidden" name="approve" value="true" data-type="bool">

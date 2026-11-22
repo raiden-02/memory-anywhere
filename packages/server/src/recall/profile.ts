@@ -10,7 +10,6 @@ import { createHash } from "node:crypto";
 import type { ProfileOutputT } from "@memory-anywhere/contracts/schemas/tools";
 import type { RecallItemT } from "@memory-anywhere/contracts/schemas/common";
 import type { DatabaseSync } from "node:sqlite";
-import type { ServerConfigT } from "../config/schema.ts";
 import { POLICY_VERSION, TEXTS } from "../policy/generated.ts";
 import { prepared } from "../store/db.ts";
 import { SECTION } from "../write/resolve.ts";
@@ -49,16 +48,17 @@ function fit(lines: readonly string[], budget: number): string[] {
 	return out;
 }
 
-/** Current versions of global, unexpired, non-Projects memories with these statuses. */
-function profileRows(db: DatabaseSync, nowIso: string): ItemRow[] {
+/** Current versions of global, unexpired, non-Projects memories in no private category, with these statuses. */
+function profileRows(db: DatabaseSync, privateCategories: readonly string[], nowIso: string): ItemRow[] {
 	const ids = prepared(
 		db,
 		`SELECT v.id FROM memory m JOIN memory_version v ON v.memory_id = m.id
       WHERE v.valid_to IS NULL AND v.expired_at IS NULL AND v.content IS NOT NULL
-        AND m.status IN ('active','contested') AND m.scope = 'global' AND m.sensitivity_category IS NULL
+        AND m.status IN ('active','contested') AND m.scope = 'global'
+        AND (m.sensitivity_category IS NULL OR m.sensitivity_category NOT IN (SELECT value FROM json_each(?)))
         AND m.section_id != ? AND v.trust_tier <= 2 AND NOT (m.kind = 'event' AND m.expires_at IS NOT NULL AND m.expires_at <= ?)
       ORDER BY m.id`,
-	).all(SECTION.projects, nowIso) as { id: string }[];
+	).all(JSON.stringify(privateCategories), SECTION.projects, nowIso) as { id: string }[];
 	return ids.map((r) => loadItem(db, r.id)).filter((r): r is ItemRow => r !== undefined);
 }
 
@@ -67,23 +67,17 @@ const byRecorded = (a: ItemRow, b: ItemRow): number =>
 const byAttribute = (a: ItemRow, b: ItemRow): number =>
 	(a.attributeSort ?? 1e9) - (b.attributeSort ?? 1e9) || byRecorded(a, b);
 
-export function buildProfile(
-	db: DatabaseSync,
-	config: ServerConfigT,
-	reader: Reader,
-	policy: ReadPolicy,
-	nowIso: string,
-): Profile {
+export function buildProfile(db: DatabaseSync, reader: Reader, policy: ReadPolicy, nowIso: string): Profile {
 	const renderHits: string[] = [];
 	const shown = (row: ItemRow): boolean => {
 		if (!visible(reader, policy, ["global"], row, undefined)) return false;
-		if (newlySensitive(row.content, row.sensitivity, config.sensitive.blocked)) {
+		if (newlySensitive(row.content, row.sensitivity, policy.private)) {
 			renderHits.push(row.memoryId);
 			return false;
 		}
 		return true;
 	};
-	const rows = policy.profileEligible ? profileRows(db, nowIso).filter(shown) : [];
+	const rows = policy.profileEligible ? profileRows(db, policy.private, nowIso).filter(shown) : [];
 	const used = new Set<string>();
 	const take = (picked: ItemRow[]): ItemRow[] => picked.filter((r) => !used.has(r.memoryId));
 

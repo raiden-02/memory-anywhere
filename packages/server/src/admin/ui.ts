@@ -178,6 +178,7 @@ export function adminUi(
 					return page(res, "admin-system", "System", "/system", csrf, {
 						recoveryCodesLeft: local ? undefined : owner.recoveryCodesLeft(),
 						spend: views.spend(app),
+						topics: views.privateTopics(app),
 						alerts: app.alerts.open(),
 						digestHour: app.config.alerts.digest_hour_local,
 						cap: app.config.llm.daily_usd_cap,

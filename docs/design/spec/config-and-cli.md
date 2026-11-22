@@ -175,7 +175,7 @@ quota_forgets_per_day = 5
 read_budget_1h = 60
 read_budget_24h = 200
 
-[sensitive]
+[sensitive]                       # memory-policy.md §7; `blocked` = the private categories until the owner chooses
 blocked = ["health", "finances", "religion", "politics", "sexual_life", "immigration", "criminal", "home_address"]
 llm_check = true
 
@@ -207,6 +207,8 @@ digest_hour_local = 8
 ```
 
 Calibrated thresholds (`dup_threshold`, `abstain_cosine`, `sections_cluster_threshold`) live in `meta`, not in this file (write-path.md §12).
+
+`[sensitive] blocked` is the default list of private categories (memory-policy.md §7.1). Once the owner saves a choice on the admin System page, the store's `meta.sensitive_private` replaces it, and later changes to `blocked` no longer apply to that store.
 
 ## 6. Client config (`client.toml`)
 

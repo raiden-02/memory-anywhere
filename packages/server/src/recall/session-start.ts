@@ -136,8 +136,8 @@ function build(
 	const { ctx, config } = env;
 	const { db } = ctx;
 	const now = iso(ctx.clock.now());
-	const policy = readPolicy(db, reader);
-	const profile = buildProfile(db, config, reader, policy, now);
+	const policy = readPolicy(db, config, reader);
+	const profile = buildProfile(db, reader, policy, now);
 	const base = {
 		profile_etag: profile.output.profile_etag,
 		profile: profile.output.text,
@@ -160,7 +160,7 @@ function build(
 	const renderHits: string[] = [...profile.renderHits];
 	const shown = (row: ItemRow): boolean => {
 		if (!visible(reader, policy, ["global", `repo:${policy.repo?.key}`], row, undefined)) return false;
-		if (newlySensitive(row.content, row.sensitivity, config.sensitive.blocked)) {
+		if (newlySensitive(row.content, row.sensitivity, policy.private)) {
 			renderHits.push(row.memoryId);
 			return false;
 		}
@@ -185,7 +185,7 @@ function build(
 
 	// 3–4. The linked project's card and its decisions and constraints.
 	const projectId = policy.repo.projectEntityId;
-	const projectRows = projectId ? projectMemories(db, projectId).filter(shown) : [];
+	const projectRows = projectId ? projectMemories(db, policy, projectId).filter(shown) : [];
 	const projectName = projectId
 		? (prepared(db, "SELECT canonical_name FROM entity WHERE id = ? AND approved = 1").get(projectId) as
 				{ canonical_name: string } | undefined)
@@ -263,21 +263,25 @@ const newestFirst = (a: ItemRow, b: ItemRow): number =>
 	b.recordedAt.localeCompare(a.recordedAt) ||
 	a.memoryId.localeCompare(b.memoryId);
 
-function currentRows(db: DatabaseSync, where: string, ...params: string[]): ItemRow[] {
+/** Current versions of active or contested memories in no private category that match `where`. */
+function currentRows(db: DatabaseSync, policy: ReadPolicy, where: string, ...params: string[]): ItemRow[] {
 	const ids = prepared(
 		db,
 		`SELECT v.id FROM memory m JOIN memory_version v ON v.memory_id = m.id
-    WHERE v.valid_to IS NULL AND v.expired_at IS NULL AND v.content IS NOT NULL AND m.status IN ('active','contested') AND m.sensitivity_category IS NULL AND ${where}
+    WHERE v.valid_to IS NULL AND v.expired_at IS NULL AND v.content IS NOT NULL AND m.status IN ('active','contested')
+      AND (m.sensitivity_category IS NULL OR m.sensitivity_category NOT IN (SELECT value FROM json_each(?))) AND ${where}
     ORDER BY m.id`,
-	).all(...params) as { id: string }[];
+	).all(JSON.stringify(policy.private), ...params) as { id: string }[];
 	return ids.map((r) => loadItem(db, r.id)).filter((r): r is ItemRow => r !== undefined);
 }
 
-const projectMemories = (db: DatabaseSync, entityId: string): ItemRow[] => currentRows(db, "m.entity_id = ?", entityId);
+const projectMemories = (db: DatabaseSync, policy: ReadPolicy, entityId: string): ItemRow[] =>
+	currentRows(db, policy, "m.entity_id = ?", entityId);
 
 function repoMemories(db: DatabaseSync, policy: ReadPolicy, nowIso: string): ItemRow[] {
 	return currentRows(
 		db,
+		policy,
 		"m.scope = ? AND NOT (m.kind = 'event' AND m.expires_at IS NOT NULL AND m.expires_at <= ?)",
 		`repo:${policy.repo?.key}`,
 		nowIso,

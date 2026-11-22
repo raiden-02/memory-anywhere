@@ -549,6 +549,8 @@ CREATE TABLE owner_reset (                             -- break-glass, auth-and-
 );
 ```
 
+Optional `meta` keys, absent until set: `sensitive_private` (JSON array of category ids; the owner's private categories, written by the admin UI; when absent, `[sensitive] blocked` applies, memory-policy.md §7.1).
+
 ### 2.1 Migration 0003 (imports)
 
 `packages/server/migrations/0003_import.sql` adds what imports need (importers.md; write-path.md §10.4–10.5). It only adds columns and an index (on `import_item(batch_id, outcome)`, for a batch's waiting items), so an older store upgrades in place.

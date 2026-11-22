@@ -79,7 +79,7 @@ If `write_request` already holds the key, the server returns the stored `result_
 4. Compute `qualifying_user_words` (memory-policy.md §3.5).
 5. Coding-tool `user_words` check: for callers of class `coding` in a repo with prompt logging (every enabled repo), if `user_words` is present it MUST occur, after `norm()` on both sides, as a substring of a `session_prompt` from the same `client_id` and `repo_key` received in the last 24 hours. If it is not found at once, the server re-checks every 250 ms for up to 1.5 s (the async prompt hook may still be in flight). If it is still not found, `user_words` is treated as absent for every rule below, and the result reason gets the suffix `; user_words not found in your prompts`. This catches invented quotes. It does not raise the tier, because a prompt may contain pasted text the user did not write.
 6. `remember_intent` = memory-policy.md §3.4 on `user_words` (after step 5).
-7. Screens computed once: `secret_hit`, `instruction_hit` (memory-policy.md §3.2), `sensitive_category` (memory-policy.md §7.1; first category whose lexicon matches; the LLM `sensitive_check` may add one after D2, §6.2), `short_lived_hit`, `suppression_hit` (§9.2).
+7. Screens computed once: `secret_hit`, `instruction_hit` (memory-policy.md §3.2), `sensitive_category` (memory-policy.md §7.1; first private category whose lexicon matches; the LLM `sensitive_check` may add a private one after D2, §6.2), `short_lived_hit`, `suppression_hit` (§9.2).
 
 ## 5. Policy decision table
 
@@ -117,6 +117,7 @@ Rules for the table:
 - The optional durability judge (§6.2) runs only when the outcome came from D14–D18 and tier ≥ T2. It may change `active` to `observation` (reason `judge_not_durable`). It never changes any other outcome. D17's own outcome is `observation`, so the judge never sees it, and an observation promoted on recurrence (§8.3) is not judged: a save the judge staged is promoted when it comes up again, as its reason message says. A staged D15 preference creates no `preference_confirm` item. Imports (§10.4) and no-LLM capture make no judge call.
 - Rows apply to every channel. For `capture`, `explicit_request` is set when the source prompt shows remember intent, and `user_words` = the extracted span. For `import`, rows D11, D13b and D14–D19 are replaced by §10.4, and D13 applies without the `qualifying_user_words` condition.
 - A `review` outcome creates a `pending_review` memory. It is not recalled, projected or profiled. `memory_profile` shows "N items await your review in the admin UI" when N > 0.
+- `sensitive_category` is set only for a private category (memory-policy.md §7.1), so rows D3–D6 apply only to private categories; a save in any other category is decided by the remaining rows like any save.
 - At T0, rows D2, D7 and D8 do not apply and D10a decides (the owner's word is final); D1 (secrets) and D3 (third-party sensitive) still reject, and D4 applies to sensitive content. A T0 save that matches a suppression lifts it.
 
 ### 5.1 Outcomes

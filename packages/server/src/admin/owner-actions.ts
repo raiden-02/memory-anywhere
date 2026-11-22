@@ -9,6 +9,7 @@
 //   repos         enable, disable, capture on/off
 //   clients       policy (uv), revoke (uv), revert by time window (uv)
 //   export keys   add (uv), revoke (uv)
+//   settings      private topics (uv)
 //   alerts        acknowledge; owner reset: cancel
 
 import { ownerCaller } from "../write/owner.ts";
@@ -23,6 +24,8 @@ import { RESTRICTED_SECTIONS } from "../auth/vendors.ts";
 import { iso } from "../store/clock.ts";
 import { prepared, transaction } from "../store/db.ts";
 import { appendEvent } from "../store/events.ts";
+import { PRIVATE_TOPICS_KEY, setMeta } from "../store/meta.ts";
+import { SENSITIVE_CATEGORIES } from "../policy/generated.ts";
 import { forgetByOwner, forgetObservation, purgeMemory, undoForget } from "../write/forget.ts";
 import { save } from "../write/pipeline.ts";
 import { heldSensitive } from "../write/imports.ts";
@@ -513,6 +516,21 @@ export const ACTIONS = {
 				);
 				appendEvent(app.ctx, { actor: "owner", op: "recipient.revoke", refs: { recipient_id: i.id } });
 			});
+		},
+	}),
+	"settings.private_topics": action({
+		// Which sensitive categories are private (memory-policy.md §7.1). Saves and recalls read the
+		// choice from the store, so it applies to the next call; cached contexts are dropped now.
+		input: z.strictObject({ private: z.array(z.enum(SENSITIVE_CATEGORIES)).max(SENSITIVE_CATEGORIES.length) }),
+		uv: true,
+		run(app, i) {
+			const chosen = new Set(i.private);
+			const value = SENSITIVE_CATEGORIES.filter((c) => chosen.has(c));
+			transaction(app.ctx.db, () => {
+				setMeta(app.ctx.db, PRIVATE_TOPICS_KEY, JSON.stringify(value));
+				appendEvent(app.ctx, { actor: "owner", op: "settings.private_topics", refs: { private: value } });
+			});
+			app.committed([]);
 		},
 	}),
 	"alert.ack": action({

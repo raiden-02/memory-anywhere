@@ -3,8 +3,10 @@
 
 import { contentWords } from "@memory-anywhere/contracts/normalize";
 import type { App } from "../app.ts";
+import { SENSITIVE_CATEGORIES } from "../policy/generated.ts";
 import { DAY_MS, iso } from "../store/clock.ts";
 import { prepared } from "../store/db.ts";
+import { privateCategories } from "../store/meta.ts";
 import { heldSensitive, namesKnownPerson } from "../write/imports.ts";
 
 const PAGE = 50;
@@ -349,6 +351,12 @@ export function spend(app: App) {
 		app.ctx.db,
 		"SELECT day, purpose, round(usd, 4) usd, tokens_in, tokens_out FROM llm_spend ORDER BY day DESC, purpose LIMIT 60",
 	).all() as { day: string; purpose: string; usd: number; tokens_in: number; tokens_out: number }[];
+}
+
+/** Every sensitive category and whether this store treats it as private (memory-policy.md §7.1). */
+export function privateTopics(app: App) {
+	const chosen = privateCategories(app.ctx.db, app.config);
+	return SENSITIVE_CATEGORIES.map((category) => ({ category, private: chosen.includes(category) }));
 }
 
 export function sectionOptions(app: App) {

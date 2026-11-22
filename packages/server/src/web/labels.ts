@@ -1,7 +1,9 @@
 // What the admin pages show instead of internal names: who a memory came from (its trust tier), what an
-// alert means and what to do about it, and what a review item asks. Templates get these as `it.fmt`.
+// alert means and what to do about it, what a review item asks, and what a sensitive category is about.
+// Templates get these as `it.fmt`.
 
 import type { AlertKind } from "../ops/alerts.ts";
+import type { SensitiveCategory } from "../policy/generated.ts";
 import type { ReviewKind } from "../write/rows.ts";
 
 /** Lower is more trusted (write-path.md §2.1). */
@@ -92,11 +94,23 @@ const REVIEW: Readonly<Record<ReviewKind, string>> = {
 	render_sensitive: "A memory an app showed that may be sensitive",
 };
 
+const TOPIC: Readonly<Record<SensitiveCategory, string>> = {
+	health: "Health",
+	finances: "Money",
+	religion: "Religion",
+	politics: "Politics",
+	sexual_life: "Sex life",
+	immigration: "Immigration",
+	criminal: "Criminal history",
+	home_address: "Home address",
+};
+
 export const fmt = {
 	tier: (t: number): string => TIER[t] ?? `tier ${t}`,
 	alert: (kind: string): string => ALERT_TEXT[kind as AlertKind]?.title ?? kind,
 	alertAction: (kind: string): string | undefined => ALERT_TEXT[kind as AlertKind]?.action,
 	review: (kind: string): string => REVIEW[kind as ReviewKind] ?? kind,
+	topic: (category: string): string => TOPIC[category as SensitiveCategory] ?? category,
 	/**
 	 * A timestamp as HTML, which the page's script shows in the viewer's own time zone (the server does
 	 * not know it); the UTC text stays as a fallback. Only an ISO UTC timestamp becomes markup: the

@@ -149,7 +149,7 @@ export async function callTool(
 	if (!(TOOL_ORDER as readonly string[]).includes(name))
 		return done(errorResult("INVALID_INPUT", `unknown tool ${name}`, { field: "name" }));
 	const tool = name as ToolName;
-	const policy = readPolicy(app.ctx.db, grant);
+	const policy = readPolicy(app.ctx.db, app.config, grant);
 	if (WRITE_TOOLS.has(tool) && !grant.scopes.write)
 		return done(
 			errorResult(
@@ -207,7 +207,7 @@ async function run(
 		}
 		case "memory_profile": {
 			if (!canRead) return done(errorResult("FORBIDDEN", READ_OFF));
-			const p = buildProfile(app.ctx.db, app.config, grant, readPolicy(app.ctx.db, grant), new Date(now).toISOString());
+			const p = buildProfile(app.ctx.db, grant, readPolicy(app.ctx.db, app.config, grant), new Date(now).toISOString());
 			return done(ok(p.output.text, p.output), () => {
 				if (p.renderHits.length > 0) transaction(app.ctx.db, () => flagRenderSensitive(app.ctx, grant, p.renderHits));
 			});
@@ -254,7 +254,7 @@ function magnitude(n: number): "0" | "1-9" | "10-99" | "100-999" | "1000+" {
 /** memory_status (mcp-interface.md §3.5): never sections, projects, entities or exact counts. */
 export function status(app: App, grant: Grant): ToolResult {
 	const { db } = app.ctx;
-	const policy = readPolicy(db, grant);
+	const policy = readPolicy(db, app.config, grant);
 	const row = clientPolicy(db, grant.clientId);
 	const memories = (
 		prepared(db, "SELECT count(*) AS n FROM memory WHERE status IN ('active','contested')").get() as { n: number }

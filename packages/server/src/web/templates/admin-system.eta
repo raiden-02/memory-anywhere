@@ -1,4 +1,12 @@
 <% layout("./admin") %>
+<h1>Private topics</h1>
+<p class="muted">A memory on a private topic is saved only with your approval and recalled only by the apps you allow for that topic. Other topics are saved and recalled like any memory.</p>
+<form class="act stack" data-action="settings.private_topics">
+  <fieldset class="choices"><legend class="muted">Private</legend>
+    <% for (const t of it.topics) { %><label><input type="checkbox" name="private" value="<%= t.category %>" data-type="list"<% if (t.private) { %> checked<% } %>> <%= it.fmt.topic(t.category) %></label><% } %>
+  </fieldset>
+  <button type="submit" class="secondary">Save private topics</button>
+</form>
 <h1>LLM spend</h1>
 <p class="muted">Capped at $<%= it.cap.toFixed(2) %> a day; past it the server works without the LLM until midnight UTC.</p>
 <table class="table"><thead><tr><th>Day</th><th>Use</th><th>USD</th><th>Tokens in / out</th></tr></thead><tbody>

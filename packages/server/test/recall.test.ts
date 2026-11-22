@@ -248,7 +248,7 @@ describe("profile", () => {
 			stated("Prefers dark mode", "i prefer dark mode", { kind: "preference" }),
 		);
 		const city = await put(w, chatCaller(), stated("Lives in Denver", "i live in denver these days"));
-		const build = () => buildProfile(s.db, r.config, CHAT, readPolicy(s.db, CHAT), "2026-11-10T12:00:00.000Z").output;
+		const build = () => buildProfile(s.db, CHAT, readPolicy(s.db, r.config, CHAT), "2026-11-10T12:00:00.000Z").output;
 		const p = build();
 		expect(build().profile_etag).toBe(p.profile_etag);
 		expect(p.owner_preferences.map((i) => i.id)).toEqual([pref.id]);
@@ -272,7 +272,7 @@ describe("profile", () => {
 			chatCaller({ clientId: "cli_gpt", sessionKey: "cli_gpt:1" }),
 			stated("Lives in Seattle", "i live in seattle these days"),
 		);
-		const p = buildProfile(s.db, r.config, CHAT, readPolicy(s.db, CHAT), "2026-11-10T12:00:00.000Z").output;
+		const p = buildProfile(s.db, CHAT, readPolicy(s.db, r.config, CHAT), "2026-11-10T12:00:00.000Z").output;
 		expect(p.text).toContain(
 			`- city: unconfirmed: Lives in Denver [${a.id}] / Lives in Seattle [${b.id}] (ask the user)`,
 		);
@@ -282,7 +282,7 @@ describe("profile", () => {
 		const { s, w, r } = await world();
 		await put(w, chatCaller(), stated("Lives in Denver", "i live in denver these days"));
 		s.db.prepare("UPDATE client_policy SET profile_eligible = 0 WHERE client_id = ?").run(CHAT_CLIENT_ID);
-		const p = buildProfile(s.db, r.config, CHAT, readPolicy(s.db, CHAT), "2026-11-10T12:00:00.000Z").output;
+		const p = buildProfile(s.db, CHAT, readPolicy(s.db, r.config, CHAT), "2026-11-10T12:00:00.000Z").output;
 		expect(p.key_facts).toEqual([]);
 		expect(p.text).not.toContain("## Key facts");
 	});

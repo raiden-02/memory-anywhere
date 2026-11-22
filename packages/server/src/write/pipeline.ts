@@ -22,7 +22,7 @@ import { DAY_MS, HOUR_MS, iso, sixHourBucket } from "../store/clock.ts";
 import { clientPolicy, notePolicyVersion } from "../store/client-policy.ts";
 import type { StoreContext } from "../store/context.ts";
 import { prepared, transaction } from "../store/db.ts";
-import { requireMeta } from "../store/meta.ts";
+import { privateCategories, requireMeta } from "../store/meta.ts";
 import { decide, type DecideInput, type ImportClass } from "./decide.ts";
 import { assertEvalStore, modelOnlyDecision, type EvalBuild } from "./eval-build.ts";
 import { forgetByClient, type ForgetResult } from "./forget.ts";
@@ -98,7 +98,7 @@ async function judged(
 
 /**
  * The `sensitive_check` call (memory-policy.md §7.3), for a save rows D1–D2 will not decide and the
- * lexicons did not flag. It can only add a category, and only one the owner blocks.
+ * lexicons did not flag. It can only add a category, and only one that is private.
  */
 async function llmSensitive(
 	env: WriteEnv,
@@ -115,7 +115,9 @@ async function llmSensitive(
 		),
 	);
 	if (!a.ok || a.value.sensitive_category === "none") return undefined;
-	return env.config.sensitive.blocked.includes(a.value.sensitive_category) ? a.value.sensitive_category : undefined;
+	return privateCategories(env.ctx.db, env.config).includes(a.value.sensitive_category)
+		? a.value.sensitive_category
+		: undefined;
 }
 
 export interface RequestMeta {
@@ -445,7 +447,7 @@ async function screen(
 	const screens: Screens = {
 		secretHit: secretHit([v.content, v.userWords, v.whyDurable]),
 		instructionHit: instructionHit(v.content, req.kind),
-		sensitiveCategory: sensitiveCategory([v.content, v.userWords], config.sensitive.blocked),
+		sensitiveCategory: sensitiveCategory([v.content, v.userWords], privateCategories(ctx.db, config)),
 		shortLivedHit: shortLivedHit(v.content),
 		suppressionHit: isSuppressed(ctx, v.content, slot),
 	};

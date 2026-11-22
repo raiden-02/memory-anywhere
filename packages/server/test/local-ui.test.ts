@@ -103,3 +103,11 @@ test("actions need no passkey in local mode, but still need the CSRF token", asy
 	expect((await act({ "x-ma-csrf": csrf })).status).toBe(200);
 	expect((s.db.prepare("SELECT status FROM memory WHERE id = ?").get(id) as { status: string }).status).toBe("purged");
 });
+
+test("the System page offers every sensitive category as a private topic, ticked while private", async () => {
+	const { cookie } = await signIn();
+	const html = await (await fetch(`${base}/admin/system`, { headers: { cookie } })).text();
+	expect(html).toContain('data-action="settings.private_topics"');
+	expect(html).toContain("Sex life");
+	expect(html.match(/name="private" value="[a-z_]+" data-type="list" checked>/gu)).toHaveLength(8);
+});

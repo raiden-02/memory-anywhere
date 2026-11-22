@@ -139,7 +139,7 @@ export function projection(app: App, grant: Grant, query: URLSearchParams): V1Re
 	const repoKey = query.get("repo_key") ?? "none";
 	const reader = withRepo(grant, repoKey);
 	const now = new Date(app.ctx.clock.now()).toISOString();
-	const profile = buildProfile(app.ctx.db, app.config, reader, readPolicy(app.ctx.db, reader), now).output.text;
+	const profile = buildProfile(app.ctx.db, reader, readPolicy(app.ctx.db, app.config, reader), now).output.text;
 	const ctx = app.sessions.sessionStart({ ctx: app.ctx, config: app.config }, reader, "claude-code", 9000).response;
 	const repoContext = ctx.repo_enabled ? ctx.context : null;
 	const etag = createHash("sha256")

@@ -291,7 +291,7 @@ Output JSON only: {"items":[{"content":string,"kind":"fact"|"preference"|"event"
 
 ### 7.1 Categories
 
-Blocked by default. Each category has a lexicon file `policy/sensitive/<id>.txt` (words and phrases, matched on word boundaries against `norm(content)` and `norm(user_words)`), plus the optional classifier (§7.3).
+Private by default. Each category has a lexicon file `policy/sensitive/<id>.txt` (words and phrases, matched on word boundaries against `norm(content)` and `norm(user_words)`), plus the optional classifier (§7.3).
 
 | id | Covers |
 | --- | --- |
@@ -306,9 +306,13 @@ Blocked by default. Each category has a lexicon file `policy/sensitive/<id>.txt`
 
 Sensitive memories keep their normal section; recall gating uses the client policy and the query lexicon (§7.2 rule 7), not a section.
 
-The owner can add or remove categories in `server.toml` (`[sensitive] blocked = [...]`). Subscription plans ("ChatGPT Plus") are not `finances`; the `finances` lexicon excludes product plan names.
+**Private categories.** The owner chooses which categories are private on the admin System page (`settings.private_topics`, auth-and-security.md §8.1); the choice is stored as `meta.sensitive_private` (data-model.md §2). Until the owner chooses, the private categories are `[sensitive] blocked` in `server.toml` (default: all). The save screens (write-path.md §7), the classifier (§7.3) and the render-time recheck (§7.2 rule 8) look only for private categories, and §7.2 rules 2–8 apply only to them. A memory in a category that is not private is saved, recalled, profiled and placed in session-start like any other memory; a memory stored with a category that the owner later makes non-private is treated the same way. The project catalog export (data-model.md §11) still leaves out every memory stored with a category.
+
+Subscription plans ("ChatGPT Plus") are not `finances`; the `finances` lexicon excludes product plan names.
 
 ### 7.2 Rules
+
+"Sensitive" in rules 2–8 means a private category (§7.1).
 
 1. **Never stored, even when asked:** the secret and never-store patterns (§3.7).
 2. **About other people:** a proposal whose entity is not `self` (or whose section resolves to People) and that hits a sensitive category is rejected, even with an explicit request.
@@ -322,7 +326,7 @@ The owner can add or remove categories in `server.toml` (`[sensitive] blocked = 
 
 ### 7.3 Classifier
 
-The lexicons always run. When `llm.provider` is not `none` and `sensitive.llm_check = true` (default `true`), the `sensitive_check` call (write-path.md §6.2) also runs on every save that rows D1–D2 did not decide, before row D3. A save flagged by either the lexicon or the LLM is treated as sensitive. The LLM can only add a flag, never remove one. On timeout or when the cap is reached, the lexicon result stands.
+The lexicons always run. When `llm.provider` is not `none` and `sensitive.llm_check = true` (default `true`), the `sensitive_check` call (write-path.md §6.2) also runs on every save that rows D1–D2 did not decide, before row D3. Its answer counts only when it names a private category (§7.1). A save flagged by either the lexicon or the LLM is treated as sensitive. The LLM can only add a flag, never remove one. On timeout or when the cap is reached, the lexicon result stands.
 
 Suite P reports per-category detection recall with n and Wilson 95% intervals. The project makes no "under 1%" claim for a category unless that category has at least 300 labelled items (evals.md §5).
 
