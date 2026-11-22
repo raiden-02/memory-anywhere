@@ -67,7 +67,7 @@ const NAV: readonly { path: string; label: string }[] = [
 	{ path: "/system", label: "System" },
 ];
 const MEMORY_PAGE = new RegExp(`^/memories/(mem_${ULID_PATTERN})$`, "u");
-const ACT = /^\/api\/act\/([a-z]+\.[a-z]+)$/u;
+const ACT = /^\/api\/act\/([a-z_]+\.[a-z_]+)$/u;
 
 /** Serves a page or action; returns the status, or undefined when the path is not the UI's. */
 export function adminUi(

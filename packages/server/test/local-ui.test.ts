@@ -111,3 +111,21 @@ test("the System page offers every sensitive category as a private topic, ticked
 	expect(html).toContain("Sex life");
 	expect(html.match(/name="private" value="[a-z_]+" data-type="list" checked>/gu)).toHaveLength(8);
 });
+
+test("an action whose name has an underscore is reachable, as the System page posts it", async () => {
+	const { cookie, csrf } = await signIn();
+	const res = await fetch(`${base}/admin/api/act/settings.private_topics`, {
+		method: "POST",
+		headers: {
+			cookie,
+			"content-type": "application/json",
+			origin: base,
+			"ma-client-version": SERVER_VERSION,
+			"x-ma-csrf": csrf,
+		},
+		body: JSON.stringify({ input: { private: ["criminal"] } }),
+	});
+	expect(res.status).toBe(200);
+	const row = s.db.prepare("SELECT value FROM meta WHERE key = 'sensitive_private'").get() as { value: string };
+	expect(JSON.parse(row.value)).toEqual(["criminal"]);
+});
